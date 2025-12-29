@@ -76,7 +76,7 @@ final class HealthKitService: Sendable {
                         date: workout.startDate,
                         distanceInMeters: workout.totalDistance?.doubleValue(for: .meter()) ?? 0,
                         durationInSeconds: workout.duration,
-                        caloriesBurned: workout.totalEnergyBurned?.doubleValue(for: .kilocalorie())
+                        caloriesBurned: workout.statistics(for: HKQuantityType(.activeEnergyBurned))?.sumQuantity()?.doubleValue(for: .kilocalorie())
                     )
                 } ?? []
 
