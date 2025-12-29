@@ -93,7 +93,11 @@ struct MonthlyRunningView: View {
     private var statsListView: some View {
         List {
             ForEach(viewModel.monthlyStats.reversed()) { stats in
-                MonthlyStatsRow(stats: stats)
+                NavigationLink {
+                    MonthDetailView(year: stats.year, month: stats.month)
+                } label: {
+                    MonthlyStatsRow(stats: stats)
+                }
             }
         }
         .listStyle(.plain)
