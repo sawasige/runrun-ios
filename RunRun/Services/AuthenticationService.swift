@@ -27,6 +27,7 @@ final class AuthenticationService: ObservableObject {
     @Published private(set) var isAuthenticated = false
 
     private var currentNonce: String?
+    private let firestoreService = FirestoreService()
 
     init() {
         self.user = Auth.auth().currentUser
@@ -85,7 +86,19 @@ final class AuthenticationService: ObservableObject {
             fullName: appleIDCredential.fullName
         )
 
-        try await Auth.auth().signIn(with: credential)
+        let authResult = try await Auth.auth().signIn(with: credential)
+
+        // Create user profile if first time
+        let userId = authResult.user.uid
+        let existingProfile = try? await firestoreService.getUserProfile(userId: userId)
+        if existingProfile == nil {
+            let displayName = appleIDCredential.fullName?.givenName ?? "ランナー"
+            try await firestoreService.createUserProfile(
+                userId: userId,
+                displayName: displayName,
+                email: authResult.user.email
+            )
+        }
     }
 
     private func randomNonceString(length: Int = 32) -> String {
