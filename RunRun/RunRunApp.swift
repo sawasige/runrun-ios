@@ -1,10 +1,3 @@
-//
-//  RunRunApp.swift
-//  RunRun
-//
-//  Created by SAWADA Shigeru on 2025/12/29.
-//
-
 import SwiftUI
 
 @main
