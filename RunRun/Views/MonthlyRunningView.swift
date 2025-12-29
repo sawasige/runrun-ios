@@ -98,7 +98,16 @@ struct MonthlyRunningView: View {
                     .frame(height: 200)
             }
 
-            Section {
+            Section("年間サマリー") {
+                StatRow(icon: "figure.run", label: "ラン回数", value: "\(viewModel.totalRunCount)回")
+                StatRow(icon: "clock", label: "合計時間", value: viewModel.formattedTotalDuration)
+                StatRow(icon: "arrow.left.and.right", label: "平均距離", value: viewModel.formattedAverageDistance)
+                if let best = viewModel.bestMonth, best.totalDistanceInKilometers > 0 {
+                    StatRow(icon: "trophy", label: "ベスト月", value: "\(best.month)月 (\(best.formattedTotalDistance))")
+                }
+            }
+
+            Section("月別記録") {
                 ForEach(viewModel.monthlyStats.reversed()) { stats in
                     NavigationLink {
                         MonthDetailView(year: stats.year, month: stats.month)
@@ -120,6 +129,21 @@ struct MonthlyRunningView: View {
             .foregroundStyle(.blue.gradient)
         }
         .chartYAxisLabel("km")
+    }
+}
+
+struct StatRow: View {
+    let icon: String
+    let label: String
+    let value: String
+
+    var body: some View {
+        HStack {
+            Label(label, systemImage: icon)
+            Spacer()
+            Text(value)
+                .foregroundStyle(.secondary)
+        }
     }
 }
 
