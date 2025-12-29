@@ -1,4 +1,5 @@
 import SwiftUI
+import Charts
 
 struct MonthlyRunningView: View {
     @StateObject private var viewModel = MonthlyRunningViewModel()
@@ -92,15 +93,33 @@ struct MonthlyRunningView: View {
 
     private var statsListView: some View {
         List {
-            ForEach(viewModel.monthlyStats.reversed()) { stats in
-                NavigationLink {
-                    MonthDetailView(year: stats.year, month: stats.month)
-                } label: {
-                    MonthlyStatsRow(stats: stats)
+            Section {
+                monthlyChart
+                    .frame(height: 200)
+            }
+
+            Section {
+                ForEach(viewModel.monthlyStats.reversed()) { stats in
+                    NavigationLink {
+                        MonthDetailView(year: stats.year, month: stats.month)
+                    } label: {
+                        MonthlyStatsRow(stats: stats)
+                    }
                 }
             }
         }
-        .listStyle(.plain)
+        .listStyle(.insetGrouped)
+    }
+
+    private var monthlyChart: some View {
+        Chart(viewModel.monthlyStats) { stats in
+            BarMark(
+                x: .value("月", "\(stats.month)月"),
+                y: .value("距離", stats.totalDistanceInKilometers)
+            )
+            .foregroundStyle(.blue.gradient)
+        }
+        .chartYAxisLabel("km")
     }
 }
 
