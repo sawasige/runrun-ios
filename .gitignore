@@ -55,3 +55,4 @@ iOSInjectionProject/
 *.xcconfig
 !*.xcconfig.template
 GoogleService-Info.plist
+RunRun/GoogleService-Info.plist
