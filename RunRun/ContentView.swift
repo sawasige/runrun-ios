@@ -1,21 +1,28 @@
 import SwiftUI
 
 struct ContentView: View {
-    var body: some View {
-        TabView {
-            MonthlyRunningView()
-                .tabItem {
-                    Label("記録", systemImage: "figure.run")
-                }
+    @EnvironmentObject private var authService: AuthenticationService
 
-            SettingsView()
-                .tabItem {
-                    Label("設定", systemImage: "gear")
-                }
+    var body: some View {
+        if authService.isAuthenticated {
+            TabView {
+                MonthlyRunningView()
+                    .tabItem {
+                        Label("記録", systemImage: "figure.run")
+                    }
+
+                SettingsView()
+                    .tabItem {
+                        Label("設定", systemImage: "gear")
+                    }
+            }
+        } else {
+            LoginView()
         }
     }
 }
 
 #Preview {
     ContentView()
+        .environmentObject(AuthenticationService())
 }

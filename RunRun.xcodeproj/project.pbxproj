@@ -6,6 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		2A03494A2F02A709003DECEA /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 2A0349492F02A709003DECEA /* FirebaseAuth */; };
+		2A03494C2F02A709003DECEA /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 2A03494B2F02A709003DECEA /* FirebaseCrashlytics */; };
+		2A03494E2F02A709003DECEA /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 2A03494D2F02A709003DECEA /* FirebaseFirestore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		2A8048E22F02923A001FA4CE /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -53,6 +59,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2A03494A2F02A709003DECEA /* FirebaseAuth in Frameworks */,
+				2A03494C2F02A709003DECEA /* FirebaseCrashlytics in Frameworks */,
+				2A03494E2F02A709003DECEA /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -120,6 +129,9 @@
 			);
 			name = RunRun;
 			packageProductDependencies = (
+				2A0349492F02A709003DECEA /* FirebaseAuth */,
+				2A03494B2F02A709003DECEA /* FirebaseCrashlytics */,
+				2A03494D2F02A709003DECEA /* FirebaseFirestore */,
 			);
 			productName = RunRun;
 			productReference = 2A8048D42F029239001FA4CE /* RunRun.app */;
@@ -203,6 +215,9 @@
 			);
 			mainGroup = 2A8048CB2F029239001FA4CE;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				2A0349482F02A709003DECEA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2A8048D52F029239001FA4CE /* Products */;
 			projectDirPath = "";
@@ -426,7 +441,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.mazda.RunRun;
+				PRODUCT_BUNDLE_IDENTIFIER = com.himatsubu.RunRun;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -460,7 +475,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.mazda.RunRun;
+				PRODUCT_BUNDLE_IDENTIFIER = com.himatsubu.RunRun;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -482,7 +497,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.mazda.RunRunTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.himatsubu.RunRunTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -504,7 +519,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.mazda.RunRunTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.himatsubu.RunRunTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -524,7 +539,7 @@
 				DEVELOPMENT_TEAM = U9296HT99T;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.mazda.RunRunUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.himatsubu.RunRunUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -544,7 +559,7 @@
 				DEVELOPMENT_TEAM = U9296HT99T;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.mazda.RunRunUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.himatsubu.RunRunUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -596,6 +611,35 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		2A0349482F02A709003DECEA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.7.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		2A0349492F02A709003DECEA /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2A0349482F02A709003DECEA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		2A03494B2F02A709003DECEA /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2A0349482F02A709003DECEA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
+		};
+		2A03494D2F02A709003DECEA /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2A0349482F02A709003DECEA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 2A8048CC2F029239001FA4CE /* Project object */;
 }
