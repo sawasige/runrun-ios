@@ -35,7 +35,7 @@ struct MonthlyRunningView: View {
         VStack(spacing: 12) {
             Picker("年", selection: $viewModel.selectedYear) {
                 ForEach(viewModel.availableYears, id: \.self) { year in
-                    Text("\(year)年").tag(year)
+                    Text(verbatim: "\(year)年").tag(year)
                 }
             }
             .pickerStyle(.segmented)
