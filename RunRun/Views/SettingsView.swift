@@ -128,12 +128,26 @@ struct SettingsView: View {
             do {
                 let calendar = Calendar.current
                 let now = Date()
-                let startOfYear = calendar.date(from: DateComponents(year: calendar.component(.year, from: now), month: 1, day: 1))!
+                let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: now))!
 
-                let records = try await healthKitService.fetchRunningWorkouts(from: startOfYear, to: now)
-                try await firestoreService.syncRunRecords(userId: userId, records: records)
+                let records = try await healthKitService.fetchRunningWorkouts(from: startOfMonth, to: now)
+                let newCount = try await firestoreService.syncRunRecords(userId: userId, records: records)
 
-                lastSyncMessage = "\(records.count)件の記録を同期しました"
+                // 今月の統計情報を更新
+                let allRuns = try await firestoreService.getUserRuns(userId: userId)
+                let monthlyRuns = allRuns.filter { calendar.isDate($0.date, equalTo: now, toGranularity: .month) }
+                let totalDistance = monthlyRuns.reduce(0) { $0 + $1.distanceKm }
+                try await firestoreService.updateUserStats(
+                    userId: userId,
+                    totalDistanceKm: totalDistance,
+                    totalRuns: monthlyRuns.count
+                )
+
+                if newCount > 0 {
+                    lastSyncMessage = "\(newCount)件の新規記録を同期しました"
+                } else {
+                    lastSyncMessage = "同期済みです"
+                }
             } catch {
                 lastSyncMessage = "同期エラー: \(error.localizedDescription)"
             }

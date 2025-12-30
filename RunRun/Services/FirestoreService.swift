@@ -55,8 +55,9 @@ final class FirestoreService {
 
     // MARK: - Run Records
 
-    func syncRunRecords(userId: String, records: [RunningRecord]) async throws {
-        guard !records.isEmpty else { return }
+    @discardableResult
+    func syncRunRecords(userId: String, records: [RunningRecord]) async throws -> Int {
+        guard !records.isEmpty else { return 0 }
 
         // 既存の同期済み日付を取得して重複を除外
         let existingDates = try await getExistingSyncedDates(userId: userId)
@@ -64,7 +65,7 @@ final class FirestoreService {
             !existingDates.contains { Calendar.current.isDate($0, inSameDayAs: record.date) }
         }
 
-        guard !newRecords.isEmpty else { return }
+        guard !newRecords.isEmpty else { return 0 }
 
         for record in newRecords {
             let data: [String: Any] = [
@@ -77,15 +78,25 @@ final class FirestoreService {
             ]
             _ = try await runsCollection.addDocument(data: data)
         }
+
+        return newRecords.count
     }
 
-    func getUserRuns(userId: String) async throws -> [SyncedRunRecord] {
+    func getUserRuns(userId: String) async throws -> [(date: Date, distanceKm: Double, durationSeconds: TimeInterval)] {
         let snapshot = try await runsCollection
             .whereField("userId", isEqualTo: userId)
             .order(by: "date", descending: true)
             .getDocuments()
 
-        return snapshot.documents.compactMap { try? $0.data(as: SyncedRunRecord.self) }
+        return snapshot.documents.compactMap { doc -> (Date, Double, TimeInterval)? in
+            let data = doc.data()
+            guard let timestamp = data["date"] as? Timestamp,
+                  let distance = data["distanceKm"] as? Double,
+                  let duration = data["durationSeconds"] as? TimeInterval else {
+                return nil
+            }
+            return (timestamp.dateValue(), distance, duration)
+        }
     }
 
     private func getExistingSyncedDates(userId: String) async throws -> [Date] {
@@ -112,5 +123,44 @@ final class FirestoreService {
                 totalRuns: data["totalRuns"] as? Int ?? 0
             )
         }
+    }
+
+    func getMonthlyLeaderboard(year: Int, month: Int, limit: Int = 20) async throws -> [UserProfile] {
+        let calendar = Calendar.current
+        guard let startOfMonth = calendar.date(from: DateComponents(year: year, month: month, day: 1)),
+              let endOfMonth = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: startOfMonth) else {
+            return []
+        }
+
+        // 該当月のラン記録を全て取得
+        let snapshot = try await runsCollection
+            .whereField("date", isGreaterThanOrEqualTo: startOfMonth)
+            .whereField("date", isLessThanOrEqualTo: endOfMonth)
+            .getDocuments()
+
+        // ユーザーごとに集計
+        var userStats: [String: (distance: Double, runs: Int)] = [:]
+        for doc in snapshot.documents {
+            let data = doc.data()
+            guard let userId = data["userId"] as? String,
+                  let distance = data["distanceKm"] as? Double else { continue }
+
+            let current = userStats[userId] ?? (0, 0)
+            userStats[userId] = (current.distance + distance, current.runs + 1)
+        }
+
+        // ユーザープロフィールを取得して結合
+        var profiles: [UserProfile] = []
+        for (userId, stats) in userStats {
+            if let profile = try? await getUserProfile(userId: userId) {
+                var monthlyProfile = profile
+                monthlyProfile.totalDistanceKm = stats.distance
+                monthlyProfile.totalRuns = stats.runs
+                profiles.append(monthlyProfile)
+            }
+        }
+
+        // 距離でソート
+        return profiles.sorted { $0.totalDistanceKm > $1.totalDistanceKm }.prefix(limit).map { $0 }
     }
 }
