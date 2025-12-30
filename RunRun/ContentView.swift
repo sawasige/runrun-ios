@@ -11,6 +11,11 @@ struct ContentView: View {
                         Label("記録", systemImage: "figure.run")
                     }
 
+                LeaderboardView()
+                    .tabItem {
+                        Label("ランキング", systemImage: "trophy")
+                    }
+
                 SettingsView()
                     .tabItem {
                         Label("設定", systemImage: "gear")
