@@ -16,19 +16,40 @@ final class FirestoreService {
     // MARK: - User Profile
 
     func createUserProfile(userId: String, displayName: String, email: String?) async throws {
-        let profile = UserProfile(displayName: displayName, email: email)
-        try usersCollection.document(userId).setData(from: profile)
+        let data: [String: Any] = [
+            "displayName": displayName,
+            "email": email as Any,
+            "createdAt": Date(),
+            "totalDistanceKm": 0.0,
+            "totalRuns": 0
+        ]
+        try await usersCollection.document(userId).setData(data)
     }
 
     func getUserProfile(userId: String) async throws -> UserProfile? {
         let snapshot = try await usersCollection.document(userId).getDocument()
-        return try snapshot.data(as: UserProfile.self)
+        guard let data = snapshot.data() else { return nil }
+
+        return UserProfile(
+            id: snapshot.documentID,
+            displayName: data["displayName"] as? String ?? "ランナー",
+            email: data["email"] as? String,
+            createdAt: (data["createdAt"] as? Timestamp)?.dateValue() ?? Date(),
+            totalDistanceKm: data["totalDistanceKm"] as? Double ?? 0,
+            totalRuns: data["totalRuns"] as? Int ?? 0
+        )
     }
 
     func updateUserStats(userId: String, totalDistanceKm: Double, totalRuns: Int) async throws {
         try await usersCollection.document(userId).updateData([
             "totalDistanceKm": totalDistanceKm,
             "totalRuns": totalRuns
+        ])
+    }
+
+    func updateDisplayName(userId: String, displayName: String) async throws {
+        try await usersCollection.document(userId).updateData([
+            "displayName": displayName
         ])
     }
 
@@ -80,6 +101,16 @@ final class FirestoreService {
             .limit(to: limit)
             .getDocuments()
 
-        return snapshot.documents.compactMap { try? $0.data(as: UserProfile.self) }
+        return snapshot.documents.compactMap { doc -> UserProfile? in
+            let data = doc.data()
+            return UserProfile(
+                id: doc.documentID,
+                displayName: data["displayName"] as? String ?? "ランナー",
+                email: data["email"] as? String,
+                createdAt: (data["createdAt"] as? Timestamp)?.dateValue() ?? Date(),
+                totalDistanceKm: data["totalDistanceKm"] as? Double ?? 0,
+                totalRuns: data["totalRuns"] as? Int ?? 0
+            )
+        }
     }
 }
