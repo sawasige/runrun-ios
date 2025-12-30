@@ -33,7 +33,7 @@ final class AuthenticationService: ObservableObject {
         self.user = Auth.auth().currentUser
         self.isAuthenticated = user != nil
 
-        Auth.auth().addStateDidChangeListener { [weak self] _, user in
+        _ = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             Task { @MainActor in
                 self?.user = user
                 self?.isAuthenticated = user != nil

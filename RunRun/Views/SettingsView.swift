@@ -5,6 +5,8 @@ struct SettingsView: View {
     @EnvironmentObject private var authService: AuthenticationService
     @State private var isSyncing = false
     @State private var lastSyncMessage: String?
+    @State private var userProfile: UserProfile?
+    @State private var showingProfileEdit = false
 
     private let firestoreService = FirestoreService()
     private let healthKitService = HealthKitService()
@@ -12,6 +14,19 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
+                Section("プロフィール") {
+                    HStack {
+                        Text("表示名")
+                        Spacer()
+                        Text(userProfile?.displayName ?? "読み込み中...")
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Button("プロフィールを編集") {
+                        showingProfileEdit = true
+                    }
+                }
+
                 Section("アカウント") {
                     if let email = authService.user?.email {
                         HStack {
@@ -66,6 +81,40 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("設定")
+            .task {
+                await loadProfile()
+            }
+            .sheet(isPresented: $showingProfileEdit, onDismiss: {
+                Task { await loadProfile() }
+            }) {
+                if let userId = authService.user?.uid {
+                    ProfileEditView(
+                        userId: userId,
+                        currentDisplayName: userProfile?.displayName ?? ""
+                    )
+                }
+            }
+        }
+    }
+
+    private func loadProfile() async {
+        guard let userId = authService.user?.uid else { return }
+
+        do {
+            if let profile = try await firestoreService.getUserProfile(userId: userId) {
+                userProfile = profile
+            } else {
+                // プロフィールが存在しない場合は作成
+                let displayName = authService.user?.displayName ?? "ランナー"
+                try await firestoreService.createUserProfile(
+                    userId: userId,
+                    displayName: displayName,
+                    email: authService.user?.email
+                )
+                userProfile = try await firestoreService.getUserProfile(userId: userId)
+            }
+        } catch {
+            print("Profile load error: \(error)")
         }
     }
 
