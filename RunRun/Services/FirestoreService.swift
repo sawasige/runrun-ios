@@ -329,6 +329,33 @@ final class FirestoreService {
         return profiles.sorted { $0.totalDistanceKm > $1.totalDistanceKm }
     }
 
+    // MARK: - User Runs by Month
+
+    func getUserMonthlyRuns(userId: String, year: Int, month: Int) async throws -> [(date: Date, distanceKm: Double, durationSeconds: TimeInterval)] {
+        let calendar = Calendar.current
+        guard let startOfMonth = calendar.date(from: DateComponents(year: year, month: month, day: 1)),
+              let startOfNextMonth = calendar.date(byAdding: .month, value: 1, to: startOfMonth) else {
+            return []
+        }
+
+        let snapshot = try await runsCollection
+            .whereField("userId", isEqualTo: userId)
+            .whereField("date", isGreaterThanOrEqualTo: startOfMonth)
+            .whereField("date", isLessThan: startOfNextMonth)
+            .order(by: "date", descending: true)
+            .getDocuments()
+
+        return snapshot.documents.compactMap { doc -> (Date, Double, TimeInterval)? in
+            let data = doc.data()
+            guard let timestamp = data["date"] as? Timestamp,
+                  let distance = data["distanceKm"] as? Double,
+                  let duration = data["durationSeconds"] as? TimeInterval else {
+                return nil
+            }
+            return (timestamp.dateValue(), distance, duration)
+        }
+    }
+
     // MARK: - Debug
 
     #if DEBUG

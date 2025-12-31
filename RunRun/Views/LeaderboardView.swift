@@ -87,11 +87,19 @@ struct LeaderboardView: View {
                     } else {
                         List {
                             ForEach(Array(users.enumerated()), id: \.element.id) { index, user in
-                                LeaderboardRow(
-                                    rank: index + 1,
-                                    user: user,
-                                    isCurrentUser: user.id == authService.user?.uid
-                                )
+                                NavigationLink {
+                                    UserDetailView(
+                                        user: user,
+                                        year: selectedYear,
+                                        month: selectedMonth
+                                    )
+                                } label: {
+                                    LeaderboardRow(
+                                        rank: index + 1,
+                                        user: user,
+                                        isCurrentUser: user.id == authService.user?.uid
+                                    )
+                                }
                             }
                         }
                     }

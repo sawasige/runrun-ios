@@ -7,6 +7,24 @@ struct RunningRecord: Identifiable, Equatable {
     let durationInSeconds: TimeInterval
     let caloriesBurned: Double?
 
+    /// HealthKitデータからの初期化用
+    init(id: UUID, date: Date, distanceInMeters: Double, durationInSeconds: TimeInterval, caloriesBurned: Double?) {
+        self.id = id
+        self.date = date
+        self.distanceInMeters = distanceInMeters
+        self.durationInSeconds = durationInSeconds
+        self.caloriesBurned = caloriesBurned
+    }
+
+    /// Firestoreデータからの初期化用
+    init(date: Date, distanceKm: Double, durationSeconds: TimeInterval) {
+        self.id = UUID()
+        self.date = date
+        self.distanceInMeters = distanceKm * 1000
+        self.durationInSeconds = durationSeconds
+        self.caloriesBurned = nil
+    }
+
     var distanceInKilometers: Double {
         distanceInMeters / 1000.0
     }
