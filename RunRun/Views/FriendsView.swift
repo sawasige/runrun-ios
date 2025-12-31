@@ -35,12 +35,10 @@ struct FriendsView: View {
                                     .foregroundStyle(.secondary)
                             } else {
                                 ForEach(friends) { friend in
-                                    if let friendId = friend.id {
-                                        NavigationLink {
-                                            MonthlyRunningView(userId: friendId, userName: friend.displayName)
-                                        } label: {
-                                            FriendRow(friend: friend)
-                                        }
+                                    NavigationLink {
+                                        MonthlyRunningView(user: friend)
+                                    } label: {
+                                        FriendRow(friend: friend)
                                     }
                                 }
                                 .onDelete(perform: deleteFriend)

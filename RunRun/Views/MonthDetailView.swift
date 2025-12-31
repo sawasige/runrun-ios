@@ -2,9 +2,16 @@ import SwiftUI
 
 struct MonthDetailView: View {
     @StateObject private var viewModel: MonthDetailViewModel
+    let userProfile: UserProfile?
 
     init(userId: String, year: Int, month: Int) {
+        self.userProfile = nil
         _viewModel = StateObject(wrappedValue: MonthDetailViewModel(userId: userId, year: year, month: month))
+    }
+
+    init(user: UserProfile, year: Int, month: Int) {
+        self.userProfile = user
+        _viewModel = StateObject(wrappedValue: MonthDetailViewModel(userId: user.id ?? "", year: year, month: month))
     }
 
     var body: some View {
@@ -20,6 +27,17 @@ struct MonthDetailView: View {
             }
         }
         .navigationTitle(viewModel.title)
+        .toolbar {
+            if let user = userProfile {
+                ToolbarItem(placement: .primaryAction) {
+                    NavigationLink {
+                        MonthlyRunningView(user: user)
+                    } label: {
+                        Image(systemName: "person.circle")
+                    }
+                }
+            }
+        }
         .task {
             await viewModel.onAppear()
         }
@@ -27,6 +45,19 @@ struct MonthDetailView: View {
 
     private var recordsList: some View {
         List {
+            if let user = userProfile {
+                Section {
+                    HStack(spacing: 16) {
+                        ProfileAvatarView(user: user, size: 50)
+
+                        Text(user.displayName)
+                            .font(.headline)
+
+                        Spacer()
+                    }
+                }
+            }
+
             Section {
                 HStack {
                     Text("合計")
