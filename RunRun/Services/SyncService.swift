@@ -69,7 +69,14 @@ final class SyncService: ObservableObject {
                 phase = .completed(count: 0)
             } else {
                 phase = .syncing(current: 0, total: records.count)
-                let count = try await firestoreService.syncRunRecords(userId: userId, records: records)
+                let count = try await firestoreService.syncRunRecords(
+                    userId: userId,
+                    records: records
+                ) { [weak self] current, total in
+                    Task { @MainActor in
+                        self?.phase = .syncing(current: current, total: total)
+                    }
+                }
                 syncedCount = count
                 phase = .completed(count: count)
             }
