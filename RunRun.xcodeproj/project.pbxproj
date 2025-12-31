@@ -10,6 +10,7 @@
 		2A03494A2F02A709003DECEA /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 2A0349492F02A709003DECEA /* FirebaseAuth */; };
 		2A03494C2F02A709003DECEA /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 2A03494B2F02A709003DECEA /* FirebaseCrashlytics */; };
 		2A03494E2F02A709003DECEA /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 2A03494D2F02A709003DECEA /* FirebaseFirestore */; };
+		2A0349A12F03ACD7003DECEA /* CLAUDE.md in Resources */ = {isa = PBXBuildFile; fileRef = 2A0349A02F03ACD7003DECEA /* CLAUDE.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -30,6 +31,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		2A0349A02F03ACD7003DECEA /* CLAUDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CLAUDE.md; sourceTree = "<group>"; };
 		2A8048D42F029239001FA4CE /* RunRun.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RunRun.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2A8048E12F02923A001FA4CE /* RunRunTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunRunTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2A8048EB2F02923A001FA4CE /* RunRunUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunRunUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -89,6 +91,7 @@
 				2A8048E42F02923A001FA4CE /* RunRunTests */,
 				2A8048EE2F02923A001FA4CE /* RunRunUITests */,
 				2A8048D52F029239001FA4CE /* Products */,
+				2A0349A02F03ACD7003DECEA /* CLAUDE.md */,
 			);
 			sourceTree = "<group>";
 		};
@@ -241,6 +244,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2A0349A12F03ACD7003DECEA /* CLAUDE.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
