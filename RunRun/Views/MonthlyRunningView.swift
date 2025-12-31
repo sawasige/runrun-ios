@@ -2,7 +2,18 @@ import SwiftUI
 import Charts
 
 struct MonthlyRunningView: View {
-    @StateObject private var viewModel = MonthlyRunningViewModel()
+    @StateObject private var viewModel: MonthlyRunningViewModel
+
+    let userName: String?
+
+    init(userId: String, userName: String? = nil) {
+        self.userName = userName
+        _viewModel = StateObject(wrappedValue: MonthlyRunningViewModel(userId: userId))
+    }
+
+    private var navigationTitle: String {
+        userName ?? "ランニング記録"
+    }
 
     var body: some View {
         NavigationStack {
@@ -17,7 +28,7 @@ struct MonthlyRunningView: View {
                     statsListView
                 }
             }
-            .navigationTitle("ランニング記録")
+            .navigationTitle(navigationTitle)
             .task {
                 await viewModel.onAppear()
             }
@@ -110,7 +121,7 @@ struct MonthlyRunningView: View {
             Section("月別記録") {
                 ForEach(viewModel.monthlyStats.reversed()) { stats in
                     NavigationLink {
-                        MonthDetailView(year: stats.year, month: stats.month)
+                        MonthDetailView(userId: viewModel.userId, year: stats.year, month: stats.month)
                     } label: {
                         MonthlyStatsRow(stats: stats)
                     }
@@ -172,5 +183,5 @@ struct MonthlyStatsRow: View {
 }
 
 #Preview {
-    MonthlyRunningView()
+    MonthlyRunningView(userId: "preview")
 }

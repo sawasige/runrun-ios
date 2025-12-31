@@ -7,10 +7,11 @@ final class MonthDetailViewModel: ObservableObject {
     @Published private(set) var isLoading = false
     @Published private(set) var error: Error?
 
+    let userId: String
     let year: Int
     let month: Int
 
-    private let healthKitService = HealthKitService()
+    private let firestoreService = FirestoreService()
 
     var title: String {
         "\(year)年\(month)月"
@@ -24,7 +25,8 @@ final class MonthDetailViewModel: ObservableObject {
         String(format: "%.2f km", totalDistance)
     }
 
-    init(year: Int, month: Int) {
+    init(userId: String, year: Int, month: Int) {
+        self.userId = userId
         self.year = year
         self.month = month
     }
@@ -34,17 +36,18 @@ final class MonthDetailViewModel: ObservableObject {
     }
 
     func loadRecords() async {
-        let calendar = Calendar.current
-        guard let startDate = calendar.date(from: DateComponents(year: year, month: month, day: 1)),
-              let endDate = calendar.date(byAdding: .month, value: 1, to: startDate) else {
-            return
-        }
-
         isLoading = true
         error = nil
 
         do {
-            records = try await healthKitService.fetchRunningWorkouts(from: startDate, to: endDate)
+            let runs = try await firestoreService.getUserMonthlyRuns(
+                userId: userId,
+                year: year,
+                month: month
+            )
+            records = runs.map {
+                RunningRecord(date: $0.date, distanceKm: $0.distanceKm, durationSeconds: $0.durationSeconds)
+            }
         } catch {
             self.error = error
         }

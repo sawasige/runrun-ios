@@ -8,7 +8,8 @@ final class MonthlyRunningViewModel: ObservableObject {
     @Published private(set) var error: Error?
     @Published var selectedYear: Int
 
-    private let healthKitService = HealthKitService()
+    let userId: String
+    private let firestoreService = FirestoreService()
 
     var totalYearlyDistance: Double {
         monthlyStats.reduce(0) { $0 + $1.totalDistanceInKilometers }
@@ -53,21 +54,13 @@ final class MonthlyRunningViewModel: ObservableObject {
         return Array((currentYear - 5)...currentYear).reversed()
     }
 
-    init() {
+    init(userId: String) {
+        self.userId = userId
         self.selectedYear = Calendar.current.component(.year, from: Date())
     }
 
     func onAppear() async {
-        await requestHealthKitAuthorization()
         await loadMonthlyStats()
-    }
-
-    func requestHealthKitAuthorization() async {
-        do {
-            try await healthKitService.requestAuthorization()
-        } catch {
-            self.error = error
-        }
     }
 
     func loadMonthlyStats() async {
@@ -75,7 +68,8 @@ final class MonthlyRunningViewModel: ObservableObject {
         error = nil
 
         do {
-            monthlyStats = try await healthKitService.fetchMonthlyStats(for: selectedYear)
+            let runs = try await firestoreService.getUserRuns(userId: userId)
+            monthlyStats = aggregateToMonthlyStats(runs: runs, for: selectedYear)
         } catch {
             self.error = error
         }
@@ -85,5 +79,48 @@ final class MonthlyRunningViewModel: ObservableObject {
 
     func refresh() async {
         await loadMonthlyStats()
+    }
+
+    private func aggregateToMonthlyStats(
+        runs: [(date: Date, distanceKm: Double, durationSeconds: TimeInterval)],
+        for year: Int
+    ) -> [MonthlyRunningStats] {
+        let calendar = Calendar.current
+
+        // Filter runs for the selected year
+        let yearRuns = runs.filter { calendar.component(.year, from: $0.date) == year }
+
+        // Group by month
+        var monthlyData: [Int: (distance: Double, duration: TimeInterval, count: Int)] = [:]
+
+        for run in yearRuns {
+            let month = calendar.component(.month, from: run.date)
+            let current = monthlyData[month] ?? (0, 0, 0)
+            monthlyData[month] = (
+                current.distance + run.distanceKm,
+                current.duration + run.durationSeconds,
+                current.count + 1
+            )
+        }
+
+        // Create stats for all months up to current
+        let currentMonth = calendar.component(.month, from: Date())
+        let currentYear = calendar.component(.year, from: Date())
+        let maxMonth = year == currentYear ? currentMonth : 12
+
+        var stats: [MonthlyRunningStats] = []
+        for month in 1...maxMonth {
+            let data = monthlyData[month] ?? (0, 0, 0)
+            stats.append(MonthlyRunningStats(
+                id: UUID(),
+                year: year,
+                month: month,
+                totalDistanceInMeters: data.distance * 1000,
+                totalDurationInSeconds: data.duration,
+                runCount: data.count
+            ))
+        }
+
+        return stats
     }
 }
