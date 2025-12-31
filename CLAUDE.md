@@ -4,14 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-RunRunはApple Watchのランニング記録を月別に表示するiOSアプリ。将来的にはソーシャル機能を追加予定。
+RunRunはApple Watchのランニング記録を月別に表示し、他のユーザーとランキングで競えるiOSアプリ。
 
 ## Tech Stack
 
 - **UI**: SwiftUI (iOS 17+)
 - **Architecture**: MVVM
 - **Data Source**: HealthKit (Apple Watchの運動データ)
-- **Backend (将来)**: Firebase
+- **Backend**: Firebase (Authentication, Firestore)
+- **認証**: Sign in with Apple
 
 ## Build & Run
 
@@ -23,19 +24,36 @@ open RunRun.xcodeproj
 
 HealthKitを使用するため、実機でのテストを推奨。シミュレータではヘルスケアデータがないためモックが必要。
 
+CLIでビルド:
+```bash
+xcodebuild -project RunRun.xcodeproj -scheme RunRun -destination 'platform=iOS Simulator,name=iPhone 17' build
+```
+
 ## Project Structure
 
 ```
 RunRun/
-├── Sources/
-│   ├── App/           # @main エントリポイント、ContentView
-│   ├── Views/         # SwiftUI View (画面)
-│   ├── ViewModels/    # @MainActor ObservableObject
-│   ├── Models/        # データ構造体
-│   └── Services/      # HealthKit等の外部連携
-└── Resources/
-    ├── Info.plist     # HealthKit権限設定含む
-    └── Assets.xcassets/
+├── RunRunApp.swift          # @main エントリポイント
+├── ContentView.swift        # タブビュー (記録/ランキング/設定)
+├── Views/
+│   ├── MonthlyRunningView.swift   # 月別ランニング記録
+│   ├── MonthDetailView.swift      # 月の詳細 (個別記録一覧)
+│   ├── LeaderboardView.swift      # 月別ランキング
+│   ├── SettingsView.swift         # 設定画面
+│   ├── ProfileEditView.swift      # プロフィール編集
+│   └── LoginView.swift            # ログイン画面
+├── ViewModels/
+│   ├── MonthlyRunningViewModel.swift
+│   └── MonthDetailViewModel.swift
+├── Models/
+│   ├── RunningRecord.swift        # HealthKitから取得したラン記録
+│   ├── MonthlyRunningStats.swift  # 月別統計
+│   ├── UserProfile.swift          # ユーザープロフィール
+│   └── SyncedRunRecord.swift      # Firestoreに同期した記録
+└── Services/
+    ├── HealthKitService.swift     # HealthKit連携
+    ├── AuthenticationService.swift # Apple Sign In + Firebase Auth
+    └── FirestoreService.swift     # Firestore CRUD操作
 ```
 
 ## Architecture Conventions
@@ -59,11 +77,45 @@ RunRun/
 
 Info.plistに`NSHealthShareUsageDescription`が設定済み。
 
+## Firebase Integration
+
+### Authentication
+- Sign in with Apple を使用
+- `AuthenticationService`が認証状態を管理
+- 初回サインイン時にFirestoreにユーザープロフィールを作成
+
+### Firestore
+- データベース: `(default)` (asia-northeast1)
+- コレクション:
+  - `users`: ユーザープロフィール (displayName, totalDistanceKm, totalRuns)
+  - `runs`: ランニング記録 (userId, date, distanceKm, durationSeconds)
+
+**注意**: FirestoreのCodableは問題が起きやすいため、辞書ベースでデータを読み書きする。
+
+### Firebase CLI
+```bash
+# デプロイ
+firebase deploy --only firestore:rules
+firebase deploy --only firestore:indexes
+```
+
 ## Xcode Project Setup
 
 新規Xcodeプロジェクト作成時:
 1. File > New > Project > iOS App
 2. Product Name: `RunRun`
 3. Interface: SwiftUI, Language: Swift
-4. Signing & Capabilities で「HealthKit」を追加
-5. HealthKit の「Clinical Health Records」はオフ、「Background Delivery」は任意
+4. Signing & Capabilities で「HealthKit」「Sign in with Apple」を追加
+5. Firebase SDKをSwift Package Managerで追加
+
+## Git Workflow
+
+### ブランチ戦略
+- `main`: プロダクションブランチ
+- `feature/*`: 機能追加用ブランチ
+
+### PR・マージルール
+```bash
+# PRをマージしてブランチを削除
+gh pr merge <PR番号> --merge --delete-branch
+```
