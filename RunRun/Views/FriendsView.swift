@@ -183,20 +183,8 @@ struct FriendRow: View {
     let friend: UserProfile
 
     var body: some View {
-        HStack {
-            VStack(alignment: .leading) {
-                Text(friend.displayName)
-                    .font(.headline)
-                Text("\(friend.totalRuns)回のラン")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
-            Text(String(format: "%.1f km", friend.totalDistanceKm))
-                .foregroundStyle(.secondary)
-        }
+        Text(friend.displayName)
+            .font(.headline)
     }
 }
 

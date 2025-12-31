@@ -87,7 +87,7 @@ Info.plistに`NSHealthShareUsageDescription`が設定済み。
 ### Firestore
 - データベース: `(default)` (asia-northeast1)
 - コレクション:
-  - `users`: ユーザープロフィール (displayName, totalDistanceKm, totalRuns)
+  - `users`: ユーザープロフィール (displayName, email, createdAt)
   - `runs`: ランニング記録 (userId, date, distanceKm, durationSeconds)
 
 **注意**: FirestoreのCodableは問題が起きやすいため、辞書ベースでデータを読み書きする。

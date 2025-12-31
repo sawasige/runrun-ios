@@ -19,9 +19,7 @@ final class FirestoreService {
         let data: [String: Any] = [
             "displayName": displayName,
             "email": email as Any,
-            "createdAt": Date(),
-            "totalDistanceKm": 0.0,
-            "totalRuns": 0
+            "createdAt": Date()
         ]
         try await usersCollection.document(userId).setData(data)
     }
@@ -34,17 +32,8 @@ final class FirestoreService {
             id: snapshot.documentID,
             displayName: data["displayName"] as? String ?? "ランナー",
             email: data["email"] as? String,
-            createdAt: (data["createdAt"] as? Timestamp)?.dateValue() ?? Date(),
-            totalDistanceKm: data["totalDistanceKm"] as? Double ?? 0,
-            totalRuns: data["totalRuns"] as? Int ?? 0
+            createdAt: (data["createdAt"] as? Timestamp)?.dateValue() ?? Date()
         )
-    }
-
-    func updateUserStats(userId: String, totalDistanceKm: Double, totalRuns: Int) async throws {
-        try await usersCollection.document(userId).updateData([
-            "totalDistanceKm": totalDistanceKm,
-            "totalRuns": totalRuns
-        ])
     }
 
     func updateDisplayName(userId: String, displayName: String) async throws {
