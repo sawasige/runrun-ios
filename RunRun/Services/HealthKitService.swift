@@ -87,6 +87,45 @@ final class HealthKitService: Sendable {
         }
     }
 
+    func fetchAllRunningWorkouts() async throws -> [RunningRecord] {
+        let workoutType = HKObjectType.workoutType()
+
+        let runningPredicate = HKQuery.predicateForWorkouts(with: .running)
+
+        let sortDescriptor = NSSortDescriptor(
+            key: HKSampleSortIdentifierStartDate,
+            ascending: false
+        )
+
+        return try await withCheckedThrowingContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: workoutType,
+                predicate: runningPredicate,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: [sortDescriptor]
+            ) { _, samples, error in
+                if let error = error {
+                    continuation.resume(throwing: HealthKitError.queryFailed(error))
+                    return
+                }
+
+                let records = (samples as? [HKWorkout])?.map { workout in
+                    RunningRecord(
+                        id: UUID(),
+                        date: workout.startDate,
+                        distanceInMeters: workout.totalDistance?.doubleValue(for: .meter()) ?? 0,
+                        durationInSeconds: workout.duration,
+                        caloriesBurned: workout.statistics(for: HKQuantityType(.activeEnergyBurned))?.sumQuantity()?.doubleValue(for: .kilocalorie())
+                    )
+                } ?? []
+
+                continuation.resume(returning: records)
+            }
+
+            healthStore.execute(query)
+        }
+    }
+
     func fetchMonthlyStats(for year: Int) async throws -> [MonthlyRunningStats] {
         var stats: [MonthlyRunningStats] = []
         let calendar = Calendar.current

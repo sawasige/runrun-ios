@@ -3,14 +3,13 @@ import FirebaseAuth
 
 struct SettingsView: View {
     @EnvironmentObject private var authService: AuthenticationService
-    @State private var isSyncing = false
+    @EnvironmentObject private var syncService: SyncService
     @State private var lastSyncMessage: String?
     @State private var userProfile: UserProfile?
     @State private var showingProfileEdit = false
     @State private var debugMessage: String?
 
     private let firestoreService = FirestoreService()
-    private let healthKitService = HealthKitService()
 
     var body: some View {
         NavigationStack {
@@ -45,17 +44,17 @@ struct SettingsView: View {
 
                 Section("データ同期") {
                     Button {
-                        syncData()
+                        Task { await syncData() }
                     } label: {
                         HStack {
-                            Text("クラウドに同期")
-                            Spacer()    
-                            if isSyncing {
+                            Text("再同期")
+                            Spacer()
+                            if syncService.isSyncing {
                                 ProgressView()
                             }
                         }
                     }
-                    .disabled(isSyncing)
+                    .disabled(syncService.isSyncing)
 
                     if let message = lastSyncMessage {
                         Text(message)
@@ -133,31 +132,18 @@ struct SettingsView: View {
         }
     }
 
-    private func syncData() {
+    private func syncData() async {
         guard let userId = authService.user?.uid else { return }
 
-        isSyncing = true
         lastSyncMessage = nil
+        await syncService.syncHealthKitData(userId: userId)
 
-        Task {
-            do {
-                let calendar = Calendar.current
-                let now = Date()
-                let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: now))!
-
-                let records = try await healthKitService.fetchRunningWorkouts(from: startOfMonth, to: now)
-                let newCount = try await firestoreService.syncRunRecords(userId: userId, records: records)
-
-                if newCount > 0 {
-                    lastSyncMessage = "\(newCount)件の新規記録を同期しました"
-                } else {
-                    lastSyncMessage = "同期済みです"
-                }
-            } catch {
-                lastSyncMessage = "同期エラー: \(error.localizedDescription)"
-            }
-
-            isSyncing = false
+        if let error = syncService.error {
+            lastSyncMessage = "同期エラー: \(error.localizedDescription)"
+        } else if syncService.syncedCount > 0 {
+            lastSyncMessage = "\(syncService.syncedCount)件の新規記録を同期しました"
+        } else {
+            lastSyncMessage = "同期済みです"
         }
     }
 

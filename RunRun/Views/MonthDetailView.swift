@@ -3,8 +3,8 @@ import SwiftUI
 struct MonthDetailView: View {
     @StateObject private var viewModel: MonthDetailViewModel
 
-    init(year: Int, month: Int) {
-        _viewModel = StateObject(wrappedValue: MonthDetailViewModel(year: year, month: month))
+    init(userId: String, year: Int, month: Int) {
+        _viewModel = StateObject(wrappedValue: MonthDetailViewModel(userId: userId, year: year, month: month))
     }
 
     var body: some View {
@@ -106,6 +106,6 @@ struct RunningRecordRow: View {
 
 #Preview {
     NavigationStack {
-        MonthDetailView(year: 2025, month: 1)
+        MonthDetailView(userId: "preview", year: 2025, month: 1)
     }
 }
