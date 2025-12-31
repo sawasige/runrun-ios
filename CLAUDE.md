@@ -121,3 +121,7 @@ gh pr merge <PR番号> --merge --delete-branch
 ```
 
 **注意**: `--delete-branch`でマージすると、ローカルのmainも自動的に更新される。マージ後に`git checkout main && git pull`は不要。
+
+### コミット・PR作成時のルール
+- コミットメッセージは日本語で書く
+- PRのタイトル・本文も日本語で書く
