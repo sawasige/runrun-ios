@@ -119,3 +119,5 @@ firebase deploy --only firestore:indexes
 # PRをマージしてブランチを削除
 gh pr merge <PR番号> --merge --delete-branch
 ```
+
+**注意**: `--delete-branch`でマージすると、ローカルのmainも自動的に更新される。マージ後に`git checkout main && git pull`は不要。
