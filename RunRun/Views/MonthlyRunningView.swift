@@ -4,20 +4,29 @@ import Charts
 struct MonthlyRunningView: View {
     @StateObject private var viewModel: MonthlyRunningViewModel
 
-    let userName: String?
+    let userProfile: UserProfile?
 
     init(userId: String, userName: String? = nil) {
-        self.userName = userName
+        self.userProfile = nil
         _viewModel = StateObject(wrappedValue: MonthlyRunningViewModel(userId: userId))
     }
 
+    init(user: UserProfile) {
+        self.userProfile = user
+        _viewModel = StateObject(wrappedValue: MonthlyRunningViewModel(userId: user.id ?? ""))
+    }
+
     private var navigationTitle: String {
-        userName ?? "ランニング記録"
+        userProfile != nil ? "記録" : "ランニング記録"
     }
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
+                if let user = userProfile {
+                    userHeaderSection(user: user)
+                }
+
                 yearPickerSection
 
                 if viewModel.isLoading {
@@ -41,6 +50,22 @@ struct MonthlyRunningView: View {
                 }
             }
         }
+    }
+
+    private func userHeaderSection(user: UserProfile) -> some View {
+        HStack(spacing: 16) {
+            ProfileAvatarView(user: user, size: 60)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(user.displayName)
+                    .font(.title2)
+                    .fontWeight(.bold)
+            }
+
+            Spacer()
+        }
+        .padding()
+        .background(Color(.systemBackground))
     }
 
     private var yearPickerSection: some View {
