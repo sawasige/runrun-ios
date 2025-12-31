@@ -6,32 +6,25 @@ struct UserSearchView: View {
     @EnvironmentObject private var authService: AuthenticationService
     @State private var searchText = ""
     @State private var searchResults: [UserProfile] = []
-    @State private var isSearching = false
     @State private var sentRequests: Set<String> = []
     @State private var existingFriends: Set<String> = []
 
-    private let firestoreService = FirestoreService()
+    private let firestoreService = FirestoreService.shared
 
     var body: some View {
         NavigationStack {
             List {
-                if searchResults.isEmpty && !searchText.isEmpty && !isSearching {
+                if searchResults.isEmpty && !searchText.isEmpty {
                     Text("ユーザーが見つかりません")
                         .foregroundStyle(.secondary)
-                } else {
-                    ForEach(searchResults) { user in
-                        UserSearchRow(
-                            user: user,
-                            isFriend: existingFriends.contains(user.id ?? ""),
-                            requestSent: sentRequests.contains(user.id ?? ""),
-                            onSendRequest: { await sendRequest(to: user) }
-                        )
-                    }
                 }
-            }
-            .overlay {
-                if isSearching {
-                    ProgressView()
+                ForEach(searchResults) { user in
+                    UserSearchRow(
+                        user: user,
+                        isFriend: existingFriends.contains(user.id ?? ""),
+                        requestSent: sentRequests.contains(user.id ?? ""),
+                        onSendRequest: { await sendRequest(to: user) }
+                    )
                 }
             }
             .navigationTitle("ユーザー検索")
@@ -44,44 +37,47 @@ struct UserSearchView: View {
                     }
                 }
             }
-            .onChange(of: searchText) {
-                Task { await search() }
+            .task(id: searchText) {
+                guard !searchText.isEmpty else {
+                    searchResults = []
+                    return
+                }
+                try? await Task.sleep(for: .milliseconds(300))
+                guard !Task.isCancelled else { return }
+                await performSearch(query: searchText)
             }
             .task {
-                await loadExistingFriends()
+                // バックグラウンドで実行してUIをブロックしない
+                await Task.detached {
+                    let userId = await MainActor.run { authService.user?.uid }
+                    guard let userId else { return }
+                    do {
+                        let friendIds = try await firestoreService.getFriends(userId: userId)
+                        await MainActor.run {
+                            existingFriends = Set(friendIds)
+                        }
+                    } catch {
+                        print("Load friends error: \(error)")
+                    }
+                }.value
             }
         }
     }
 
-    private func loadExistingFriends() async {
+    private func performSearch(query: String) async {
+        guard !query.isEmpty else { return }
         guard let userId = authService.user?.uid else { return }
-        do {
-            let friendIds = try await firestoreService.getFriends(userId: userId)
-            existingFriends = Set(friendIds)
-        } catch {
-            print("Load friends error: \(error)")
-        }
-    }
-
-    private func search() async {
-        guard let userId = authService.user?.uid else { return }
-        guard !searchText.isEmpty else {
-            searchResults = []
-            return
-        }
-
-        isSearching = true
 
         do {
-            searchResults = try await firestoreService.searchUsers(
-                query: searchText,
+            let results = try await firestoreService.searchUsers(
+                query: query,
                 excludeUserId: userId
             )
+            guard !Task.isCancelled else { return }
+            searchResults = results
         } catch {
             print("Search error: \(error)")
         }
-
-        isSearching = false
     }
 
     private func sendRequest(to user: UserProfile) async {

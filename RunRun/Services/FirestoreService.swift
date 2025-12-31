@@ -3,7 +3,10 @@ import FirebaseFirestore
 import FirebaseAuth
 
 final class FirestoreService {
+    static let shared = FirestoreService()
     private let db = Firestore.firestore()
+
+    private init() {}
 
     private var usersCollection: CollectionReference {
         db.collection("users")

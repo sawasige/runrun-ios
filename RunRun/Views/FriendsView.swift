@@ -8,7 +8,7 @@ struct FriendsView: View {
     @State private var isLoading = true
     @State private var showingSearch = false
 
-    private let firestoreService = FirestoreService()
+    private let firestoreService = FirestoreService.shared
 
     var body: some View {
         NavigationStack {

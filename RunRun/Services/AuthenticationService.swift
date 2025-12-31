@@ -27,7 +27,7 @@ final class AuthenticationService: ObservableObject {
     @Published private(set) var isAuthenticated = false
 
     private var currentNonce: String?
-    private let firestoreService = FirestoreService()
+    private let firestoreService = FirestoreService.shared
 
     init() {
         self.user = Auth.auth().currentUser

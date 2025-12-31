@@ -51,7 +51,7 @@ final class SyncService: ObservableObject {
     @Published private(set) var error: Error?
 
     private let healthKitService = HealthKitService()
-    private let firestoreService = FirestoreService()
+    private let firestoreService = FirestoreService.shared
 
     func syncHealthKitData(userId: String) async {
         isSyncing = true

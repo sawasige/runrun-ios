@@ -9,7 +9,7 @@ final class MonthlyRunningViewModel: ObservableObject {
     @Published var selectedYear: Int
 
     let userId: String
-    private let firestoreService = FirestoreService()
+    private let firestoreService = FirestoreService.shared
 
     var totalYearlyDistance: Double {
         monthlyStats.reduce(0) { $0 + $1.totalDistanceInKilometers }

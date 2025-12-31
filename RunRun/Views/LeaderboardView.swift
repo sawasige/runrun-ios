@@ -14,7 +14,7 @@ struct LeaderboardView: View {
     @State private var selectedDate = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month], from: Date()))!
     @State private var selectedFilter: LeaderboardFilter = .all
 
-    private let firestoreService = FirestoreService()
+    private let firestoreService = FirestoreService.shared
     private let calendar = Calendar.current
 
     private var availableMonths: [Date] {
