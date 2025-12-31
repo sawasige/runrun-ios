@@ -1,26 +1,58 @@
 import SwiftUI
-import FirebaseAuth
+import PhotosUI
 
 struct ProfileEditView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var displayName: String
     @State private var selectedIcon: String
+    @State private var selectedPhoto: PhotosPickerItem?
+    @State private var avatarImage: UIImage?
+    @State private var currentAvatarURL: URL?
     @State private var isSaving = false
     @State private var errorMessage: String?
 
     private let userId: String
+    private let originalAvatarURL: URL?
     private let firestoreService = FirestoreService()
+    private let storageService = StorageService()
 
-    init(userId: String, currentDisplayName: String, currentIcon: String) {
+    init(userId: String, currentDisplayName: String, currentIcon: String, currentAvatarURL: URL?) {
         self.userId = userId
+        self.originalAvatarURL = currentAvatarURL
         _displayName = State(initialValue: currentDisplayName)
         _selectedIcon = State(initialValue: currentIcon)
+        _currentAvatarURL = State(initialValue: currentAvatarURL)
     }
 
     var body: some View {
         NavigationStack {
             Form {
-                Section("アイコン") {
+                Section("プロフィール画像") {
+                    HStack {
+                        Spacer()
+                        VStack(spacing: 12) {
+                            avatarPreview
+                                .frame(width: 100, height: 100)
+
+                            PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                                Text("写真を選択")
+                            }
+
+                            if avatarImage != nil || currentAvatarURL != nil {
+                                Button("写真を削除", role: .destructive) {
+                                    avatarImage = nil
+                                    currentAvatarURL = nil
+                                    selectedPhoto = nil
+                                }
+                                .font(.caption)
+                            }
+                        }
+                        Spacer()
+                    }
+                    .padding(.vertical, 8)
+                }
+
+                Section("アイコン（写真がない場合に表示）") {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 50))], spacing: 12) {
                         ForEach(UserProfile.availableIcons, id: \.self) { icon in
                             Button {
@@ -62,35 +94,90 @@ struct ProfileEditView: View {
 
                 ToolbarItem(placement: .confirmationAction) {
                     Button("保存") {
-                        save()
+                        Task { await save() }
                     }
                     .disabled(displayName.isEmpty || isSaving)
                 }
             }
             .overlay {
                 if isSaving {
-                    ProgressView()
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+                    ProgressView("保存中...")
+                        .padding()
+                        .background(.regularMaterial)
+                        .cornerRadius(10)
+                }
+            }
+            .onChange(of: selectedPhoto) {
+                Task {
+                    if let data = try? await selectedPhoto?.loadTransferable(type: Data.self),
+                       let image = UIImage(data: data) {
+                        avatarImage = image
+                    }
                 }
             }
         }
     }
 
-    private func save() {
+    @ViewBuilder
+    private var avatarPreview: some View {
+        if let avatarImage = avatarImage {
+            Image(uiImage: avatarImage)
+                .resizable()
+                .scaledToFill()
+                .clipShape(Circle())
+        } else if let currentAvatarURL = currentAvatarURL {
+            AsyncImage(url: currentAvatarURL) { image in
+                image
+                    .resizable()
+                    .scaledToFill()
+            } placeholder: {
+                ProgressView()
+            }
+            .clipShape(Circle())
+        } else {
+            Image(systemName: selectedIcon)
+                .font(.system(size: 40))
+                .frame(width: 100, height: 100)
+                .background(Color.blue)
+                .foregroundStyle(.white)
+                .clipShape(Circle())
+        }
+    }
+
+    private func save() async {
         isSaving = true
         errorMessage = nil
 
-        Task {
-            do {
-                try await firestoreService.updateProfile(userId: userId, displayName: displayName, iconName: selectedIcon)
-                dismiss()
-            } catch {
-                errorMessage = error.localizedDescription
+        do {
+            var newAvatarURL: URL? = currentAvatarURL
+
+            // 新しい画像がある場合はアップロード
+            if let avatarImage = avatarImage {
+                newAvatarURL = try await storageService.uploadAvatar(userId: userId, image: avatarImage)
+            } else if originalAvatarURL != nil && currentAvatarURL == nil {
+                // 元々画像があったが削除された場合
+                try? await storageService.deleteAvatar(userId: userId)
+                try? await firestoreService.clearAvatarURL(userId: userId)
+                newAvatarURL = nil
             }
-            isSaving = false
+
+            try await firestoreService.updateProfile(
+                userId: userId,
+                displayName: displayName,
+                iconName: selectedIcon,
+                avatarURL: newAvatarURL
+            )
+            dismiss()
+        } catch {
+            errorMessage = error.localizedDescription
         }
+
+        isSaving = false
     }
 }
 
 #Preview {
-    ProfileEditView(userId: "test", currentDisplayName: "ランナー", currentIcon: "figure.run")
+    ProfileEditView(userId: "test", currentDisplayName: "ランナー", currentIcon: "figure.run", currentAvatarURL: nil)
 }

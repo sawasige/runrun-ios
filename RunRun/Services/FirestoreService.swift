@@ -29,19 +29,35 @@ final class FirestoreService {
         let snapshot = try await usersCollection.document(userId).getDocument()
         guard let data = snapshot.data() else { return nil }
 
+        var avatarURL: URL?
+        if let urlString = data["avatarURL"] as? String {
+            avatarURL = URL(string: urlString)
+        }
+
         return UserProfile(
             id: snapshot.documentID,
             displayName: data["displayName"] as? String ?? "ランナー",
             email: data["email"] as? String,
             iconName: data["iconName"] as? String ?? "figure.run",
+            avatarURL: avatarURL,
             createdAt: (data["createdAt"] as? Timestamp)?.dateValue() ?? Date()
         )
     }
 
-    func updateProfile(userId: String, displayName: String, iconName: String) async throws {
-        try await usersCollection.document(userId).updateData([
+    func updateProfile(userId: String, displayName: String, iconName: String, avatarURL: URL?) async throws {
+        var updateData: [String: Any] = [
             "displayName": displayName,
             "iconName": iconName
+        ]
+        if let avatarURL = avatarURL {
+            updateData["avatarURL"] = avatarURL.absoluteString
+        }
+        try await usersCollection.document(userId).updateData(updateData)
+    }
+
+    func clearAvatarURL(userId: String) async throws {
+        try await usersCollection.document(userId).updateData([
+            "avatarURL": FieldValue.delete()
         ])
     }
 
@@ -112,11 +128,16 @@ final class FirestoreService {
 
         return snapshot.documents.compactMap { doc -> UserProfile? in
             let data = doc.data()
+            var avatarURL: URL?
+            if let urlString = data["avatarURL"] as? String {
+                avatarURL = URL(string: urlString)
+            }
             return UserProfile(
                 id: doc.documentID,
                 displayName: data["displayName"] as? String ?? "ランナー",
                 email: data["email"] as? String,
                 iconName: data["iconName"] as? String ?? "figure.run",
+                avatarURL: avatarURL,
                 createdAt: (data["createdAt"] as? Timestamp)?.dateValue() ?? Date(),
                 totalDistanceKm: data["totalDistanceKm"] as? Double ?? 0,
                 totalRuns: data["totalRuns"] as? Int ?? 0
@@ -282,11 +303,16 @@ final class FirestoreService {
         return snapshot.documents.compactMap { doc -> UserProfile? in
             guard doc.documentID != excludeUserId else { return nil }
             let data = doc.data()
+            var avatarURL: URL?
+            if let urlString = data["avatarURL"] as? String {
+                avatarURL = URL(string: urlString)
+            }
             return UserProfile(
                 id: doc.documentID,
                 displayName: data["displayName"] as? String ?? "ランナー",
                 email: data["email"] as? String,
                 iconName: data["iconName"] as? String ?? "figure.run",
+                avatarURL: avatarURL,
                 createdAt: (data["createdAt"] as? Timestamp)?.dateValue() ?? Date(),
                 totalDistanceKm: data["totalDistanceKm"] as? Double ?? 0,
                 totalRuns: data["totalRuns"] as? Int ?? 0

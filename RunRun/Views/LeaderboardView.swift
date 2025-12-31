@@ -154,7 +154,7 @@ struct LeaderboardRow: View {
         HStack(spacing: 12) {
             rankBadge
 
-            userIcon
+            ProfileAvatarView(user: user, size: 32)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(user.displayName)
@@ -176,15 +176,6 @@ struct LeaderboardRow: View {
         }
         .padding(.vertical, 4)
         .listRowBackground(isCurrentUser ? Color.blue.opacity(0.1) : nil)
-    }
-
-    private var userIcon: some View {
-        Image(systemName: user.iconName)
-            .font(.body)
-            .frame(width: 32, height: 32)
-            .background(Color.blue)
-            .foregroundStyle(.white)
-            .clipShape(Circle())
     }
 
     @ViewBuilder
