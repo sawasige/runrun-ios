@@ -148,16 +148,6 @@ struct SettingsView: View {
                 let records = try await healthKitService.fetchRunningWorkouts(from: startOfMonth, to: now)
                 let newCount = try await firestoreService.syncRunRecords(userId: userId, records: records)
 
-                // 今月の統計情報を更新
-                let allRuns = try await firestoreService.getUserRuns(userId: userId)
-                let monthlyRuns = allRuns.filter { calendar.isDate($0.date, equalTo: now, toGranularity: .month) }
-                let totalDistance = monthlyRuns.reduce(0) { $0 + $1.distanceKm }
-                try await firestoreService.updateUserStats(
-                    userId: userId,
-                    totalDistanceKm: totalDistance,
-                    totalRuns: monthlyRuns.count
-                )
-
                 if newCount > 0 {
                     lastSyncMessage = "\(newCount)件の新規記録を同期しました"
                 } else {
@@ -180,35 +170,30 @@ struct SettingsView: View {
         do {
             // ダミーユーザーを作成
             let dummyUsers = [
-                ("dummy1", "田中太郎", 85.5, 12),
-                ("dummy2", "鈴木花子", 120.3, 18),
-                ("dummy3", "佐藤次郎", 45.2, 8),
-                ("dummy4", "山田美咲", 200.0, 25),
-                ("dummy5", "高橋健一", 65.8, 10)
+                ("dummy1", "田中太郎", 8.5),
+                ("dummy2", "鈴木花子", 12.3),
+                ("dummy3", "佐藤次郎", 4.5),
+                ("dummy4", "山田美咲", 15.0),
+                ("dummy5", "高橋健一", 6.8)
             ]
 
-            for (id, name, distance, runs) in dummyUsers {
+            for (id, name, distance) in dummyUsers {
                 try await firestoreService.createUserProfile(
                     userId: id,
                     displayName: name,
                     email: "\(id)@example.com"
                 )
-                try await firestoreService.updateUserStats(
-                    userId: id,
-                    totalDistanceKm: distance,
-                    totalRuns: runs
-                )
 
                 // 今月のダミーラン記録を作成
                 try await firestoreService.createDummyRun(
                     userId: id,
-                    distanceKm: distance / Double(runs),
+                    distanceKm: distance,
                     date: Date()
                 )
             }
 
             // 自分にフレンドリクエストを送信
-            for (id, name, _, _) in dummyUsers.prefix(2) {
+            for (id, name, _) in dummyUsers.prefix(2) {
                 try await firestoreService.sendFriendRequest(
                     fromUserId: id,
                     fromDisplayName: name,

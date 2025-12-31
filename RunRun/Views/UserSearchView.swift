@@ -112,13 +112,8 @@ struct UserSearchRow: View {
 
     var body: some View {
         HStack {
-            VStack(alignment: .leading) {
-                Text(user.displayName)
-                    .font(.headline)
-                Text(String(format: "%.1f km", user.totalDistanceKm))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            Text(user.displayName)
+                .font(.headline)
 
             Spacer()
 
