@@ -196,14 +196,9 @@ final class FirestoreService {
     }
 
     func sendFriendRequest(fromUserId: String, fromDisplayName: String, toUserId: String) async throws {
-        // 既存のリクエストをチェック
-        let existing = try await friendRequestsCollection
-            .whereField("fromUserId", isEqualTo: fromUserId)
-            .whereField("toUserId", isEqualTo: toUserId)
-            .whereField("status", isEqualTo: "pending")
-            .getDocuments()
-
-        guard existing.documents.isEmpty else { return }
+        // 24時間以内のリクエストをチェック
+        let canSend = try await canSendFriendRequest(fromUserId: fromUserId, toUserId: toUserId)
+        guard canSend else { return }
 
         let data: [String: Any] = [
             "fromUserId": fromUserId,
@@ -213,6 +208,33 @@ final class FirestoreService {
             "status": "pending"
         ]
         _ = try await friendRequestsCollection.addDocument(data: data)
+    }
+
+    func canSendFriendRequest(fromUserId: String, toUserId: String) async throws -> Bool {
+        let twentyFourHoursAgo = Date().addingTimeInterval(-24 * 60 * 60)
+
+        let existing = try await friendRequestsCollection
+            .whereField("fromUserId", isEqualTo: fromUserId)
+            .whereField("toUserId", isEqualTo: toUserId)
+            .whereField("createdAt", isGreaterThan: twentyFourHoursAgo)
+            .getDocuments()
+
+        return existing.documents.isEmpty
+    }
+
+    func getLastFriendRequestDate(fromUserId: String, toUserId: String) async throws -> Date? {
+        let snapshot = try await friendRequestsCollection
+            .whereField("fromUserId", isEqualTo: fromUserId)
+            .whereField("toUserId", isEqualTo: toUserId)
+            .order(by: "createdAt", descending: true)
+            .limit(to: 1)
+            .getDocuments()
+
+        guard let doc = snapshot.documents.first,
+              let timestamp = doc.data()["createdAt"] as? Timestamp else {
+            return nil
+        }
+        return timestamp.dateValue()
     }
 
     func getFriendRequests(userId: String) async throws -> [FriendRequest] {

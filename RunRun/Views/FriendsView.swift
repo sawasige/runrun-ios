@@ -36,7 +36,7 @@ struct FriendsView: View {
                             } else {
                                 ForEach(friends) { friend in
                                     NavigationLink {
-                                        MonthlyRunningView(user: friend)
+                                        ProfileView(user: friend)
                                     } label: {
                                         FriendRow(friend: friend)
                                     }

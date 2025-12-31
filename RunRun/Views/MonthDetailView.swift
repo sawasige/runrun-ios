@@ -31,7 +31,7 @@ struct MonthDetailView: View {
             if let user = userProfile {
                 ToolbarItem(placement: .primaryAction) {
                     NavigationLink {
-                        MonthlyRunningView(user: user)
+                        ProfileView(user: user)
                     } label: {
                         Image(systemName: "person.circle")
                     }
