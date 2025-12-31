@@ -70,7 +70,11 @@ final class FirestoreService {
     // MARK: - Run Records
 
     @discardableResult
-    func syncRunRecords(userId: String, records: [RunningRecord]) async throws -> Int {
+    func syncRunRecords(
+        userId: String,
+        records: [RunningRecord],
+        onProgress: ((Int, Int) -> Void)? = nil
+    ) async throws -> Int {
         guard !records.isEmpty else { return 0 }
 
         // 既存の同期済み日付を取得して重複を除外
@@ -81,7 +85,7 @@ final class FirestoreService {
 
         guard !newRecords.isEmpty else { return 0 }
 
-        for record in newRecords {
+        for (index, record) in newRecords.enumerated() {
             let data: [String: Any] = [
                 "userId": userId,
                 "date": record.date,
@@ -91,6 +95,7 @@ final class FirestoreService {
                 "syncedAt": Date()
             ]
             _ = try await runsCollection.addDocument(data: data)
+            onProgress?(index + 1, newRecords.count)
         }
 
         return newRecords.count
