@@ -189,8 +189,17 @@ struct FriendRow: View {
     let friend: UserProfile
 
     var body: some View {
-        Text(friend.displayName)
-            .font(.headline)
+        HStack(spacing: 12) {
+            Image(systemName: friend.iconName)
+                .font(.body)
+                .frame(width: 36, height: 36)
+                .background(Color.blue)
+                .foregroundStyle(.white)
+                .clipShape(Circle())
+
+            Text(friend.displayName)
+                .font(.headline)
+        }
     }
 }
 

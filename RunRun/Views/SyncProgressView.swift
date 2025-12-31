@@ -1,18 +1,27 @@
 import SwiftUI
 
 struct SyncProgressView: View {
-    var body: some View {
-        VStack(spacing: 24) {
-            ProgressView()
-                .scaleEffect(1.5)
+    @ObservedObject var syncService: SyncService
 
-            Text("ランニングデータを同期中...")
-                .font(.headline)
-                .foregroundStyle(.secondary)
+    var body: some View {
+        VStack(spacing: 32) {
+            Image(systemName: "figure.run")
+                .font(.system(size: 60))
+                .foregroundStyle(.blue)
+
+            VStack(spacing: 16) {
+                ProgressView(value: syncService.phase.progress)
+                    .progressViewStyle(.linear)
+                    .frame(width: 200)
+
+                Text(syncService.phase.message)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 }
 
 #Preview {
-    SyncProgressView()
+    SyncProgressView(syncService: SyncService())
 }

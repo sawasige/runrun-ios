@@ -10,7 +10,7 @@ struct ContentView: View {
         Group {
             if authService.isAuthenticated {
                 if !hasCompletedInitialSync {
-                    SyncProgressView()
+                    SyncProgressView(syncService: syncService)
                         .task {
                             await performInitialSync()
                         }
