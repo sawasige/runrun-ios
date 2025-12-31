@@ -16,6 +16,11 @@ struct ContentView: View {
                         Label("ランキング", systemImage: "trophy")
                     }
 
+                FriendsView()
+                    .tabItem {
+                        Label("フレンド", systemImage: "person.2")
+                    }
+
                 SettingsView()
                     .tabItem {
                         Label("設定", systemImage: "gear")
