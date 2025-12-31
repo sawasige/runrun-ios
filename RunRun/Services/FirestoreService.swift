@@ -19,6 +19,7 @@ final class FirestoreService {
         let data: [String: Any] = [
             "displayName": displayName,
             "email": email as Any,
+            "iconName": "figure.run",
             "createdAt": Date()
         ]
         try await usersCollection.document(userId).setData(data)
@@ -32,8 +33,16 @@ final class FirestoreService {
             id: snapshot.documentID,
             displayName: data["displayName"] as? String ?? "ランナー",
             email: data["email"] as? String,
+            iconName: data["iconName"] as? String ?? "figure.run",
             createdAt: (data["createdAt"] as? Timestamp)?.dateValue() ?? Date()
         )
+    }
+
+    func updateProfile(userId: String, displayName: String, iconName: String) async throws {
+        try await usersCollection.document(userId).updateData([
+            "displayName": displayName,
+            "iconName": iconName
+        ])
     }
 
     func updateDisplayName(userId: String, displayName: String) async throws {
@@ -107,6 +116,7 @@ final class FirestoreService {
                 id: doc.documentID,
                 displayName: data["displayName"] as? String ?? "ランナー",
                 email: data["email"] as? String,
+                iconName: data["iconName"] as? String ?? "figure.run",
                 createdAt: (data["createdAt"] as? Timestamp)?.dateValue() ?? Date(),
                 totalDistanceKm: data["totalDistanceKm"] as? Double ?? 0,
                 totalRuns: data["totalRuns"] as? Int ?? 0
@@ -276,6 +286,7 @@ final class FirestoreService {
                 id: doc.documentID,
                 displayName: data["displayName"] as? String ?? "ランナー",
                 email: data["email"] as? String,
+                iconName: data["iconName"] as? String ?? "figure.run",
                 createdAt: (data["createdAt"] as? Timestamp)?.dateValue() ?? Date(),
                 totalDistanceKm: data["totalDistanceKm"] as? Double ?? 0,
                 totalRuns: data["totalRuns"] as? Int ?? 0

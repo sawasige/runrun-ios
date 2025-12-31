@@ -151,8 +151,10 @@ struct LeaderboardRow: View {
     let isCurrentUser: Bool
 
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 12) {
             rankBadge
+
+            userIcon
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(user.displayName)
@@ -176,15 +178,24 @@ struct LeaderboardRow: View {
         .listRowBackground(isCurrentUser ? Color.blue.opacity(0.1) : nil)
     }
 
+    private var userIcon: some View {
+        Image(systemName: user.iconName)
+            .font(.body)
+            .frame(width: 32, height: 32)
+            .background(Color.blue)
+            .foregroundStyle(.white)
+            .clipShape(Circle())
+    }
+
     @ViewBuilder
     private var rankBadge: some View {
         ZStack {
             Circle()
                 .fill(rankColor)
-                .frame(width: 36, height: 36)
+                .frame(width: 28, height: 28)
 
             Text("\(rank)")
-                .font(.headline)
+                .font(.subheadline.bold())
                 .foregroundStyle(.white)
         }
     }

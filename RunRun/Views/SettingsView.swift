@@ -15,12 +15,25 @@ struct SettingsView: View {
         NavigationStack {
             List {
                 Section("プロフィール") {
-                    HStack {
-                        Text("表示名")
-                        Spacer()
-                        Text(userProfile?.displayName ?? "読み込み中...")
-                            .foregroundStyle(.secondary)
+                    HStack(spacing: 16) {
+                        Image(systemName: userProfile?.iconName ?? "figure.run")
+                            .font(.title)
+                            .frame(width: 50, height: 50)
+                            .background(Color.blue)
+                            .foregroundStyle(.white)
+                            .clipShape(Circle())
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(userProfile?.displayName ?? "読み込み中...")
+                                .font(.headline)
+                            if let email = authService.user?.email {
+                                Text(email)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
                     }
+                    .padding(.vertical, 4)
 
                     Button("プロフィールを編集") {
                         showingProfileEdit = true
@@ -28,15 +41,6 @@ struct SettingsView: View {
                 }
 
                 Section("アカウント") {
-                    if let email = authService.user?.email {
-                        HStack {
-                            Text("メール")
-                            Spacer()
-                            Text(email)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-
                     Button("サインアウト", role: .destructive) {
                         try? authService.signOut()
                     }
@@ -104,7 +108,8 @@ struct SettingsView: View {
                 if let userId = authService.user?.uid {
                     ProfileEditView(
                         userId: userId,
-                        currentDisplayName: userProfile?.displayName ?? ""
+                        currentDisplayName: userProfile?.displayName ?? "",
+                        currentIcon: userProfile?.iconName ?? "figure.run"
                     )
                 }
             }
