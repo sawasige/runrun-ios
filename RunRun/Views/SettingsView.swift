@@ -7,6 +7,7 @@ struct SettingsView: View {
     @State private var lastSyncMessage: String?
     @State private var userProfile: UserProfile?
     @State private var showingProfileEdit = false
+    @State private var debugMessage: String?
 
     private let firestoreService = FirestoreService()
     private let healthKitService = HealthKitService()
@@ -79,6 +80,20 @@ struct SettingsView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+
+                #if DEBUG
+                Section("デバッグ") {
+                    Button("ダミーユーザーを作成") {
+                        Task { await createDummyData() }
+                    }
+
+                    if let message = debugMessage {
+                        Text(message)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                #endif
             }
             .navigationTitle("設定")
             .task {
@@ -155,6 +170,58 @@ struct SettingsView: View {
             isSyncing = false
         }
     }
+
+    #if DEBUG
+    private func createDummyData() async {
+        guard let currentUserId = authService.user?.uid else { return }
+
+        debugMessage = "作成中..."
+
+        do {
+            // ダミーユーザーを作成
+            let dummyUsers = [
+                ("dummy1", "田中太郎", 85.5, 12),
+                ("dummy2", "鈴木花子", 120.3, 18),
+                ("dummy3", "佐藤次郎", 45.2, 8),
+                ("dummy4", "山田美咲", 200.0, 25),
+                ("dummy5", "高橋健一", 65.8, 10)
+            ]
+
+            for (id, name, distance, runs) in dummyUsers {
+                try await firestoreService.createUserProfile(
+                    userId: id,
+                    displayName: name,
+                    email: "\(id)@example.com"
+                )
+                try await firestoreService.updateUserStats(
+                    userId: id,
+                    totalDistanceKm: distance,
+                    totalRuns: runs
+                )
+
+                // 今月のダミーラン記録を作成
+                try await firestoreService.createDummyRun(
+                    userId: id,
+                    distanceKm: distance / Double(runs),
+                    date: Date()
+                )
+            }
+
+            // 自分にフレンドリクエストを送信
+            for (id, name, _, _) in dummyUsers.prefix(2) {
+                try await firestoreService.sendFriendRequest(
+                    fromUserId: id,
+                    fromDisplayName: name,
+                    toUserId: currentUserId
+                )
+            }
+
+            debugMessage = "ダミーユーザー5人とリクエスト2件を作成しました"
+        } catch {
+            debugMessage = "エラー: \(error.localizedDescription)"
+        }
+    }
+    #endif
 }
 
 #Preview {

@@ -1,12 +1,18 @@
 import SwiftUI
 import FirebaseAuth
 
+enum LeaderboardFilter: String, CaseIterable {
+    case all = "全員"
+    case friends = "フレンド"
+}
+
 struct LeaderboardView: View {
     @EnvironmentObject private var authService: AuthenticationService
     @State private var users: [UserProfile] = []
     @State private var isLoading = true
     @State private var errorMessage: String?
     @State private var selectedDate = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month], from: Date()))!
+    @State private var selectedFilter: LeaderboardFilter = .all
 
     private let firestoreService = FirestoreService()
     private let calendar = Calendar.current
@@ -44,12 +50,21 @@ struct LeaderboardView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                Picker("月", selection: $selectedDate) {
-                    ForEach(availableMonths, id: \.self) { date in
-                        Text(monthLabel(for: date)).tag(date)
+                VStack(spacing: 8) {
+                    Picker("フィルター", selection: $selectedFilter) {
+                        ForEach(LeaderboardFilter.allCases, id: \.self) { filter in
+                            Text(filter.rawValue).tag(filter)
+                        }
                     }
+                    .pickerStyle(.segmented)
+
+                    Picker("月", selection: $selectedDate) {
+                        ForEach(availableMonths, id: \.self) { date in
+                            Text(monthLabel(for: date)).tag(date)
+                        }
+                    }
+                    .pickerStyle(.segmented)
                 }
-                .pickerStyle(.segmented)
                 .padding()
 
                 Group {
@@ -92,15 +107,25 @@ struct LeaderboardView: View {
             .onChange(of: selectedDate) {
                 Task { await loadLeaderboard() }
             }
+            .onChange(of: selectedFilter) {
+                Task { await loadLeaderboard() }
+            }
         }
     }
 
     private func loadLeaderboard() async {
+        guard let userId = authService.user?.uid else { return }
+
         isLoading = true
         errorMessage = nil
 
         do {
-            users = try await firestoreService.getMonthlyLeaderboard(year: selectedYear, month: selectedMonth)
+            switch selectedFilter {
+            case .all:
+                users = try await firestoreService.getMonthlyLeaderboard(year: selectedYear, month: selectedMonth)
+            case .friends:
+                users = try await firestoreService.getFriendsMonthlyLeaderboard(userId: userId, year: selectedYear, month: selectedMonth)
+            }
         } catch {
             errorMessage = error.localizedDescription
         }
