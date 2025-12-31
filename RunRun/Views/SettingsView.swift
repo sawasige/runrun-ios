@@ -16,12 +16,11 @@ struct SettingsView: View {
             List {
                 Section("プロフィール") {
                     HStack(spacing: 16) {
-                        Image(systemName: userProfile?.iconName ?? "figure.run")
-                            .font(.title)
-                            .frame(width: 50, height: 50)
-                            .background(Color.blue)
-                            .foregroundStyle(.white)
-                            .clipShape(Circle())
+                        ProfileAvatarView(
+                            iconName: userProfile?.iconName ?? "figure.run",
+                            avatarURL: userProfile?.avatarURL,
+                            size: 50
+                        )
 
                         VStack(alignment: .leading, spacing: 4) {
                             Text(userProfile?.displayName ?? "読み込み中...")
@@ -109,7 +108,8 @@ struct SettingsView: View {
                     ProfileEditView(
                         userId: userId,
                         currentDisplayName: userProfile?.displayName ?? "",
-                        currentIcon: userProfile?.iconName ?? "figure.run"
+                        currentIcon: userProfile?.iconName ?? "figure.run",
+                        currentAvatarURL: userProfile?.avatarURL
                     )
                 }
             }

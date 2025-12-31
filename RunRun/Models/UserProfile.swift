@@ -5,6 +5,7 @@ struct UserProfile: Identifiable {
     let displayName: String
     let email: String?
     let iconName: String
+    let avatarURL: URL?
     let createdAt: Date
     var totalDistanceKm: Double
     var totalRuns: Int
@@ -29,6 +30,7 @@ struct UserProfile: Identifiable {
         displayName: String,
         email: String?,
         iconName: String = "figure.run",
+        avatarURL: URL? = nil,
         createdAt: Date = Date(),
         totalDistanceKm: Double = 0,
         totalRuns: Int = 0
@@ -37,6 +39,7 @@ struct UserProfile: Identifiable {
         self.displayName = displayName
         self.email = email
         self.iconName = iconName
+        self.avatarURL = avatarURL
         self.createdAt = createdAt
         self.totalDistanceKm = totalDistanceKm
         self.totalRuns = totalRuns

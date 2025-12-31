@@ -190,12 +190,7 @@ struct FriendRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: friend.iconName)
-                .font(.body)
-                .frame(width: 36, height: 36)
-                .background(Color.blue)
-                .foregroundStyle(.white)
-                .clipShape(Circle())
+            ProfileAvatarView(user: friend, size: 36)
 
             Text(friend.displayName)
                 .font(.headline)
