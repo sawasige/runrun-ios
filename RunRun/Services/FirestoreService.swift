@@ -80,15 +80,7 @@ final class FirestoreService {
     ) async throws -> Int {
         guard !records.isEmpty else { return 0 }
 
-        // 既存の同期済み日付を取得して重複を除外
-        let existingDates = try await getExistingSyncedDates(userId: userId)
-        let newRecords = records.filter { record in
-            !existingDates.contains { Calendar.current.isDate($0, inSameDayAs: record.date) }
-        }
-
-        guard !newRecords.isEmpty else { return 0 }
-
-        for (index, record) in newRecords.enumerated() {
+        for (index, record) in records.enumerated() {
             let data: [String: Any] = [
                 "userId": userId,
                 "date": record.date,
@@ -98,10 +90,10 @@ final class FirestoreService {
                 "syncedAt": Date()
             ]
             _ = try await runsCollection.addDocument(data: data)
-            onProgress?(index + 1, newRecords.count)
+            onProgress?(index + 1, records.count)
         }
 
-        return newRecords.count
+        return records.count
     }
 
     func getUserRuns(userId: String) async throws -> [(date: Date, distanceKm: Double, durationSeconds: TimeInterval)] {
@@ -124,6 +116,13 @@ final class FirestoreService {
     private func getExistingSyncedDates(userId: String) async throws -> [Date] {
         let runs = try await getUserRuns(userId: userId)
         return runs.map { $0.date }
+    }
+
+    func getNewRecordsToSync(userId: String, records: [RunningRecord]) async throws -> [RunningRecord] {
+        let existingDates = try await getExistingSyncedDates(userId: userId)
+        return records.filter { record in
+            !existingDates.contains { Calendar.current.isDate($0, inSameDayAs: record.date) }
+        }
     }
 
     // MARK: - Leaderboard
