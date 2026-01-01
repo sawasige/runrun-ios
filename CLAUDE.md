@@ -120,7 +120,8 @@ firebase deploy --only firestore:indexes
 gh pr merge <PR番号> --merge --delete-branch
 ```
 
-**注意**: `--delete-branch`でマージすると、ローカルのmainも自動的に更新される。マージ後に`git checkout main && git pull`は不要。
+- **`--squash`は使用禁止**: 個別のコミット履歴を残すため、必ず`--merge`を使用する
+- `--delete-branch`でマージすると、ローカルのmainも自動的に更新される
 
 ### コミット・PR作成時のルール
 - コミットメッセージは日本語で書く
