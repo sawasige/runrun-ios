@@ -113,6 +113,7 @@ firebase deploy --only firestore:indexes
 ### ブランチ戦略
 - `main`: プロダクションブランチ
 - `feature/*`: 機能追加用ブランチ
+- **mainへの直接プッシュ禁止**: 全ての変更はPR経由でマージする
 
 ### PR・マージルール
 ```bash
