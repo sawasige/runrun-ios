@@ -148,14 +148,44 @@ struct RunDetailView: View {
         // スプリットを計算
         splits = healthKitService.calculateSplits(from: locations)
 
-        // カメラ位置を設定
-        if let firstCoord = routeCoordinates.first {
-            let region = MKCoordinateRegion(
-                center: firstCoord,
-                span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
-            )
+        // カメラ位置を設定（ルート全体が表示されるように）
+        if let region = regionToFitCoordinates(routeCoordinates) {
             mapCameraPosition = .region(region)
         }
+    }
+
+    /// 全座標を含む領域を計算
+    private func regionToFitCoordinates(_ coordinates: [CLLocationCoordinate2D]) -> MKCoordinateRegion? {
+        guard !coordinates.isEmpty else { return nil }
+
+        var minLat = coordinates[0].latitude
+        var maxLat = coordinates[0].latitude
+        var minLon = coordinates[0].longitude
+        var maxLon = coordinates[0].longitude
+
+        for coord in coordinates {
+            minLat = min(minLat, coord.latitude)
+            maxLat = max(maxLat, coord.latitude)
+            minLon = min(minLon, coord.longitude)
+            maxLon = max(maxLon, coord.longitude)
+        }
+
+        let center = CLLocationCoordinate2D(
+            latitude: (minLat + maxLat) / 2,
+            longitude: (minLon + maxLon) / 2
+        )
+
+        // 余白を追加（20%）
+        let latDelta = (maxLat - minLat) * 1.2
+        let lonDelta = (maxLon - minLon) * 1.2
+
+        // 最小スパンを設定（ズームしすぎ防止）
+        let span = MKCoordinateSpan(
+            latitudeDelta: max(latDelta, 0.005),
+            longitudeDelta: max(lonDelta, 0.005)
+        )
+
+        return MKCoordinateRegion(center: center, span: span)
     }
 
     private func findWorkout(for date: Date) async -> HKWorkout? {
