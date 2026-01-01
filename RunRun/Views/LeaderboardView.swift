@@ -37,16 +37,8 @@ struct LeaderboardView: View {
     }
 
     private func monthLabel(for date: Date) -> String {
-        let year = calendar.component(.year, from: date)
         let month = calendar.component(.month, from: date)
-        let currentYear = calendar.component(.year, from: Date())
-        if year == currentYear {
-            return "\(month)月"
-        } else {
-            // 短縮形式: "12月'24"
-            let shortYear = year % 100
-            return "\(month)月'\(shortYear)"
-        }
+        return "\(month)月"
     }
 
     var body: some View {
