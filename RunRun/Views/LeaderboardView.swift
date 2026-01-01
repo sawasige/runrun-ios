@@ -43,7 +43,9 @@ struct LeaderboardView: View {
         if year == currentYear {
             return "\(month)月"
         } else {
-            return "\(year)年\(month)月"
+            // 短縮形式: "12月'24"
+            let shortYear = year % 100
+            return "\(month)月'\(shortYear)"
         }
     }
 
