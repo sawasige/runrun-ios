@@ -11,7 +11,7 @@ final class MonthDetailViewModel: ObservableObject {
     let year: Int
     let month: Int
 
-    private let firestoreService = FirestoreService()
+    private let firestoreService = FirestoreService.shared
 
     var title: String {
         "\(year)年\(month)月"

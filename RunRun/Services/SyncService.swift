@@ -51,7 +51,7 @@ final class SyncService: ObservableObject {
     @Published private(set) var error: Error?
 
     private let healthKitService = HealthKitService()
-    private let firestoreService = FirestoreService()
+    private let firestoreService = FirestoreService.shared
 
     func syncHealthKitData(userId: String) async {
         isSyncing = true
@@ -65,13 +65,19 @@ final class SyncService: ObservableObject {
             phase = .fetching
             let records = try await healthKitService.fetchAllRunningWorkouts()
 
-            if records.isEmpty {
+            // 差分を先に計算
+            let newRecords = try await firestoreService.getNewRecordsToSync(
+                userId: userId,
+                records: records
+            )
+
+            if newRecords.isEmpty {
                 phase = .completed(count: 0)
             } else {
-                phase = .syncing(current: 0, total: records.count)
+                phase = .syncing(current: 0, total: newRecords.count)
                 let count = try await firestoreService.syncRunRecords(
                     userId: userId,
-                    records: records
+                    records: newRecords
                 ) { [weak self] current, total in
                     Task { @MainActor in
                         self?.phase = .syncing(current: current, total: total)

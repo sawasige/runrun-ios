@@ -13,7 +13,7 @@ struct ProfileEditView: View {
 
     private let userId: String
     private let originalAvatarURL: URL?
-    private let firestoreService = FirestoreService()
+    private let firestoreService = FirestoreService.shared
     private let storageService = StorageService()
 
     init(userId: String, currentDisplayName: String, currentIcon: String, currentAvatarURL: URL?) {

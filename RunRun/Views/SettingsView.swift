@@ -9,7 +9,7 @@ struct SettingsView: View {
     @State private var showingProfileEdit = false
     @State private var debugMessage: String?
 
-    private let firestoreService = FirestoreService()
+    private let firestoreService = FirestoreService.shared
 
     var body: some View {
         NavigationStack {

@@ -13,7 +13,7 @@ struct ProfileView: View {
     @State private var canSendRequest = true
     @State private var lastRequestDate: Date?
 
-    private let firestoreService = FirestoreService()
+    private let firestoreService = FirestoreService.shared
 
     private var isCurrentUser: Bool {
         user.id == authService.user?.uid
