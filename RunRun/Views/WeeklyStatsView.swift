@@ -84,6 +84,7 @@ struct WeeklyStatsView: View {
             Text(error.localizedDescription)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
+                .textSelection(.enabled)
         }
         .padding()
     }
