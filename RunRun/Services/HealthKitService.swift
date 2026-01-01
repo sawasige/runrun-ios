@@ -1,5 +1,6 @@
 import Foundation
 import HealthKit
+import CoreLocation
 
 enum HealthKitError: LocalizedError {
     case notAvailable
@@ -288,5 +289,98 @@ final class HealthKitService: Sendable {
         }
 
         return stats
+    }
+
+    // MARK: - Route Data
+
+    /// ワークアウトのGPSルートを取得
+    func fetchWorkoutRoute(for workout: HKWorkout) async -> [CLLocation] {
+        // まずワークアウトに紐づくルートを取得
+        let routes = await fetchRouteObjects(for: workout)
+        guard let route = routes.first else { return [] }
+
+        // ルートからロケーションデータを取得
+        return await fetchLocations(from: route)
+    }
+
+    private func fetchRouteObjects(for workout: HKWorkout) async -> [HKWorkoutRoute] {
+        let routeType = HKSeriesType.workoutRoute()
+        let predicate = HKQuery.predicateForObjects(from: workout)
+
+        return await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: routeType,
+                predicate: predicate,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: nil
+            ) { _, samples, _ in
+                let routes = (samples as? [HKWorkoutRoute]) ?? []
+                continuation.resume(returning: routes)
+            }
+            healthStore.execute(query)
+        }
+    }
+
+    private func fetchLocations(from route: HKWorkoutRoute) async -> [CLLocation] {
+        return await withCheckedContinuation { continuation in
+            var allLocations: [CLLocation] = []
+
+            let query = HKWorkoutRouteQuery(route: route) { _, locations, done, _ in
+                if let locations = locations {
+                    allLocations.append(contentsOf: locations)
+                }
+                if done {
+                    continuation.resume(returning: allLocations)
+                }
+            }
+            healthStore.execute(query)
+        }
+    }
+
+    /// GPSロケーションからスプリット（キロごとのペース）を計算
+    func calculateSplits(from locations: [CLLocation]) -> [Split] {
+        guard locations.count >= 2 else { return [] }
+
+        var splits: [Split] = []
+        var currentKm = 1
+        var kmStartIndex = 0
+        var accumulatedDistance: Double = 0
+
+        for i in 1..<locations.count {
+            let distance = locations[i].distance(from: locations[i - 1])
+            accumulatedDistance += distance
+
+            // 1km到達
+            if accumulatedDistance >= 1000 {
+                let startTime = locations[kmStartIndex].timestamp
+                let endTime = locations[i].timestamp
+                let duration = endTime.timeIntervalSince(startTime)
+
+                splits.append(Split(
+                    kilometer: currentKm,
+                    durationSeconds: duration,
+                    distanceMeters: accumulatedDistance
+                ))
+
+                currentKm += 1
+                kmStartIndex = i
+                accumulatedDistance = 0
+            }
+        }
+
+        // 最後の端数キロを追加
+        if accumulatedDistance > 100 && kmStartIndex < locations.count - 1 {
+            let startTime = locations[kmStartIndex].timestamp
+            let endTime = locations[locations.count - 1].timestamp
+            let duration = endTime.timeIntervalSince(startTime)
+
+            splits.append(Split(
+                kilometer: currentKm,
+                durationSeconds: duration,
+                distanceMeters: accumulatedDistance
+            ))
+        }
+
+        return splits
     }
 }

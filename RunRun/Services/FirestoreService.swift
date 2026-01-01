@@ -443,6 +443,65 @@ final class FirestoreService {
         }
     }
 
+    // MARK: - Weekly Stats
+
+    func getUserWeeklyStats(userId: String, weeks: Int = 12) async throws -> [WeeklyRunningStats] {
+        let calendar = Calendar.current
+        let today = Date()
+
+        // 今週の月曜日を取得
+        guard let thisWeekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: today)) else {
+            return []
+        }
+
+        // 指定週数前から今週までのデータを取得
+        guard let startDate = calendar.date(byAdding: .weekOfYear, value: -(weeks - 1), to: thisWeekStart) else {
+            return []
+        }
+
+        let snapshot = try await runsCollection
+            .whereField("userId", isEqualTo: userId)
+            .whereField("date", isGreaterThanOrEqualTo: startDate)
+            .getDocuments()
+
+        // 週ごとに集計
+        var weeklyData: [Date: (distance: Double, duration: TimeInterval, count: Int)] = [:]
+
+        for doc in snapshot.documents {
+            let data = doc.data()
+            guard let timestamp = data["date"] as? Timestamp,
+                  let distance = data["distanceKm"] as? Double,
+                  let duration = data["durationSeconds"] as? TimeInterval else {
+                continue
+            }
+
+            let runDate = timestamp.dateValue()
+            guard let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: runDate)) else {
+                continue
+            }
+
+            let current = weeklyData[weekStart] ?? (0, 0, 0)
+            weeklyData[weekStart] = (current.distance + distance, current.duration + duration, current.count + 1)
+        }
+
+        // 全週のデータを作成（データがない週も含む）
+        var stats: [WeeklyRunningStats] = []
+        var currentWeek = startDate
+
+        while currentWeek <= thisWeekStart {
+            let data = weeklyData[currentWeek] ?? (0, 0, 0)
+            stats.append(WeeklyRunningStats(
+                weekStartDate: currentWeek,
+                totalDistanceInMeters: data.distance * 1000,
+                totalDurationInSeconds: data.duration,
+                runCount: data.count
+            ))
+            currentWeek = calendar.date(byAdding: .weekOfYear, value: 1, to: currentWeek) ?? currentWeek
+        }
+
+        return stats
+    }
+
     // MARK: - Debug
 
     #if DEBUG

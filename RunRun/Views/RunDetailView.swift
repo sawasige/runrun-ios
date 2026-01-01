@@ -1,7 +1,17 @@
 import SwiftUI
+import MapKit
+import CoreLocation
+import HealthKit
 
 struct RunDetailView: View {
     let record: RunningRecord
+
+    @State private var routeCoordinates: [CLLocationCoordinate2D] = []
+    @State private var splits: [Split] = []
+    @State private var isLoadingRoute = false
+    @State private var mapCameraPosition: MapCameraPosition = .automatic
+
+    private let healthKitService = HealthKitService()
 
     private var formattedDate: String {
         let formatter = DateFormatter()
@@ -18,6 +28,29 @@ struct RunDetailView: View {
 
     var body: some View {
         List {
+            // 地図セクション
+            if !routeCoordinates.isEmpty {
+                Section {
+                    Map(position: $mapCameraPosition) {
+                        MapPolyline(coordinates: routeCoordinates)
+                            .stroke(.blue, lineWidth: 4)
+                    }
+                    .frame(height: 250)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+                }
+            } else if isLoadingRoute {
+                Section {
+                    HStack {
+                        Spacer()
+                        ProgressView()
+                            .padding()
+                        Spacer()
+                    }
+                }
+            }
+
             // ヘッダーセクション
             Section {
                 VStack(spacing: 16) {
@@ -35,6 +68,23 @@ struct RunDetailView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
+            }
+
+            // スプリットセクション
+            if !splits.isEmpty {
+                Section("スプリット") {
+                    ForEach(splits) { split in
+                        HStack {
+                            Text(split.formattedKilometer)
+                            Spacer()
+                            Text(split.formattedPace)
+                                .fontWeight(.medium)
+                                .monospacedDigit()
+                            Text("/km")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
             }
 
             // 心拍数セクション
@@ -76,6 +126,50 @@ struct RunDetailView: View {
         }
         .navigationTitle("ランニング詳細")
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            await loadRouteData()
+        }
+    }
+
+    private func loadRouteData() async {
+        isLoadingRoute = true
+        defer { isLoadingRoute = false }
+
+        // 該当日のワークアウトを検索
+        guard let workout = await findWorkout(for: record.date) else { return }
+
+        // ルートを取得
+        let locations = await healthKitService.fetchWorkoutRoute(for: workout)
+        guard !locations.isEmpty else { return }
+
+        // 座標配列に変換
+        routeCoordinates = locations.map { $0.coordinate }
+
+        // スプリットを計算
+        splits = healthKitService.calculateSplits(from: locations)
+
+        // カメラ位置を設定
+        if let firstCoord = routeCoordinates.first {
+            let region = MKCoordinateRegion(
+                center: firstCoord,
+                span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+            )
+            mapCameraPosition = .region(region)
+        }
+    }
+
+    private func findWorkout(for date: Date) async -> HKWorkout? {
+        let calendar = Calendar.current
+
+        do {
+            let allWorkouts = try await healthKitService.fetchAllRawRunningWorkouts()
+            return allWorkouts.first { workout in
+                calendar.isDate(workout.startDate, inSameDayAs: date) &&
+                abs(workout.startDate.timeIntervalSince(date)) < 60 // 1分以内
+            }
+        } catch {
+            return nil
+        }
     }
 }
 
