@@ -115,11 +115,23 @@ struct MonthlyRunningView: View {
             }
 
             Section("年間サマリー") {
-                StatRow(icon: "figure.run", label: "ラン回数", value: "\(viewModel.totalRunCount)回")
-                StatRow(icon: "clock", label: "合計時間", value: viewModel.formattedTotalDuration)
-                StatRow(icon: "arrow.left.and.right", label: "平均距離", value: viewModel.formattedAverageDistance)
-                if let best = viewModel.bestMonth, best.totalDistanceInKilometers > 0 {
-                    StatRow(icon: "trophy", label: "ベスト月", value: "\(best.month)月 (\(best.formattedTotalDistance))")
+                NavigationLink {
+                    YearlySummaryView(year: viewModel.selectedYear, monthlyStats: viewModel.monthlyStats)
+                } label: {
+                    HStack {
+                        Label("詳細を見る", systemImage: "chart.bar.doc.horizontal")
+                        Spacer()
+                        Text(viewModel.formattedTotalYearlyDistance)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+
+            Section("週間推移") {
+                NavigationLink {
+                    WeeklyStatsView()
+                } label: {
+                    Label("過去12週間の推移", systemImage: "chart.line.uptrend.xyaxis")
                 }
             }
 
