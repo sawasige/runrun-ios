@@ -81,7 +81,7 @@ final class FirestoreService {
         guard !records.isEmpty else { return 0 }
 
         for (index, record) in records.enumerated() {
-            let data: [String: Any] = [
+            var data: [String: Any] = [
                 "userId": userId,
                 "date": record.date,
                 "distanceKm": record.distanceInKilometers,
@@ -89,6 +89,16 @@ final class FirestoreService {
                 "paceSecondsPerKm": record.averagePacePerKilometer ?? 0,
                 "syncedAt": Date()
             ]
+
+            // 詳細データ（nilでなければ保存）
+            if let hr = record.averageHeartRate { data["averageHeartRate"] = hr }
+            if let hr = record.maxHeartRate { data["maxHeartRate"] = hr }
+            if let hr = record.minHeartRate { data["minHeartRate"] = hr }
+            if let cal = record.caloriesBurned { data["caloriesBurned"] = cal }
+            if let cad = record.cadence { data["cadence"] = cad }
+            if let stride = record.strideLength { data["strideLength"] = stride }
+            if let steps = record.stepCount { data["stepCount"] = steps }
+
             _ = try await runsCollection.addDocument(data: data)
             onProgress?(index + 1, records.count)
         }
@@ -397,7 +407,7 @@ final class FirestoreService {
 
     // MARK: - User Runs by Month
 
-    func getUserMonthlyRuns(userId: String, year: Int, month: Int) async throws -> [(date: Date, distanceKm: Double, durationSeconds: TimeInterval)] {
+    func getUserMonthlyRuns(userId: String, year: Int, month: Int) async throws -> [RunningRecord] {
         let calendar = Calendar.current
         guard let startOfMonth = calendar.date(from: DateComponents(year: year, month: month, day: 1)),
               let startOfNextMonth = calendar.date(byAdding: .month, value: 1, to: startOfMonth) else {
@@ -411,14 +421,25 @@ final class FirestoreService {
             .order(by: "date", descending: true)
             .getDocuments()
 
-        return snapshot.documents.compactMap { doc -> (Date, Double, TimeInterval)? in
+        return snapshot.documents.compactMap { doc -> RunningRecord? in
             let data = doc.data()
             guard let timestamp = data["date"] as? Timestamp,
                   let distance = data["distanceKm"] as? Double,
                   let duration = data["durationSeconds"] as? TimeInterval else {
                 return nil
             }
-            return (timestamp.dateValue(), distance, duration)
+            return RunningRecord(
+                date: timestamp.dateValue(),
+                distanceKm: distance,
+                durationSeconds: duration,
+                caloriesBurned: data["caloriesBurned"] as? Double,
+                averageHeartRate: data["averageHeartRate"] as? Double,
+                maxHeartRate: data["maxHeartRate"] as? Double,
+                minHeartRate: data["minHeartRate"] as? Double,
+                cadence: data["cadence"] as? Double,
+                strideLength: data["strideLength"] as? Double,
+                stepCount: data["stepCount"] as? Int
+            )
         }
     }
 

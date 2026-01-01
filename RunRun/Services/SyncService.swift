@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import HealthKit
 
 enum SyncPhase {
     case idle
@@ -63,26 +64,48 @@ final class SyncService: ObservableObject {
             try await healthKitService.requestAuthorization()
 
             phase = .fetching
-            let records = try await healthKitService.fetchAllRunningWorkouts()
+            // 生のHKWorkoutを取得
+            let workouts = try await healthKitService.fetchAllRawRunningWorkouts()
 
-            // 差分を先に計算
-            let newRecords = try await firestoreService.getNewRecordsToSync(
+            // 基本情報だけでRunningRecordを作成（差分チェック用）
+            let basicRecords = workouts.map { workout in
+                RunningRecord(
+                    id: UUID(),
+                    date: workout.startDate,
+                    distanceInMeters: workout.totalDistance?.doubleValue(for: .meter()) ?? 0,
+                    durationInSeconds: workout.duration
+                )
+            }
+
+            // 差分を計算
+            let newBasicRecords = try await firestoreService.getNewRecordsToSync(
                 userId: userId,
-                records: records
+                records: basicRecords
             )
 
-            if newRecords.isEmpty {
+            if newBasicRecords.isEmpty {
                 phase = .completed(count: 0)
             } else {
-                phase = .syncing(current: 0, total: newRecords.count)
+                // 新規レコードに対応するワークアウトを特定し、詳細を取得
+                let newWorkouts = workouts.filter { workout in
+                    newBasicRecords.contains { Calendar.current.isDate($0.date, inSameDayAs: workout.startDate) }
+                }
+
+                phase = .syncing(current: 0, total: newWorkouts.count)
+
+                // 詳細データを取得してRunningRecordを作成
+                var detailedRecords: [RunningRecord] = []
+                for (index, workout) in newWorkouts.enumerated() {
+                    let record = await healthKitService.createRunningRecord(from: workout, withDetails: true)
+                    detailedRecords.append(record)
+                    phase = .syncing(current: index + 1, total: newWorkouts.count)
+                }
+
+                // Firestoreに同期
                 let count = try await firestoreService.syncRunRecords(
                     userId: userId,
-                    records: newRecords
-                ) { [weak self] current, total in
-                    Task { @MainActor in
-                        self?.phase = .syncing(current: current, total: total)
-                    }
-                }
+                    records: detailedRecords
+                )
                 syncedCount = count
                 phase = .completed(count: count)
             }

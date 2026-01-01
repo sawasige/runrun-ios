@@ -74,7 +74,11 @@ struct MonthDetailView: View {
 
             Section("ランニング記録") {
                 ForEach(viewModel.records) { record in
-                    RunningRecordRow(record: record)
+                    NavigationLink {
+                        RunDetailView(record: record)
+                    } label: {
+                        RunningRecordRow(record: record)
+                    }
                 }
             }
         }
