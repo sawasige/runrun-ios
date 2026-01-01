@@ -40,14 +40,11 @@ final class MonthDetailViewModel: ObservableObject {
         error = nil
 
         do {
-            let runs = try await firestoreService.getUserMonthlyRuns(
+            records = try await firestoreService.getUserMonthlyRuns(
                 userId: userId,
                 year: year,
                 month: month
             )
-            records = runs.map {
-                RunningRecord(date: $0.date, distanceKm: $0.distanceKm, durationSeconds: $0.durationSeconds)
-            }
         } catch {
             self.error = error
         }
