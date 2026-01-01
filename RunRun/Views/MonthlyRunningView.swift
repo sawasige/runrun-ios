@@ -20,6 +20,22 @@ struct MonthlyRunningView: View {
         userProfile != nil ? "記録" : "ランニング記録"
     }
 
+    /// リストには今月までの月のみ表示（未来の月は除外）
+    private var filteredMonthlyStats: [MonthlyRunningStats] {
+        let calendar = Calendar.current
+        let currentYear = calendar.component(.year, from: Date())
+        let currentMonth = calendar.component(.month, from: Date())
+
+        return viewModel.monthlyStats.filter { stats in
+            if stats.year < currentYear {
+                return true
+            } else if stats.year == currentYear {
+                return stats.month <= currentMonth
+            }
+            return false
+        }
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -136,7 +152,7 @@ struct MonthlyRunningView: View {
             }
 
             Section("月別記録") {
-                ForEach(viewModel.monthlyStats.reversed()) { stats in
+                ForEach(filteredMonthlyStats.reversed()) { stats in
                     NavigationLink {
                         MonthDetailView(userId: viewModel.userId, year: stats.year, month: stats.month)
                     } label: {

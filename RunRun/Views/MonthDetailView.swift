@@ -1,4 +1,5 @@
 import SwiftUI
+import Charts
 
 struct MonthDetailView: View {
     @StateObject private var viewModel: MonthDetailViewModel
@@ -58,6 +59,12 @@ struct MonthDetailView: View {
                 }
             }
 
+            // 日別グラフ
+            Section {
+                dailyChart
+                    .frame(height: 150)
+            }
+
             Section {
                 HStack {
                     Text("合計")
@@ -82,6 +89,23 @@ struct MonthDetailView: View {
                 }
             }
         }
+    }
+
+    private var dailyChart: some View {
+        Chart(viewModel.records) { record in
+            BarMark(
+                x: .value("日", record.date, unit: .day),
+                y: .value("距離", record.distanceInKilometers)
+            )
+            .foregroundStyle(.blue.gradient)
+        }
+        .chartXAxis {
+            AxisMarks(values: .stride(by: .day, count: 7)) { value in
+                AxisGridLine()
+                AxisValueLabel(format: .dateTime.day())
+            }
+        }
+        .chartYAxisLabel("km")
     }
 
     private var emptyView: some View {
