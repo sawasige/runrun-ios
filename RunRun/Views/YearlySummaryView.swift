@@ -96,7 +96,7 @@ struct YearlySummaryView: View {
                 }
             }
         }
-        .navigationTitle("\(year)年サマリー")
+        .navigationTitle(String(year) + "年サマリー")
     }
 
     private var yearlyChart: some View {

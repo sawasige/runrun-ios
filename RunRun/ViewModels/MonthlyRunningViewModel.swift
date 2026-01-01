@@ -103,13 +103,9 @@ final class MonthlyRunningViewModel: ObservableObject {
             )
         }
 
-        // Create stats for all months up to current
-        let currentMonth = calendar.component(.month, from: Date())
-        let currentYear = calendar.component(.year, from: Date())
-        let maxMonth = year == currentYear ? currentMonth : 12
-
+        // Create stats for all 12 months
         var stats: [MonthlyRunningStats] = []
-        for month in 1...maxMonth {
+        for month in 1...12 {
             let data = monthlyData[month] ?? (0, 0, 0)
             stats.append(MonthlyRunningStats(
                 id: UUID(),
