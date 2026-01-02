@@ -2,15 +2,21 @@ import SwiftUI
 import MapKit
 import CoreLocation
 import HealthKit
+import PhotosUI
 
 struct RunDetailView: View {
     let record: RunningRecord
+    var isOwnRecord: Bool = true
 
     @State private var routeLocations: [CLLocation] = []
     @State private var splits: [Split] = []
     @State private var isLoadingRoute = false
     @State private var mapCameraPosition: MapCameraPosition = .automatic
     @State private var showFullScreenMap = false
+    @State private var showPhotoPicker = false
+    @State private var selectedPhotoItem: PhotosPickerItem?
+    @State private var showExportPreview = false
+    @State private var exportImage: UIImage?
     @Namespace private var mapAnimation
 
     private let healthKitService = HealthKitService()
@@ -130,6 +136,28 @@ struct RunDetailView: View {
         }
         .navigationTitle("ランニング詳細")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if isOwnRecord {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showPhotoPicker = true
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                }
+            }
+        }
+        .photosPicker(
+            isPresented: $showPhotoPicker,
+            selection: $selectedPhotoItem,
+            matching: .images,
+            photoLibrary: .shared()
+        )
+        .onChange(of: selectedPhotoItem) { oldValue, newValue in
+            Task {
+                await loadSelectedPhoto()
+            }
+        }
         .task {
             await loadRouteData()
         }
@@ -139,6 +167,32 @@ struct RunDetailView: View {
                 kilometerPoints: calculateKilometerPoints()
             )
         }
+        .fullScreenCover(isPresented: $showExportPreview) {
+            if let image = exportImage {
+                RunExportPreviewView(
+                    originalImage: image,
+                    record: record
+                )
+            }
+        }
+    }
+
+    private func loadSelectedPhoto() async {
+        guard let item = selectedPhotoItem else { return }
+
+        do {
+            if let image = try await item.loadTransferable(type: TransferableImage.self) {
+                await MainActor.run {
+                    exportImage = image.image
+                    showExportPreview = true
+                }
+            }
+        } catch {
+            print("Failed to load image: \(error)")
+        }
+
+        // 選択をリセット（次回選択可能にする）
+        selectedPhotoItem = nil
     }
 
     private var mapPreview: some View {
@@ -254,6 +308,245 @@ struct RunDetailView: View {
             return nil
         }
     }
+}
+
+// MARK: - Run Export Preview View
+
+struct RunExportPreviewView: View {
+    let originalImage: UIImage
+    let record: RunningRecord
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var composedImage: UIImage?
+    @State private var isProcessing = false
+    @State private var showShareSheet = false
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.black.ignoresSafeArea()
+
+                if let image = composedImage {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFit()
+                } else if isProcessing {
+                    ProgressView()
+                        .tint(.white)
+                }
+            }
+            .navigationTitle("プレビュー")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarBackground(Color.black, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("キャンセル") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showShareSheet = true
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                    .disabled(composedImage == nil)
+                }
+            }
+            .task {
+                await composeImage()
+            }
+            .sheet(isPresented: $showShareSheet) {
+                if let image = composedImage {
+                    ShareSheet(items: [image])
+                }
+            }
+        }
+    }
+
+    private func composeImage() async {
+        isProcessing = true
+
+        let image = originalImage
+        let rec = record
+
+        let result = await Task.detached(priority: .userInitiated) {
+            await ImageComposer.compose(baseImage: image, record: rec)
+        }.value
+
+        await MainActor.run {
+            composedImage = result
+            isProcessing = false
+        }
+    }
+}
+
+// MARK: - Image Composer
+
+import CoreImage
+
+enum ImageComposer {
+    static func compose(baseImage: UIImage, record: RunningRecord) async -> UIImage? {
+        // まず画像のOrientationを正規化（回転問題を修正）
+        let normalizedImage = normalizeOrientation(baseImage)
+
+        let width = normalizedImage.size.width
+        let height = normalizedImage.size.height
+
+        // UIGraphicsImageRendererで描画（HDR保持のためextended rangeを使用）
+        let format = UIGraphicsImageRendererFormat()
+        format.preferredRange = .extended  // HDR対応
+        format.scale = normalizedImage.scale
+
+        let renderer = UIGraphicsImageRenderer(size: normalizedImage.size, format: format)
+
+        let result = renderer.image { context in
+            // 元画像を描画
+            normalizedImage.draw(at: .zero)
+
+            // フォントサイズを画像の1/3に収まるように計算
+            let overlayHeight = height / 3.0
+            let baseFontSize = overlayHeight / 10.0
+            let lineHeight = baseFontSize * 1.4
+            let padding = baseFontSize * 0.8
+
+            let dateFont = UIFont.systemFont(ofSize: baseFontSize * 0.7, weight: .medium)
+            let valueFont = UIFont.systemFont(ofSize: baseFontSize, weight: .semibold)
+
+            // 右下からの開始位置
+            var yOffset = height - padding
+
+            // テキスト行を収集（ラベルなし、値と単位のみ）
+            var lines: [(String, UIFont)] = []
+
+            // カロリー（あれば）
+            if let cal = record.formattedCalories {
+                lines.append((cal, valueFont))
+            }
+
+            // 歩数（あれば）
+            if let steps = record.formattedStepCount {
+                lines.append((steps, valueFont))
+            }
+
+            // 平均心拍数（あれば）
+            if let hr = record.formattedAverageHeartRate {
+                lines.append((hr, valueFont))
+            }
+
+            // ペース
+            lines.append((record.formattedPace, valueFont))
+
+            // 時間
+            lines.append((record.formattedDuration, valueFont))
+
+            // 距離
+            lines.append((record.formattedDistance, valueFont))
+
+            // 日時
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy/M/d HH:mm"
+            dateFormatter.locale = Locale(identifier: "ja_JP")
+            lines.append((dateFormatter.string(from: record.date), dateFont))
+
+            // 下から上に向かって描画
+            for (text, font) in lines {
+                yOffset -= lineHeight
+                let x = width - padding
+                drawOutlinedText(text, at: CGPoint(x: x, y: yOffset), font: font, width: width)
+            }
+        }
+
+        return result
+    }
+
+    /// 画像のOrientationを正規化（回転を適用した状態にする）
+    private static func normalizeOrientation(_ image: UIImage) -> UIImage {
+        guard image.imageOrientation != .up else { return image }
+
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = image.scale
+        format.preferredRange = .extended  // HDR保持
+
+        let renderer = UIGraphicsImageRenderer(size: image.size, format: format)
+        return renderer.image { _ in
+            image.draw(at: .zero)
+        }
+    }
+
+    private static func drawOutlinedText(_ text: String, at point: CGPoint, font: UIFont, width: CGFloat) {
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.alignment = .right
+
+        let strokeAttributes: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: UIColor.black,
+            .paragraphStyle: paragraphStyle
+        ]
+
+        let fillAttributes: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: UIColor.white,
+            .paragraphStyle: paragraphStyle
+        ]
+
+        let textSize = (text as NSString).size(withAttributes: fillAttributes)
+        let drawPoint = CGPoint(x: point.x - textSize.width, y: point.y)
+
+        // 縁取り（複数方向にオフセットして描画）
+        let outlineWidth: CGFloat = max(2, font.pointSize * 0.05)
+        let offsets: [CGPoint] = [
+            CGPoint(x: -outlineWidth, y: -outlineWidth),
+            CGPoint(x: outlineWidth, y: -outlineWidth),
+            CGPoint(x: -outlineWidth, y: outlineWidth),
+            CGPoint(x: outlineWidth, y: outlineWidth),
+            CGPoint(x: -outlineWidth, y: 0),
+            CGPoint(x: outlineWidth, y: 0),
+            CGPoint(x: 0, y: -outlineWidth),
+            CGPoint(x: 0, y: outlineWidth)
+        ]
+
+        for offset in offsets {
+            let offsetPoint = CGPoint(x: drawPoint.x + offset.x, y: drawPoint.y + offset.y)
+            (text as NSString).draw(at: offsetPoint, withAttributes: strokeAttributes)
+        }
+
+        // 白文字
+        (text as NSString).draw(at: drawPoint, withAttributes: fillAttributes)
+    }
+}
+
+// MARK: - Transferable Image
+
+struct TransferableImage: Transferable {
+    let image: UIImage
+
+    static var transferRepresentation: some TransferRepresentation {
+        DataRepresentation(importedContentType: .image) { data in
+            guard let image = UIImage(data: data) else {
+                throw TransferError.importFailed
+            }
+            return TransferableImage(image: image)
+        }
+    }
+
+    enum TransferError: Error {
+        case importFailed
+    }
+}
+
+// MARK: - Share Sheet
+
+struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 // MARK: - Kilometer Point
