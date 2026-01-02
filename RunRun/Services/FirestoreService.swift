@@ -2,6 +2,14 @@ import Foundation
 import FirebaseFirestore
 import FirebaseAuth
 
+private extension Array {
+    func chunked(into size: Int) -> [[Element]] {
+        stride(from: 0, to: count, by: size).map {
+            Array(self[$0..<Swift.min($0 + size, count)])
+        }
+    }
+}
+
 final class FirestoreService {
     static let shared = FirestoreService()
     private let db = Firestore.firestore()
@@ -500,6 +508,79 @@ final class FirestoreService {
         }
 
         return stats
+    }
+
+    // MARK: - Timeline
+
+    func getTimelineRuns(
+        userId: String,
+        limit: Int,
+        lastDocument: DocumentSnapshot?
+    ) async throws -> (runs: [TimelineRun], lastDocument: DocumentSnapshot?) {
+        // フレンドのIDを取得
+        let friendIds = try await getFriends(userId: userId)
+        let allUserIds = [userId] + friendIds
+
+        // ユーザープロフィールをキャッシュ
+        var profileCache: [String: UserProfile] = [:]
+        for uid in allUserIds {
+            if let profile = try? await getUserProfile(userId: uid) {
+                profileCache[uid] = profile
+            }
+        }
+
+        // Firestoreの制限: whereField in は最大30件まで
+        // フレンドが30人を超える場合は分割クエリが必要
+        var allRuns: [TimelineRun] = []
+        var finalLastDocument: DocumentSnapshot?
+
+        let chunks = allUserIds.chunked(into: 30)
+        for chunk in chunks {
+            var query = runsCollection
+                .whereField("userId", in: chunk)
+                .order(by: "date", descending: true)
+                .limit(to: limit)
+
+            if let lastDoc = lastDocument {
+                query = query.start(afterDocument: lastDoc)
+            }
+
+            let snapshot = try await query.getDocuments()
+
+            for doc in snapshot.documents {
+                let data = doc.data()
+                guard let timestamp = data["date"] as? Timestamp,
+                      let distance = data["distanceKm"] as? Double,
+                      let duration = data["durationSeconds"] as? TimeInterval,
+                      let runUserId = data["userId"] as? String else {
+                    continue
+                }
+
+                let profile = profileCache[runUserId]
+                allRuns.append(TimelineRun(
+                    id: doc.documentID,
+                    date: timestamp.dateValue(),
+                    distanceKm: distance,
+                    durationSeconds: duration,
+                    userId: runUserId,
+                    displayName: profile?.displayName ?? "ランナー",
+                    avatarURL: profile?.avatarURL,
+                    iconName: profile?.iconName ?? "figure.run"
+                ))
+            }
+
+            if let lastDoc = snapshot.documents.last {
+                finalLastDocument = lastDoc
+            }
+        }
+
+        // 日付でソート
+        allRuns.sort { $0.date > $1.date }
+
+        // limit件数に制限
+        let limitedRuns = Array(allRuns.prefix(limit))
+
+        return (limitedRuns, finalLastDocument)
     }
 
     // MARK: - Debug
