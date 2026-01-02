@@ -16,6 +16,11 @@ struct ContentView: View {
                         }
                 } else if let userId = authService.user?.uid {
                     TabView {
+                        TimelineView(userId: userId)
+                            .tabItem {
+                                Label("タイムライン", systemImage: "list.bullet")
+                            }
+
                         MonthlyRunningView(userId: userId)
                             .tabItem {
                                 Label("記録", systemImage: "figure.run")
