@@ -10,6 +10,15 @@ struct TimelineRun: Identifiable {
     let avatarURL: URL?
     let iconName: String
 
+    // 詳細データ
+    var caloriesBurned: Double?
+    var averageHeartRate: Double?
+    var maxHeartRate: Double?
+    var minHeartRate: Double?
+    var cadence: Double?
+    var strideLength: Double?
+    var stepCount: Int?
+
     var formattedDistance: String {
         String(format: "%.2f km", distanceKm)
     }
@@ -44,7 +53,14 @@ struct TimelineRun: Identifiable {
         RunningRecord(
             date: date,
             distanceKm: distanceKm,
-            durationSeconds: durationSeconds
+            durationSeconds: durationSeconds,
+            caloriesBurned: caloriesBurned,
+            averageHeartRate: averageHeartRate,
+            maxHeartRate: maxHeartRate,
+            minHeartRate: minHeartRate,
+            cadence: cadence,
+            strideLength: strideLength,
+            stepCount: stepCount
         )
     }
 }
