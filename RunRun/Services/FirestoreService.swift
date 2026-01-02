@@ -565,7 +565,14 @@ final class FirestoreService {
                     userId: runUserId,
                     displayName: profile?.displayName ?? "ランナー",
                     avatarURL: profile?.avatarURL,
-                    iconName: profile?.iconName ?? "figure.run"
+                    iconName: profile?.iconName ?? "figure.run",
+                    caloriesBurned: data["caloriesBurned"] as? Double,
+                    averageHeartRate: data["averageHeartRate"] as? Double,
+                    maxHeartRate: data["maxHeartRate"] as? Double,
+                    minHeartRate: data["minHeartRate"] as? Double,
+                    cadence: data["cadence"] as? Double,
+                    strideLength: data["strideLength"] as? Double,
+                    stepCount: data["stepCount"] as? Int
                 ))
             }
 
