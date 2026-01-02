@@ -122,7 +122,10 @@ struct TimelineView: View {
 
                     ForEach(group.runs) { run in
                         NavigationLink {
-                            RunDetailView(record: run.toRunningRecord())
+                            RunDetailView(
+                                record: run.toRunningRecord(),
+                                isOwnRecord: run.userId == viewModel.userId
+                            )
                         } label: {
                             TimelineRunRow(run: run)
                         }
