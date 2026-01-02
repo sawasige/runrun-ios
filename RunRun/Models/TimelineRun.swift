@@ -39,6 +39,14 @@ struct TimelineRun: Identifiable {
         formatter.dateFormat = "HH:mm"
         return formatter.string(from: date)
     }
+
+    func toRunningRecord() -> RunningRecord {
+        RunningRecord(
+            date: date,
+            distanceKm: distanceKm,
+            durationSeconds: durationSeconds
+        )
+    }
 }
 
 struct TimelineDayGroup: Identifiable {

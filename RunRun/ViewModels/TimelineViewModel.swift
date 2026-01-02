@@ -10,7 +10,7 @@ final class TimelineViewModel: ObservableObject {
     @Published private(set) var error: Error?
     @Published private(set) var hasMore = true
 
-    private let userId: String
+    let userId: String
     private let firestoreService = FirestoreService.shared
     private var lastDocument: DocumentSnapshot?
     private let pageSize = 20
