@@ -92,13 +92,18 @@ struct MonthDetailView: View {
     }
 
     private var dailyChart: some View {
-        Chart(viewModel.records) { record in
+        let calendar = Calendar.current
+        let startOfMonth = calendar.date(from: DateComponents(year: viewModel.year, month: viewModel.month, day: 1))!
+        let endOfMonth = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: startOfMonth)!
+
+        return Chart(viewModel.records) { record in
             BarMark(
                 x: .value("日", record.date, unit: .day),
                 y: .value("距離", record.distanceInKilometers)
             )
             .foregroundStyle(.blue.gradient)
         }
+        .chartXScale(domain: startOfMonth...endOfMonth)
         .chartXAxis {
             AxisMarks(values: .stride(by: .day, count: 7)) { value in
                 AxisGridLine()
