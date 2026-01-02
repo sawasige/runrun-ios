@@ -2,6 +2,7 @@ import SwiftUI
 
 struct TimelineView: View {
     @StateObject private var viewModel: TimelineViewModel
+    @State private var showNavBarLogo = false
 
     init(userId: String) {
         _viewModel = StateObject(wrappedValue: TimelineViewModel(userId: userId))
@@ -20,10 +21,19 @@ struct TimelineView: View {
                     timelineList
                 }
             }
-            .navigationTitle("タイムライン")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    logoView
+                    HStack(spacing: 6) {
+                        Image("Logo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 28)
+                        Text("RunRun")
+                            .font(.headline)
+                            .fontWeight(.bold)
+                    }
+                    .opacity(showNavBarLogo ? 1 : 0)
                 }
             }
             .refreshable {
@@ -35,11 +45,30 @@ struct TimelineView: View {
         }
     }
 
-    private var logoView: some View {
-        Image("Logo")
-            .resizable()
-            .scaledToFit()
-            .frame(height: 28)
+    private var expandedHeaderView: some View {
+        VStack(spacing: 8) {
+            Image("Logo")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 50)
+
+            Text("RunRun")
+                .font(.title2)
+                .fontWeight(.bold)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .background(
+            GeometryReader { geo in
+                Color.clear
+                    .onChange(of: geo.frame(in: .global).maxY) { oldValue, newValue in
+                        let threshold: CGFloat = 100
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            showNavBarLogo = newValue < threshold
+                        }
+                    }
+            }
+        )
     }
 
     private var loadingView: some View {
@@ -84,34 +113,56 @@ struct TimelineView: View {
     }
 
     private var timelineList: some View {
-        List {
-            ForEach(viewModel.dayGroups) { group in
-                Section(group.formattedDate) {
-                    ForEach(group.runs) { run in
-                        TimelineRunRow(run: run)
-                    }
-                }
-            }
+        ScrollView {
+            LazyVStack(spacing: 0) {
+                expandedHeaderView
 
-            if viewModel.hasMore {
-                HStack {
-                    Spacer()
-                    if viewModel.isLoadingMore {
-                        ProgressView()
-                    } else {
-                        Color.clear
-                            .frame(height: 1)
-                            .onAppear {
-                                Task {
-                                    await viewModel.loadMore()
-                                }
-                            }
+                ForEach(viewModel.dayGroups) { group in
+                    sectionHeader(title: group.formattedDate)
+
+                    ForEach(group.runs) { run in
+                        NavigationLink {
+                            RunDetailView(record: run.toRunningRecord())
+                        } label: {
+                            TimelineRunRow(run: run)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    Spacer()
+                }
+
+                if viewModel.hasMore {
+                    HStack {
+                        Spacer()
+                        if viewModel.isLoadingMore {
+                            ProgressView()
+                                .padding()
+                        } else {
+                            Color.clear
+                                .frame(height: 1)
+                                .onAppear {
+                                    Task {
+                                        await viewModel.loadMore()
+                                    }
+                                }
+                        }
+                        Spacer()
+                    }
                 }
             }
+            .padding(.horizontal)
         }
-        .listStyle(.insetGrouped)
+    }
+
+    private func sectionHeader(title: String) -> some View {
+        HStack {
+            Text(title)
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+            Spacer()
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 4)
     }
 }
 
@@ -140,8 +191,15 @@ private struct TimelineRunRow: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             }
+
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 12)
+        .padding(.horizontal, 4)
+        .background(Color(.systemBackground))
+        .contentShape(Rectangle())
     }
 }
 
