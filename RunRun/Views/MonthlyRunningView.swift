@@ -170,7 +170,7 @@ struct MonthlyRunningView: View {
                 x: .value("月", "\(stats.month)月"),
                 y: .value("距離", stats.totalDistanceInKilometers)
             )
-            .foregroundStyle(.blue.gradient)
+            .foregroundStyle(Color.accentColor.gradient)
         }
         .chartYAxisLabel("km")
     }

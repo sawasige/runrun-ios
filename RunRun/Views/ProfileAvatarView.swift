@@ -47,7 +47,7 @@ struct ProfileAvatarView: View {
         Image(systemName: iconName)
             .font(.system(size: size * 0.5))
             .frame(width: size, height: size)
-            .background(Color.blue)
+            .background(Color.accentColor)
             .foregroundStyle(.white)
             .clipShape(Circle())
     }

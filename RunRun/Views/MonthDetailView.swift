@@ -101,7 +101,7 @@ struct MonthDetailView: View {
                 x: .value("日", record.date, unit: .day),
                 y: .value("距離", record.distanceInKilometers)
             )
-            .foregroundStyle(.blue.gradient)
+            .foregroundStyle(Color.accentColor.gradient)
         }
         .chartXScale(domain: startOfMonth...endOfMonth)
         .chartXAxis {

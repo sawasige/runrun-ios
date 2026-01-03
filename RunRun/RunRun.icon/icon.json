@@ -1,0 +1,71 @@
+{
+  "fill" : {
+    "automatic-gradient" : "display-p3:0.92090,0.29639,0.27417,1.00000",
+    "orientation" : {
+      "start" : {
+        "x" : 0.5,
+        "y" : 0
+      },
+      "stop" : {
+        "x" : 0.5,
+        "y" : 0.7
+      }
+    }
+  },
+  "groups" : [
+    {
+      "blend-mode" : "normal",
+      "blur-material" : 0.5,
+      "layers" : [
+        {
+          "fill" : {
+            "solid" : "extended-gray:1.00000,1.00000"
+          },
+          "glass" : true,
+          "image-name" : "runner 3.png",
+          "name" : "friend",
+          "opacity" : 0.9,
+          "position" : {
+            "scale" : 0.8,
+            "translation-in-points" : [
+              -206.9578216866613,
+              -110.50938508838044
+            ]
+          }
+        },
+        {
+          "fill" : {
+            "solid" : "extended-gray:1.00000,1.00000"
+          },
+          "glass" : true,
+          "image-name" : "runner 3.png",
+          "name" : "runner",
+          "opacity" : 0.9,
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              164.1643763201045,
+              30.094071293713682
+            ]
+          }
+        }
+      ],
+      "lighting" : "individual",
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "specular" : true,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}

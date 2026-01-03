@@ -146,7 +146,7 @@ struct LeaderboardRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(user.displayName)
                     .font(.headline)
-                    .foregroundStyle(isCurrentUser ? .blue : .primary)
+                    .foregroundStyle(isCurrentUser ? Color.accentColor : .primary)
 
                 Text("\(user.totalRuns)回のラン")
                     .font(.caption)
@@ -162,7 +162,7 @@ struct LeaderboardRow: View {
             }
         }
         .padding(.vertical, 4)
-        .listRowBackground(isCurrentUser ? Color.blue.opacity(0.1) : nil)
+        .listRowBackground(isCurrentUser ? Color.accentColor.opacity(0.1) : nil)
     }
 
     @ViewBuilder
@@ -183,7 +183,7 @@ struct LeaderboardRow: View {
         case 1: return .yellow
         case 2: return .gray
         case 3: return .orange
-        default: return .blue.opacity(0.6)
+        default: return Color.accentColor.opacity(0.6)
         }
     }
 }
