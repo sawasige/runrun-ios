@@ -16,7 +16,7 @@ struct RunDetailView: View {
     @State private var showPhotoPicker = false
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var showExportPreview = false
-    @State private var exportImage: UIImage?
+    @State private var exportImageData: Data?
     @Namespace private var mapAnimation
 
     private let healthKitService = HealthKitService()
@@ -168,9 +168,9 @@ struct RunDetailView: View {
             )
         }
         .fullScreenCover(isPresented: $showExportPreview) {
-            if let image = exportImage {
+            if let imageData = exportImageData {
                 RunExportPreviewView(
-                    originalImage: image,
+                    imageData: imageData,
                     record: record
                 )
             }
@@ -181,9 +181,9 @@ struct RunDetailView: View {
         guard let item = selectedPhotoItem else { return }
 
         do {
-            if let image = try await item.loadTransferable(type: TransferableImage.self) {
+            if let transferable = try await item.loadTransferable(type: TransferableImage.self) {
                 await MainActor.run {
-                    exportImage = image.image
+                    exportImageData = transferable.data
                     showExportPreview = true
                 }
             }
@@ -312,21 +312,27 @@ struct RunDetailView: View {
 
 // MARK: - Run Export Preview View
 
+import Photos
+
 struct RunExportPreviewView: View {
-    let originalImage: UIImage
+    let imageData: Data
     let record: RunningRecord
 
     @Environment(\.dismiss) private var dismiss
-    @State private var composedImage: UIImage?
+    @State private var composedHEIFData: Data?
+    @State private var previewImage: UIImage?
     @State private var isProcessing = false
-    @State private var showShareSheet = false
+    @State private var isSaving = false
+    @State private var showSaveSuccess = false
+    @State private var saveError: String?
 
     var body: some View {
         NavigationStack {
             ZStack {
                 Color.black.ignoresSafeArea()
 
-                if let image = composedImage {
+                if let image = previewImage {
+                    // TODO: HDRプレビュー対応（現在はSDR表示、保存はHDR）
                     Image(uiImage: image)
                         .resizable()
                         .scaledToFit()
@@ -348,20 +354,37 @@ struct RunExportPreviewView: View {
                 }
                 ToolbarItem(placement: .primaryAction) {
                     Button {
-                        showShareSheet = true
+                        Task {
+                            await saveToPhotos()
+                        }
                     } label: {
-                        Image(systemName: "square.and.arrow.up")
+                        if isSaving {
+                            ProgressView()
+                                .tint(.white)
+                        } else {
+                            Image(systemName: "square.and.arrow.down")
+                        }
                     }
-                    .disabled(composedImage == nil)
+                    .disabled(composedHEIFData == nil || isSaving)
                 }
             }
             .task {
                 await composeImage()
             }
-            .sheet(isPresented: $showShareSheet) {
-                if let image = composedImage {
-                    ShareSheet(items: [image])
+            .alert("保存完了", isPresented: $showSaveSuccess) {
+                Button("OK") {
+                    dismiss()
                 }
+            } message: {
+                Text("写真に保存しました")
+            }
+            .alert("エラー", isPresented: .init(
+                get: { saveError != nil },
+                set: { if !$0 { saveError = nil } }
+            )) {
+                Button("OK") {}
+            } message: {
+                Text(saveError ?? "")
             }
         }
     }
@@ -369,133 +392,222 @@ struct RunExportPreviewView: View {
     private func composeImage() async {
         isProcessing = true
 
-        let image = originalImage
+        let data = imageData
         let rec = record
 
         let result = await Task.detached(priority: .userInitiated) {
-            await ImageComposer.compose(baseImage: image, record: rec)
+            await ImageComposer.composeAsHEIF(imageData: data, record: rec)
         }.value
 
         await MainActor.run {
-            composedImage = result
+            composedHEIFData = result
+            if let heifData = result {
+                previewImage = UIImage(data: heifData)
+            }
             isProcessing = false
+        }
+    }
+
+    private func saveToPhotos() async {
+        guard let heifData = composedHEIFData else { return }
+
+        isSaving = true
+        defer { isSaving = false }
+
+        do {
+            // 写真ライブラリへのアクセス許可を確認
+            let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
+            guard status == .authorized || status == .limited else {
+                saveError = "写真へのアクセスが許可されていません"
+                return
+            }
+
+            // HEIFデータを直接写真ライブラリに保存
+            try await PHPhotoLibrary.shared().performChanges {
+                let options = PHAssetResourceCreationOptions()
+                options.originalFilename = "RunRun_\(Int(Date().timeIntervalSince1970)).heic"
+
+                let request = PHAssetCreationRequest.forAsset()
+                request.addResource(with: .photo, data: heifData, options: options)
+            }
+
+            showSaveSuccess = true
+        } catch {
+            saveError = error.localizedDescription
         }
     }
 }
 
-// MARK: - Image Composer
+// MARK: - Image Composer (WWDC 2024 Strategy B - HDR対応)
 
 import CoreImage
 
 enum ImageComposer {
-    static func compose(baseImage: UIImage, record: RunningRecord) async -> UIImage? {
-        // まず画像のOrientationを正規化（回転問題を修正）
-        let normalizedImage = normalizeOrientation(baseImage)
+    /// HDR Gainmapを保持したまま画像を合成してHEIF Dataを返す (WWDC 2024 Strategy A)
+    /// - SDRとHDRの両方に同じテキストを描画
+    /// - 両者の対応関係を維持してGain Mapを再計算
+    /// - PHPhotoLibraryに直接渡すためにDataを返す
+    static func composeAsHEIF(imageData: Data, record: RunningRecord) async -> Data? {
+        // 1. SDR画像を読み込み（向き自動適用）
+        guard let sdrImage = CIImage(data: imageData, options: [
+            .applyOrientationProperty: true
+        ]) else {
+            return nil
+        }
 
-        let width = normalizedImage.size.width
-        let height = normalizedImage.size.height
+        // 2. テキストオーバーレイ画像を作成（一度だけ）
+        let textOverlay = createTextOverlay(size: sdrImage.extent.size, record: record)
 
-        // UIGraphicsImageRendererで描画（HDR保持のためextended rangeを使用）
-        let format = UIGraphicsImageRendererFormat()
-        format.preferredRange = .extended  // HDR対応
-        format.scale = normalizedImage.scale
+        // 3. SDRにテキストを合成
+        let sdrWithText: CIImage
+        if let overlay = textOverlay {
+            sdrWithText = overlay.composited(over: sdrImage)
+        } else {
+            sdrWithText = sdrImage
+        }
 
-        let renderer = UIGraphicsImageRenderer(size: normalizedImage.size, format: format)
-
-        let result = renderer.image { context in
-            // 元画像を描画
-            normalizedImage.draw(at: .zero)
-
-            // フォントサイズを画像の1/3に収まるように計算
-            let overlayHeight = height / 3.0
-            let baseFontSize = overlayHeight / 10.0
-            let lineHeight = baseFontSize * 1.4
-            let padding = baseFontSize * 0.8
-
-            let dateFont = UIFont.systemFont(ofSize: baseFontSize * 0.7, weight: .medium)
-            let valueFont = UIFont.systemFont(ofSize: baseFontSize, weight: .semibold)
-
-            // 右下からの開始位置
-            var yOffset = height - padding
-
-            // テキスト行を収集（ラベルなし、値と単位のみ）
-            var lines: [(String, UIFont)] = []
-
-            // カロリー（あれば）
-            if let cal = record.formattedCalories {
-                lines.append((cal, valueFont))
-            }
-
-            // 歩数（あれば）
-            if let steps = record.formattedStepCount {
-                lines.append((steps, valueFont))
-            }
-
-            // 平均心拍数（あれば）
-            if let hr = record.formattedAverageHeartRate {
-                lines.append((hr, valueFont))
-            }
-
-            // ペース
-            lines.append((record.formattedPace, valueFont))
-
-            // 時間
-            lines.append((record.formattedDuration, valueFont))
-
-            // 距離
-            lines.append((record.formattedDistance, valueFont))
-
-            // 日時
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "yyyy/M/d HH:mm"
-            dateFormatter.locale = Locale(identifier: "ja_JP")
-            lines.append((dateFormatter.string(from: record.date), dateFont))
-
-            // 下から上に向かって描画
-            for (text, font) in lines {
-                yOffset -= lineHeight
-                let x = width - padding
-                drawOutlinedText(text, at: CGPoint(x: x, y: yOffset), font: font, width: width)
+        // 4. iOS 17+: HDRにも同じテキストを合成
+        var hdrWithText: CIImage?
+        if #available(iOS 17.0, *) {
+            if let hdrImage = CIImage(data: imageData, options: [
+                .applyOrientationProperty: true,
+                .expandToHDR: true
+            ]) {
+                if let overlay = textOverlay {
+                    hdrWithText = overlay.composited(over: hdrImage)
+                } else {
+                    hdrWithText = hdrImage
+                }
             }
         }
 
-        return result
+        // 5. HEIF形式で出力（両方のレイヤーを渡す）
+        return saveAsHEIFData(sdrImage: sdrWithText, hdrImage: hdrWithText)
     }
 
-    /// 画像のOrientationを正規化（回転を適用した状態にする）
-    private static func normalizeOrientation(_ image: UIImage) -> UIImage {
-        guard image.imageOrientation != .up else { return image }
-
+    /// テキストオーバーレイ画像を作成
+    private static func createTextOverlay(size: CGSize, record: RunningRecord) -> CIImage? {
         let format = UIGraphicsImageRendererFormat()
-        format.scale = image.scale
-        format.preferredRange = .extended  // HDR保持
+        format.preferredRange = .extended
+        format.scale = 1.0
+        format.opaque = false
 
-        let renderer = UIGraphicsImageRenderer(size: image.size, format: format)
-        return renderer.image { _ in
-            image.draw(at: .zero)
+        let renderer = UIGraphicsImageRenderer(size: size, format: format)
+        let textUIImage = renderer.image { _ in
+            drawTextOverlay(width: size.width, height: size.height, record: record)
+        }
+
+        return CIImage(image: textUIImage)
+    }
+
+    /// HEIF形式のDataを生成（HDR対応 - ファイル経由）
+    private static func saveAsHEIFData(sdrImage: CIImage, hdrImage: CIImage?) -> Data? {
+        let context = CIContext()
+        guard let colorSpace = CGColorSpace(name: CGColorSpace.displayP3) else {
+            return nil
+        }
+
+        // 一時ファイルに書き出し（writeHEIFRepresentationを使用）
+        let tempURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension("heic")
+
+        defer {
+            try? FileManager.default.removeItem(at: tempURL)
+        }
+
+        // iOS 17+: HDR参照を設定するとCore ImageがGain Mapを再計算
+        var options: [CIImageRepresentationOption: Any] = [:]
+        if #available(iOS 17.0, *), let hdr = hdrImage {
+            options[.hdrImage] = hdr
+        }
+
+        // HDR用に10bitフォーマットを使用（アルファなし）
+        let format: CIFormat = .RGB10
+
+        do {
+            // writeHEIFRepresentationでファイルに直接書き出し
+            try context.writeHEIFRepresentation(
+                of: sdrImage,
+                to: tempURL,
+                format: format,
+                colorSpace: colorSpace,
+                options: options
+            )
+
+            // ファイルからDataを読み込んで返す（UIImageに変換しない）
+            return try Data(contentsOf: tempURL)
+        } catch {
+            print("HEIF write error: \(error)")
+
+            // フォールバック: オプションなしで再試行
+            do {
+                try context.writeHEIFRepresentation(
+                    of: sdrImage,
+                    to: tempURL,
+                    format: format,
+                    colorSpace: colorSpace,
+                    options: [:]
+                )
+                return try Data(contentsOf: tempURL)
+            } catch {
+                return nil
+            }
         }
     }
 
-    private static func drawOutlinedText(_ text: String, at point: CGPoint, font: UIFont, width: CGFloat) {
-        let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.alignment = .right
+    /// テキストオーバーレイを描画
+    private static func drawTextOverlay(width: CGFloat, height: CGFloat, record: RunningRecord) {
+        let overlayHeight = height / 3.0
+        let baseFontSize = overlayHeight / 10.0
+        let lineHeight = baseFontSize * 1.4
+        let padding = baseFontSize * 0.8
 
+        let dateFont = UIFont.systemFont(ofSize: baseFontSize * 0.7, weight: .medium)
+        let valueFont = UIFont.systemFont(ofSize: baseFontSize, weight: .semibold)
+
+        var yOffset = height - padding
+
+        var lines: [(String, UIFont)] = []
+
+        if let cal = record.formattedCalories {
+            lines.append((cal, valueFont))
+        }
+        if let steps = record.formattedStepCount {
+            lines.append((steps, valueFont))
+        }
+        if let hr = record.formattedAverageHeartRate {
+            lines.append((hr, valueFont))
+        }
+        lines.append((record.formattedPace, valueFont))
+        lines.append((record.formattedDuration, valueFont))
+        lines.append((record.formattedDistance, valueFont))
+
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy/M/d HH:mm"
+        dateFormatter.locale = Locale(identifier: "ja_JP")
+        lines.append((dateFormatter.string(from: record.date), dateFont))
+
+        for (text, font) in lines {
+            yOffset -= lineHeight
+            let x = width - padding
+            drawOutlinedText(text, at: CGPoint(x: x, y: yOffset), font: font)
+        }
+    }
+
+    private static func drawOutlinedText(_ text: String, at point: CGPoint, font: UIFont) {
         let strokeAttributes: [NSAttributedString.Key: Any] = [
             .font: font,
-            .foregroundColor: UIColor.black,
-            .paragraphStyle: paragraphStyle
+            .foregroundColor: UIColor.black
         ]
-
         let fillAttributes: [NSAttributedString.Key: Any] = [
             .font: font,
-            .foregroundColor: UIColor.white,
-            .paragraphStyle: paragraphStyle
+            .foregroundColor: UIColor.white
         ]
 
         let textSize = (text as NSString).size(withAttributes: fillAttributes)
         let drawPoint = CGPoint(x: point.x - textSize.width, y: point.y)
 
-        // 縁取り（複数方向にオフセットして描画）
         let outlineWidth: CGFloat = max(2, font.pointSize * 0.05)
         let offsets: [CGPoint] = [
             CGPoint(x: -outlineWidth, y: -outlineWidth),
@@ -512,41 +624,26 @@ enum ImageComposer {
             let offsetPoint = CGPoint(x: drawPoint.x + offset.x, y: drawPoint.y + offset.y)
             (text as NSString).draw(at: offsetPoint, withAttributes: strokeAttributes)
         }
-
-        // 白文字
         (text as NSString).draw(at: drawPoint, withAttributes: fillAttributes)
     }
 }
 
-// MARK: - Transferable Image
+// MARK: - Transferable Image (HDR対応)
 
 struct TransferableImage: Transferable {
-    let image: UIImage
+    let data: Data
 
     static var transferRepresentation: some TransferRepresentation {
         DataRepresentation(importedContentType: .image) { data in
-            guard let image = UIImage(data: data) else {
-                throw TransferError.importFailed
-            }
-            return TransferableImage(image: image)
+            // 生データを保持（HDR情報を失わないため）
+            // OrientationはCIImageが.applyOrientationPropertyで自動処理
+            TransferableImage(data: data)
         }
     }
 
     enum TransferError: Error {
         case importFailed
     }
-}
-
-// MARK: - Share Sheet
-
-struct ShareSheet: UIViewControllerRepresentable {
-    let items: [Any]
-
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: items, applicationActivities: nil)
-    }
-
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 // MARK: - Kilometer Point
