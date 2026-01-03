@@ -22,14 +22,13 @@
             "solid" : "extended-gray:1.00000,1.00000"
           },
           "glass" : true,
-          "image-name" : "runner 3.png",
-          "name" : "friend",
-          "opacity" : 0.9,
+          "image-name" : "runner.png",
+          "name" : "runner",
           "position" : {
-            "scale" : 0.8,
+            "scale" : 1,
             "translation-in-points" : [
-              -206.9578216866613,
-              -110.50938508838044
+              139.66437632010457,
+              41.6484375
             ]
           }
         },
@@ -39,13 +38,13 @@
           },
           "glass" : true,
           "image-name" : "runner 3.png",
-          "name" : "runner",
+          "name" : "friend",
           "opacity" : 0.9,
           "position" : {
-            "scale" : 1,
+            "scale" : 0.8,
             "translation-in-points" : [
-              164.1643763201045,
-              30.094071293713682
+              -191.7781341866613,
+              -125.53282258838044
             ]
           }
         }
