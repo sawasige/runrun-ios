@@ -198,7 +198,7 @@ struct RunDetailView: View {
     private var mapPreview: some View {
         Map(position: $mapCameraPosition) {
             MapPolyline(coordinates: routeCoordinates)
-                .stroke(.blue, lineWidth: 4)
+                .stroke(Color.accentColor, lineWidth: 4)
         }
         .frame(height: 250)
         .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -679,7 +679,7 @@ struct FullScreenMapView: View {
             Map(position: $cameraPosition) {
                 // ルートライン
                 MapPolyline(coordinates: coordinates)
-                    .stroke(.blue, lineWidth: 5)
+                    .stroke(Color.accentColor, lineWidth: 5)
 
                 // スタート地点
                 if let start = startCoordinate {

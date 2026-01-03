@@ -48,14 +48,14 @@ struct WeeklyStatsView: View {
                 x: .value("週", stat.weekStartDate, unit: .weekOfYear),
                 y: .value("距離", stat.totalDistanceInKilometers)
             )
-            .foregroundStyle(.blue)
+            .foregroundStyle(Color.accentColor)
             .symbol(.circle)
 
             AreaMark(
                 x: .value("週", stat.weekStartDate, unit: .weekOfYear),
                 y: .value("距離", stat.totalDistanceInKilometers)
             )
-            .foregroundStyle(.blue.opacity(0.1))
+            .foregroundStyle(Color.accentColor.opacity(0.1))
         }
         .chartYAxisLabel("km")
         .chartXAxis {

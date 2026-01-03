@@ -13,7 +13,7 @@ struct LoginView: View {
             VStack(spacing: 16) {
                 Image(systemName: "figure.run.circle.fill")
                     .font(.system(size: 80))
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(Color.accentColor)
 
                 Text("RunRun")
                     .font(.largeTitle)

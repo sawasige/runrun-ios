@@ -61,7 +61,7 @@ struct ProfileEditView: View {
                                 Image(systemName: icon)
                                     .font(.title2)
                                     .frame(width: 44, height: 44)
-                                    .background(selectedIcon == icon ? Color.blue : Color.gray.opacity(0.2))
+                                    .background(selectedIcon == icon ? Color.accentColor : Color.gray.opacity(0.2))
                                     .foregroundStyle(selectedIcon == icon ? .white : .primary)
                                     .clipShape(Circle())
                             }
@@ -140,7 +140,7 @@ struct ProfileEditView: View {
             Image(systemName: selectedIcon)
                 .font(.system(size: 40))
                 .frame(width: 100, height: 100)
-                .background(Color.blue)
+                .background(Color.accentColor)
                 .foregroundStyle(.white)
                 .clipShape(Circle())
         }

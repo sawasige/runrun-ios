@@ -5,9 +5,10 @@ struct SyncProgressView: View {
 
     var body: some View {
         VStack(spacing: 32) {
-            Image(systemName: "figure.run")
-                .font(.system(size: 60))
-                .foregroundStyle(.blue)
+            Image("Logo")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 80)
 
             VStack(spacing: 16) {
                 ProgressView(value: syncService.phase.progress)
