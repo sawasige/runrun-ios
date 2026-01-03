@@ -17,7 +17,6 @@ struct RunDetailView: View {
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var showExportPreview = false
     @State private var exportImageData: Data?
-    @Namespace private var mapAnimation
 
     private let healthKitService = HealthKitService()
 
@@ -43,12 +42,24 @@ struct RunDetailView: View {
             // 地図セクション
             if !routeCoordinates.isEmpty {
                 Section {
-                    mapPreview
-                        .onTapGesture {
-                            withAnimation(.spring(duration: 0.4)) {
-                                showFullScreenMap = true
-                            }
+                    ZStack(alignment: .bottomTrailing) {
+                        mapContent(isExpanded: false)
+                            .allowsHitTesting(false)
+
+                        Button {
+                            showFullScreenMap = true
+                        } label: {
+                            Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                .font(.caption)
+                                .padding(8)
+                                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
                         }
+                        .padding(8)
+                    }
+                    .frame(height: 250)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
                 }
             } else if isLoadingRoute {
                 Section {
@@ -147,6 +158,13 @@ struct RunDetailView: View {
                 }
             }
         }
+        .fullScreenCover(isPresented: $showFullScreenMap) {
+            FullScreenMapView(
+                routeCoordinates: routeCoordinates,
+                kilometerPoints: calculateKilometerPoints(),
+                cameraPosition: mapCameraPosition
+            )
+        }
         .photosPicker(
             isPresented: $showPhotoPicker,
             selection: $selectedPhotoItem,
@@ -160,12 +178,6 @@ struct RunDetailView: View {
         }
         .task {
             await loadRouteData()
-        }
-        .fullScreenCover(isPresented: $showFullScreenMap) {
-            FullScreenMapView(
-                locations: routeLocations,
-                kilometerPoints: calculateKilometerPoints()
-            )
         }
         .fullScreenCover(isPresented: $showExportPreview) {
             if let imageData = exportImageData {
@@ -195,22 +207,59 @@ struct RunDetailView: View {
         selectedPhotoItem = nil
     }
 
-    private var mapPreview: some View {
+    /// マップコンテンツ（縮小時・拡大時で共通のMap）
+    @ViewBuilder
+    private func mapContent(isExpanded: Bool) -> some View {
         Map(position: $mapCameraPosition) {
             MapPolyline(coordinates: routeCoordinates)
-                .stroke(Color.accentColor, lineWidth: 4)
+                .stroke(Color.accentColor, lineWidth: isExpanded ? 5 : 4)
+
+            // 拡大時のみマーカーを表示
+            if isExpanded {
+                // スタート地点
+                if let start = routeCoordinates.first {
+                    Annotation("スタート", coordinate: start) {
+                        ZStack {
+                            Circle()
+                                .fill(.green)
+                                .frame(width: 32, height: 32)
+                            Image(systemName: "flag.fill")
+                                .font(.system(size: 16))
+                                .foregroundStyle(.white)
+                        }
+                    }
+                }
+
+                // ゴール地点
+                if let goal = routeCoordinates.last {
+                    Annotation("ゴール", coordinate: goal) {
+                        ZStack {
+                            Circle()
+                                .fill(.red)
+                                .frame(width: 32, height: 32)
+                            Image(systemName: "flag.checkered")
+                                .font(.system(size: 16))
+                                .foregroundStyle(.white)
+                        }
+                    }
+                }
+
+                // 1kmごとのマーカー
+                ForEach(calculateKilometerPoints()) { point in
+                    Annotation("\(point.kilometer)km", coordinate: point.coordinate) {
+                        ZStack {
+                            Circle()
+                                .fill(.orange)
+                                .frame(width: 28, height: 28)
+                            Text("\(point.kilometer)")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundStyle(.white)
+                        }
+                    }
+                }
+            }
         }
-        .frame(height: 250)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay(alignment: .bottomTrailing) {
-            Image(systemName: "arrow.up.left.and.arrow.down.right")
-                .font(.caption)
-                .padding(8)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
-                .padding(8)
-        }
-        .listRowInsets(EdgeInsets())
-        .listRowBackground(Color.clear)
+        .mapStyle(.standard(elevation: .realistic))
     }
 
     private func loadRouteData() async {
@@ -657,123 +706,83 @@ struct KilometerPoint: Identifiable {
 // MARK: - Full Screen Map View
 
 struct FullScreenMapView: View {
-    let locations: [CLLocation]
+    let routeCoordinates: [CLLocationCoordinate2D]
     let kilometerPoints: [KilometerPoint]
+    let cameraPosition: MapCameraPosition
+
     @Environment(\.dismiss) private var dismiss
-    @State private var cameraPosition: MapCameraPosition = .automatic
-
-    private var coordinates: [CLLocationCoordinate2D] {
-        locations.map { $0.coordinate }
-    }
-
-    private var startCoordinate: CLLocationCoordinate2D? {
-        coordinates.first
-    }
-
-    private var goalCoordinate: CLLocationCoordinate2D? {
-        coordinates.last
-    }
+    @State private var localCameraPosition: MapCameraPosition = .automatic
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            Map(position: $cameraPosition) {
-                // ルートライン
-                MapPolyline(coordinates: coordinates)
-                    .stroke(Color.accentColor, lineWidth: 5)
+        GeometryReader { geometry in
+            ZStack(alignment: .topLeading) {
+                Map(position: $localCameraPosition) {
+                    MapPolyline(coordinates: routeCoordinates)
+                        .stroke(Color.accentColor, lineWidth: 5)
 
-                // スタート地点
-                if let start = startCoordinate {
-                    Annotation("スタート", coordinate: start) {
-                        ZStack {
-                            Circle()
-                                .fill(.green)
-                                .frame(width: 32, height: 32)
-                            Image(systemName: "flag.fill")
-                                .font(.system(size: 16))
-                                .foregroundStyle(.white)
+                    // スタート地点
+                    if let start = routeCoordinates.first {
+                        Annotation("スタート", coordinate: start) {
+                            ZStack {
+                                Circle()
+                                    .fill(.green)
+                                    .frame(width: 32, height: 32)
+                                Image(systemName: "flag.fill")
+                                    .font(.system(size: 16))
+                                    .foregroundStyle(.white)
+                            }
+                        }
+                    }
+
+                    // ゴール地点
+                    if let goal = routeCoordinates.last {
+                        Annotation("ゴール", coordinate: goal) {
+                            ZStack {
+                                Circle()
+                                    .fill(.red)
+                                    .frame(width: 32, height: 32)
+                                Image(systemName: "flag.checkered")
+                                    .font(.system(size: 16))
+                                    .foregroundStyle(.white)
+                            }
+                        }
+                    }
+
+                    // 1kmごとのマーカー
+                    ForEach(kilometerPoints) { point in
+                        Annotation("\(point.kilometer)km", coordinate: point.coordinate) {
+                            ZStack {
+                                Circle()
+                                    .fill(.orange)
+                                    .frame(width: 28, height: 28)
+                                Text("\(point.kilometer)")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundStyle(.white)
+                            }
                         }
                     }
                 }
+                .mapStyle(.standard(elevation: .realistic))
+                .ignoresSafeArea(edges: [.horizontal, .top])
+                .safeAreaPadding(.bottom, geometry.safeAreaInsets.bottom)
 
-                // ゴール地点
-                if let goal = goalCoordinate {
-                    Annotation("ゴール", coordinate: goal) {
-                        ZStack {
-                            Circle()
-                                .fill(.red)
-                                .frame(width: 32, height: 32)
-                            Image(systemName: "flag.checkered")
-                                .font(.system(size: 16))
-                                .foregroundStyle(.white)
-                        }
-                    }
+                // 閉じるボタン
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                        .frame(width: 36, height: 36)
+                        .background(.ultraThinMaterial, in: Circle())
                 }
-
-                // 1kmごとのマーカー
-                ForEach(kilometerPoints) { point in
-                    Annotation("\(point.kilometer)km", coordinate: point.coordinate) {
-                        ZStack {
-                            Circle()
-                                .fill(.orange)
-                                .frame(width: 28, height: 28)
-                            Text("\(point.kilometer)")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundStyle(.white)
-                        }
-                    }
-                }
+                .padding(.top, geometry.safeAreaInsets.top + 8)
+                .padding(.leading, 16)
             }
-            .mapStyle(.standard(elevation: .realistic))
-            .ignoresSafeArea()
-
-            // 閉じるボタン
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.headline)
-                    .foregroundStyle(.primary)
-                    .frame(width: 36, height: 36)
-                    .background(.ultraThinMaterial, in: Circle())
-            }
-            .padding()
         }
         .onAppear {
-            if let region = regionToFitCoordinates(coordinates) {
-                cameraPosition = .region(region)
-            }
+            localCameraPosition = cameraPosition
         }
-    }
-
-    private func regionToFitCoordinates(_ coordinates: [CLLocationCoordinate2D]) -> MKCoordinateRegion? {
-        guard !coordinates.isEmpty else { return nil }
-
-        var minLat = coordinates[0].latitude
-        var maxLat = coordinates[0].latitude
-        var minLon = coordinates[0].longitude
-        var maxLon = coordinates[0].longitude
-
-        for coord in coordinates {
-            minLat = min(minLat, coord.latitude)
-            maxLat = max(maxLat, coord.latitude)
-            minLon = min(minLon, coord.longitude)
-            maxLon = max(maxLon, coord.longitude)
-        }
-
-        let center = CLLocationCoordinate2D(
-            latitude: (minLat + maxLat) / 2,
-            longitude: (minLon + maxLon) / 2
-        )
-
-        let latDelta = (maxLat - minLat) * 1.3
-        let lonDelta = (maxLon - minLon) * 1.3
-
-        let span = MKCoordinateSpan(
-            latitudeDelta: max(latDelta, 0.005),
-            longitudeDelta: max(lonDelta, 0.005)
-        )
-
-        return MKCoordinateRegion(center: center, span: span)
     }
 }
 
