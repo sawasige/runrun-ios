@@ -42,6 +42,19 @@ jobs:
             -authenticationKeyID ${{ secrets.ASC_KEY_ID }} \
             -authenticationKeyIssuerID ${{ secrets.ASC_ISSUER_ID }}
 
+      - name: Upload dSYMs to Crashlytics
+        run: |
+          DSYM_PATH="$RUNNER_TEMP/RunRun.xcarchive/dSYMs/RunRun.app.dSYM"
+          UPLOAD_SYMBOLS=$(find ~/Library/Developer/Xcode/DerivedData -name "upload-symbols" -type f 2>/dev/null | head -1)
+          if [ -z "$UPLOAD_SYMBOLS" ]; then
+            UPLOAD_SYMBOLS=$(find $RUNNER_TEMP -name "upload-symbols" -type f 2>/dev/null | head -1)
+          fi
+          if [ -n "$UPLOAD_SYMBOLS" ] && [ -d "$DSYM_PATH" ]; then
+            "$UPLOAD_SYMBOLS" -gsp RunRun/GoogleService-Info.plist -p ios "$DSYM_PATH"
+          else
+            echo "Warning: upload-symbols not found or dSYM missing, skipping upload"
+          fi
+
       - name: Export IPA
         run: |
           cat > $RUNNER_TEMP/ExportOptions.plist << EOF

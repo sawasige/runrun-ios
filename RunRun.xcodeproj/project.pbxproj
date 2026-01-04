@@ -294,7 +294,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\n";
+			shellScript = "# CI環境ではworkflowで別途アップロードするためスキップ\nif [ \"$CI\" = \"true\" ]; then\n  echo \"Skipping dSYM upload in CI (handled by workflow)\"\n  exit 0\nfi\n\n\"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
