@@ -446,6 +446,7 @@
 				DEVELOPMENT_TEAM = U9296HT99T;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "ランニングの記録を表示するためにヘルスケアデータへのアクセスが必要です。";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "ランニングの記録をヘルスケアに保存するために使用します。";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "ランニングの記録を写真に保存するために使用します。";
@@ -483,6 +484,7 @@
 				DEVELOPMENT_TEAM = U9296HT99T;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "ランニングの記録を表示するためにヘルスケアデータへのアクセスが必要です。";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "ランニングの記録をヘルスケアに保存するために使用します。";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "ランニングの記録を写真に保存するために使用します。";
