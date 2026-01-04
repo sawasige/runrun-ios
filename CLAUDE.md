@@ -127,3 +127,14 @@ gh pr merge <PR番号> --merge --delete-branch
 ### コミット・PR作成時のルール
 - コミットメッセージは日本語で書く
 - PRのタイトル・本文も日本語で書く
+
+### リリース（GitHub Actions）
+タグをプッシュするとGitHub ActionsがTestFlightに自動アップロードする:
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+- ビルド番号は `run_number` で自動インクリメント
+- App Store Connect APIで自動署名（証明書のエクスポート不要）
+- 必要なSecrets: `ASC_ISSUER_ID`, `ASC_KEY_ID`, `ASC_PRIVATE_KEY`
