@@ -6,6 +6,7 @@
 *.xcworkspace/*
 !*.xcworkspace/contents.xcworkspacedata
 !*.xcworkspace/xcshareddata/
+!*.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
 xcuserdata/
 *.xccheckout
 *.moved-aside
@@ -29,7 +30,7 @@ Carthage/Build/
 # Swift Package Manager
 .build/
 .swiftpm/
-Package.resolved
+# Package.resolved は CI とローカルでバージョンを統一するためコミットする
 
 # fastlane
 fastlane/report.xml
@@ -54,5 +55,4 @@ iOSInjectionProject/
 # Secrets
 *.xcconfig
 !*.xcconfig.template
-GoogleService-Info.plist
-RunRun/GoogleService-Info.plist
+# GoogleService-Info.plist は Firebase 設定に必要なためコミットする
