@@ -4,6 +4,7 @@ import Charts
 struct MonthDetailView: View {
     @StateObject private var viewModel: MonthDetailViewModel
     let userProfile: UserProfile?
+    @State private var selectedCalendarRecord: RunningRecord?
 
     init(userId: String, year: Int, month: Int) {
         self.userProfile = nil
@@ -59,6 +60,16 @@ struct MonthDetailView: View {
                 }
             }
 
+            // カレンダー
+            Section {
+                RunCalendarView(
+                    year: viewModel.year,
+                    month: viewModel.month,
+                    records: viewModel.records,
+                    selectedRecord: $selectedCalendarRecord
+                )
+            }
+
             // 日別グラフ
             Section {
                 dailyChart
@@ -89,6 +100,9 @@ struct MonthDetailView: View {
                 }
             }
         }
+        .navigationDestination(item: $selectedCalendarRecord) { record in
+            RunDetailView(record: record, isOwnRecord: userProfile == nil, userProfile: userProfile)
+        }
     }
 
     private var dailyChart: some View {
@@ -105,7 +119,7 @@ struct MonthDetailView: View {
         }
         .chartXScale(domain: startOfMonth...endOfMonth)
         .chartXAxis {
-            AxisMarks(values: .stride(by: .day, count: 7)) { value in
+            AxisMarks(values: .stride(by: .day, count: 7)) { _ in
                 AxisGridLine()
                 AxisValueLabel(format: .dateTime.day())
             }

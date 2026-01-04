@@ -1,6 +1,6 @@
 import Foundation
 
-struct RunningRecord: Identifiable, Equatable {
+struct RunningRecord: Identifiable, Equatable, Hashable {
     let id: UUID
     let date: Date
     let distanceInMeters: Double
