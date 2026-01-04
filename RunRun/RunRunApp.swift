@@ -1,5 +1,6 @@
 import SwiftUI
 import FirebaseCore
+import FirebaseCrashlytics
 
 @main
 struct RunRunApp: App {
@@ -7,6 +8,7 @@ struct RunRunApp: App {
 
     init() {
         FirebaseApp.configure()
+        Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(true)
         _authService = StateObject(wrappedValue: AuthenticationService())
     }
 
