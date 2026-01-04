@@ -35,6 +35,7 @@ jobs:
           xcodebuild archive \
             -project RunRun.xcodeproj \
             -scheme RunRun \
+            -configuration Release \
             -archivePath $RUNNER_TEMP/RunRun.xcarchive \
             -destination "generic/platform=iOS" \
             -allowProvisioningUpdates \
