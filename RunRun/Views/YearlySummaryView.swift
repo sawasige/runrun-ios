@@ -4,6 +4,7 @@ import Charts
 struct YearlySummaryView: View {
     let year: Int
     let monthlyStats: [MonthlyRunningStats]
+    var userProfile: UserProfile?
 
     private var totalDistance: Double {
         monthlyStats.reduce(0) { $0 + $1.totalDistanceInKilometers }
@@ -60,6 +61,22 @@ struct YearlySummaryView: View {
 
     var body: some View {
         List {
+            // ユーザー情報セクション（他人の記録の場合）
+            if let user = userProfile {
+                Section {
+                    NavigationLink {
+                        ProfileView(user: user)
+                    } label: {
+                        HStack(spacing: 12) {
+                            ProfileAvatarView(user: user, size: 40)
+                            Text(user.displayName)
+                                .font(.headline)
+                            Spacer()
+                        }
+                    }
+                }
+            }
+
             // 年間チャート
             Section {
                 yearlyChart
@@ -97,6 +114,17 @@ struct YearlySummaryView: View {
             }
         }
         .navigationTitle(String(year) + "年サマリー")
+        .toolbar {
+            if let user = userProfile {
+                ToolbarItem(placement: .primaryAction) {
+                    NavigationLink {
+                        ProfileView(user: user)
+                    } label: {
+                        Image(systemName: "person.circle")
+                    }
+                }
+            }
+        }
     }
 
     private var yearlyChart: some View {

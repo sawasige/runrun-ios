@@ -50,6 +50,17 @@ struct MonthlyRunningView: View {
                 }
             }
             .navigationTitle(navigationTitle)
+            .toolbar {
+                if let user = userProfile {
+                    ToolbarItem(placement: .primaryAction) {
+                        NavigationLink {
+                            ProfileView(user: user)
+                        } label: {
+                            Image(systemName: "person.circle")
+                        }
+                    }
+                }
+            }
             .task {
                 await viewModel.onAppear()
             }
@@ -125,6 +136,22 @@ struct MonthlyRunningView: View {
 
     private var statsListView: some View {
         List {
+            // ユーザー情報セクション（他人の記録の場合）
+            if let user = userProfile {
+                Section {
+                    NavigationLink {
+                        ProfileView(user: user)
+                    } label: {
+                        HStack(spacing: 12) {
+                            ProfileAvatarView(user: user, size: 40)
+                            Text(user.displayName)
+                                .font(.headline)
+                            Spacer()
+                        }
+                    }
+                }
+            }
+
             Section {
                 monthlyChart
                     .frame(height: 200)
@@ -132,7 +159,7 @@ struct MonthlyRunningView: View {
 
             Section("年間サマリー") {
                 NavigationLink {
-                    YearlySummaryView(year: viewModel.selectedYear, monthlyStats: viewModel.monthlyStats)
+                    YearlySummaryView(year: viewModel.selectedYear, monthlyStats: viewModel.monthlyStats, userProfile: userProfile)
                 } label: {
                     HStack {
                         Label("詳細を見る", systemImage: "chart.bar.doc.horizontal")
@@ -145,7 +172,7 @@ struct MonthlyRunningView: View {
 
             Section("週間推移") {
                 NavigationLink {
-                    WeeklyStatsView()
+                    WeeklyStatsView(userId: viewModel.userId, userProfile: userProfile)
                 } label: {
                     Label("過去12週間の推移", systemImage: "chart.line.uptrend.xyaxis")
                 }
@@ -154,7 +181,11 @@ struct MonthlyRunningView: View {
             Section("月別記録") {
                 ForEach(filteredMonthlyStats.reversed()) { stats in
                     NavigationLink {
-                        MonthDetailView(userId: viewModel.userId, year: stats.year, month: stats.month)
+                        if let user = userProfile {
+                            MonthDetailView(user: user, year: stats.year, month: stats.month)
+                        } else {
+                            MonthDetailView(userId: viewModel.userId, year: stats.year, month: stats.month)
+                        }
                     } label: {
                         MonthlyStatsRow(stats: stats)
                     }

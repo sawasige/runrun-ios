@@ -8,6 +8,7 @@ import Charts
 struct RunDetailView: View {
     let record: RunningRecord
     var isOwnRecord: Bool = true
+    var userProfile: UserProfile?
 
     @State private var routeLocations: [CLLocation] = []
     @State private var splits: [Split] = []
@@ -71,6 +72,22 @@ struct RunDetailView: View {
                         ProgressView()
                             .padding()
                         Spacer()
+                    }
+                }
+            }
+
+            // ユーザー情報セクション（他人の記録の場合）
+            if let user = userProfile {
+                Section {
+                    NavigationLink {
+                        ProfileView(user: user)
+                    } label: {
+                        HStack(spacing: 12) {
+                            ProfileAvatarView(user: user, size: 40)
+                            Text(user.displayName)
+                                .font(.headline)
+                            Spacer()
+                        }
                     }
                 }
             }
@@ -175,7 +192,15 @@ struct RunDetailView: View {
         .navigationTitle("ランニング詳細")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            if isOwnRecord {
+            if let user = userProfile {
+                ToolbarItem(placement: .primaryAction) {
+                    NavigationLink {
+                        ProfileView(user: user)
+                    } label: {
+                        Image(systemName: "person.circle")
+                    }
+                }
+            } else if isOwnRecord {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         showPhotoPicker = true
