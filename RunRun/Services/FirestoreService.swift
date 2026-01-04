@@ -12,7 +12,7 @@ private extension Array {
 
 final class FirestoreService {
     static let shared = FirestoreService()
-    private let db = Firestore.firestore()
+    private lazy var db: Firestore = Firestore.firestore()
 
     private init() {}
 
