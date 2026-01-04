@@ -89,6 +89,10 @@ struct SettingsView: View {
                         Task { await createDummyData() }
                     }
 
+                    Button("Crashlyticsテスト", role: .destructive) {
+                        fatalError("Crashlytics test crash")
+                    }
+
                     if let message = debugMessage {
                         Text(message)
                             .font(.caption)
