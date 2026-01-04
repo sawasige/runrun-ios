@@ -18,7 +18,7 @@ struct ContentView: View {
                     TabView {
                         TimelineView(userId: userId)
                             .tabItem {
-                                Label("タイムライン", systemImage: "list.bullet")
+                                Label("ホーム", systemImage: "house")
                             }
 
                         MonthlyRunningView(userId: userId)
