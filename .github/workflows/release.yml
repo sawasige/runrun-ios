@@ -38,8 +38,12 @@ jobs:
             -configuration Release \
             -archivePath $RUNNER_TEMP/RunRun.xcarchive \
             -destination "generic/platform=iOS" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8 \
+            -authenticationKeyID ${{ secrets.ASC_KEY_ID }} \
+            -authenticationKeyIssuerID ${{ secrets.ASC_ISSUER_ID }} \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution"
 
       - name: Upload dSYMs to Crashlytics
         run: |
@@ -66,7 +70,7 @@ jobs:
               <key>destination</key>
               <string>upload</string>
               <key>signingStyle</key>
-              <string>automatic</string>
+              <string>manual</string>
               <key>signingCertificate</key>
               <string>Apple Distribution</string>
           </dict>
