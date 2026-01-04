@@ -63,6 +63,16 @@ struct TimelineRun: Identifiable {
             stepCount: stepCount
         )
     }
+
+    func toUserProfile() -> UserProfile {
+        UserProfile(
+            id: userId,
+            displayName: displayName,
+            email: nil,
+            iconName: iconName,
+            avatarURL: avatarURL
+        )
+    }
 }
 
 struct TimelineDayGroup: Identifiable {
