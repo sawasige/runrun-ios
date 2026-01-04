@@ -216,6 +216,69 @@ final class HealthKitService: Sendable {
         }
     }
 
+    /// ワークアウト中の心拍数サンプルを時系列で取得
+    func fetchHeartRateSamples(for workout: HKWorkout) async -> [HeartRateSample] {
+        let heartRateType = HKQuantityType(.heartRate)
+        let predicate = HKQuery.predicateForSamples(
+            withStart: workout.startDate,
+            end: workout.endDate,
+            options: .strictStartDate
+        )
+        let sortDescriptor = NSSortDescriptor(
+            key: HKSampleSortIdentifierStartDate,
+            ascending: true
+        )
+
+        return await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: heartRateType,
+                predicate: predicate,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: [sortDescriptor]
+            ) { _, samples, _ in
+                guard let samples = samples as? [HKQuantitySample] else {
+                    continuation.resume(returning: [])
+                    return
+                }
+
+                let bpmUnit = HKUnit.count().unitDivided(by: .minute())
+                let workoutStart = workout.startDate
+
+                let hrSamples = samples.map { sample in
+                    var hrSample = HeartRateSample(
+                        timestamp: sample.startDate,
+                        bpm: sample.quantity.doubleValue(for: bpmUnit)
+                    )
+                    hrSample.elapsedSeconds = sample.startDate.timeIntervalSince(workoutStart)
+                    return hrSample
+                }
+
+                continuation.resume(returning: hrSamples)
+            }
+            healthStore.execute(query)
+        }
+    }
+
+    /// 指定した時間範囲の心拍数統計を計算
+    func calculateHeartRateStats(
+        samples: [HeartRateSample],
+        from startTime: Date,
+        to endTime: Date
+    ) -> (avg: Double?, max: Double?, min: Double?) {
+        let filteredSamples = samples.filter {
+            $0.timestamp >= startTime && $0.timestamp <= endTime
+        }
+
+        guard !filteredSamples.isEmpty else { return (nil, nil, nil) }
+
+        let bpms = filteredSamples.map { $0.bpm }
+        let avg = bpms.reduce(0, +) / Double(bpms.count)
+        let max = bpms.max()
+        let min = bpms.min()
+
+        return (avg, max, min)
+    }
+
     private func fetchStepCount(for workout: HKWorkout) async -> Int? {
         let stepType = HKQuantityType(.stepCount)
         let predicate = HKQuery.predicateForSamples(
@@ -359,7 +422,9 @@ final class HealthKitService: Sendable {
                 splits.append(Split(
                     kilometer: currentKm,
                     durationSeconds: duration,
-                    distanceMeters: accumulatedDistance
+                    distanceMeters: accumulatedDistance,
+                    startTime: startTime,
+                    endTime: endTime
                 ))
 
                 currentKm += 1
@@ -377,10 +442,90 @@ final class HealthKitService: Sendable {
             splits.append(Split(
                 kilometer: currentKm,
                 durationSeconds: duration,
-                distanceMeters: accumulatedDistance
+                distanceMeters: accumulatedDistance,
+                startTime: startTime,
+                endTime: endTime
             ))
         }
 
         return splits
+    }
+
+    /// スプリットに心拍数データを付加
+    func enrichSplitsWithHeartRate(
+        splits: [Split],
+        heartRateSamples: [HeartRateSample]
+    ) -> [Split] {
+        return splits.map { split in
+            var enrichedSplit = split
+
+            if let start = split.startTime, let end = split.endTime {
+                let stats = calculateHeartRateStats(
+                    samples: heartRateSamples,
+                    from: start,
+                    to: end
+                )
+                enrichedSplit.averageHeartRate = stats.avg
+                enrichedSplit.maxHeartRate = stats.max
+                enrichedSplit.minHeartRate = stats.min
+            }
+
+            return enrichedSplit
+        }
+    }
+
+    // MARK: - Route Segments
+
+    /// GPSロケーションからペース別にセグメント分割
+    func calculateRouteSegments(
+        from locations: [CLLocation],
+        segmentDistance: Double = 100
+    ) -> [RouteSegment] {
+        guard locations.count >= 2 else { return [] }
+
+        var segments: [RouteSegment] = []
+        var currentSegmentCoords: [CLLocationCoordinate2D] = [locations[0].coordinate]
+        var segmentStartIndex = 0
+        var accumulatedDistance: Double = 0
+
+        for i in 1..<locations.count {
+            let distance = locations[i].distance(from: locations[i - 1])
+            accumulatedDistance += distance
+            currentSegmentCoords.append(locations[i].coordinate)
+
+            if accumulatedDistance >= segmentDistance {
+                let startTime = locations[segmentStartIndex].timestamp
+                let endTime = locations[i].timestamp
+                let duration = endTime.timeIntervalSince(startTime)
+
+                // ペース（秒/km）を計算
+                let pacePerKm = duration / (accumulatedDistance / 1000)
+
+                segments.append(RouteSegment(
+                    coordinates: currentSegmentCoords,
+                    pacePerKm: pacePerKm
+                ))
+
+                // 新しいセグメント開始（最後の点を含めて連続性を保つ）
+                currentSegmentCoords = [locations[i].coordinate]
+                segmentStartIndex = i
+                accumulatedDistance = 0
+            }
+        }
+
+        // 最後のセグメントを追加（セグメント距離の半分以上あれば追加）
+        if accumulatedDistance > segmentDistance / 2 && currentSegmentCoords.count >= 2 {
+            let startTime = locations[segmentStartIndex].timestamp
+            let endTime = locations[locations.count - 1].timestamp
+            let duration = endTime.timeIntervalSince(startTime)
+            let pacePerKm = duration / (accumulatedDistance / 1000)
+
+            segments.append(RouteSegment(
+                coordinates: currentSegmentCoords,
+                pacePerKm: pacePerKm
+            ))
+        }
+
+        return segments
     }
 }

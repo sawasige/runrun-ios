@@ -3,6 +3,7 @@ import MapKit
 import CoreLocation
 import HealthKit
 import PhotosUI
+import Charts
 
 struct RunDetailView: View {
     let record: RunningRecord
@@ -10,6 +11,8 @@ struct RunDetailView: View {
 
     @State private var routeLocations: [CLLocation] = []
     @State private var splits: [Split] = []
+    @State private var heartRateSamples: [HeartRateSample] = []
+    @State private var routeSegments: [RouteSegment] = []
     @State private var isLoadingRoute = false
     @State private var mapCameraPosition: MapCameraPosition = .automatic
     @State private var showFullScreenMap = false
@@ -95,16 +98,40 @@ struct RunDetailView: View {
             if !splits.isEmpty {
                 Section("スプリット") {
                     ForEach(splits) { split in
-                        HStack {
-                            Text(split.formattedKilometer)
-                            Spacer()
-                            Text(split.formattedPace)
-                                .fontWeight(.medium)
-                                .monospacedDigit()
-                            Text("/km")
-                                .foregroundStyle(.secondary)
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text(split.formattedKilometer)
+                                Spacer()
+                                Text(split.formattedPace)
+                                    .fontWeight(.medium)
+                                    .monospacedDigit()
+                                Text("/km")
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            // 心拍数行
+                            if let avgHR = split.formattedAverageHeartRate {
+                                HStack(spacing: 12) {
+                                    Label("\(avgHR) bpm", systemImage: "heart.fill")
+                                        .foregroundStyle(.red)
+                                    if let maxHR = split.maxHeartRate {
+                                        Text("max \(Int(maxHR))")
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                                .font(.caption)
+                            }
                         }
+                        .padding(.vertical, 2)
                     }
+                }
+            }
+
+            // 心拍数推移グラフ
+            if !heartRateSamples.isEmpty {
+                Section("心拍数推移") {
+                    HeartRateChartView(samples: heartRateSamples)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                 }
             }
 
@@ -159,8 +186,12 @@ struct RunDetailView: View {
             }
         }
         .fullScreenCover(isPresented: $showFullScreenMap) {
+            let percentiles = pacePercentiles
             FullScreenMapView(
                 routeCoordinates: routeCoordinates,
+                routeSegments: routeSegments,
+                fastPace: percentiles.fast,
+                slowPace: percentiles.slow,
                 kilometerPoints: calculateKilometerPoints(),
                 cameraPosition: mapCameraPosition
             )
@@ -207,12 +238,26 @@ struct RunDetailView: View {
         selectedPhotoItem = nil
     }
 
+    /// ペースのパーセンタイル（10%〜90%）
+    private var pacePercentiles: (fast: TimeInterval, slow: TimeInterval) {
+        RouteSegment.calculatePacePercentiles(from: routeSegments)
+    }
+
     /// マップコンテンツ（縮小時・拡大時で共通のMap）
     @ViewBuilder
     private func mapContent(isExpanded: Bool) -> some View {
         Map(position: $mapCameraPosition) {
-            MapPolyline(coordinates: routeCoordinates)
-                .stroke(Color.accentColor, lineWidth: isExpanded ? 5 : 4)
+            // 縮小時はアクセントカラー一色、拡大時はペース別色分け
+            if isExpanded && !routeSegments.isEmpty {
+                let percentiles = pacePercentiles
+                ForEach(routeSegments) { segment in
+                    MapPolyline(coordinates: segment.coordinates)
+                        .stroke(segment.color(fastPace: percentiles.fast, slowPace: percentiles.slow), lineWidth: 5)
+                }
+            } else {
+                MapPolyline(coordinates: routeCoordinates)
+                    .stroke(Color.accentColor, lineWidth: 4)
+            }
 
             // 拡大時のみマーカーを表示
             if isExpanded {
@@ -269,15 +314,28 @@ struct RunDetailView: View {
         // 該当日のワークアウトを検索
         guard let workout = await findWorkout(for: record.date) else { return }
 
-        // ルートを取得
-        let locations = await healthKitService.fetchWorkoutRoute(for: workout)
+        // ルートと心拍数サンプルを並列取得
+        async let locationsTask = healthKitService.fetchWorkoutRoute(for: workout)
+        async let hrSamplesTask = healthKitService.fetchHeartRateSamples(for: workout)
+
+        let (locations, hrSamples) = await (locationsTask, hrSamplesTask)
+
         guard !locations.isEmpty else { return }
 
         // ロケーション配列を保存
         routeLocations = locations
+        heartRateSamples = hrSamples
 
-        // スプリットを計算
-        splits = healthKitService.calculateSplits(from: locations)
+        // スプリットを計算（心拍数データ付き）
+        var calculatedSplits = healthKitService.calculateSplits(from: locations)
+        calculatedSplits = healthKitService.enrichSplitsWithHeartRate(
+            splits: calculatedSplits,
+            heartRateSamples: hrSamples
+        )
+        splits = calculatedSplits
+
+        // ルートセグメントを計算（ペース別色分け用、10m単位）
+        routeSegments = healthKitService.calculateRouteSegments(from: locations, segmentDistance: 10)
 
         // カメラ位置を設定（ルート全体が表示されるように）
         if let region = regionToFitCoordinates(routeCoordinates) {
@@ -707,6 +765,9 @@ struct KilometerPoint: Identifiable {
 
 struct FullScreenMapView: View {
     let routeCoordinates: [CLLocationCoordinate2D]
+    let routeSegments: [RouteSegment]
+    let fastPace: TimeInterval
+    let slowPace: TimeInterval
     let kilometerPoints: [KilometerPoint]
     let cameraPosition: MapCameraPosition
 
@@ -717,8 +778,16 @@ struct FullScreenMapView: View {
         GeometryReader { geometry in
             ZStack(alignment: .topLeading) {
                 Map(position: $localCameraPosition) {
-                    MapPolyline(coordinates: routeCoordinates)
-                        .stroke(Color.accentColor, lineWidth: 5)
+                    // ペース別色分けルート
+                    if !routeSegments.isEmpty {
+                        ForEach(routeSegments) { segment in
+                            MapPolyline(coordinates: segment.coordinates)
+                                .stroke(segment.color(fastPace: fastPace, slowPace: slowPace), lineWidth: 5)
+                        }
+                    } else {
+                        MapPolyline(coordinates: routeCoordinates)
+                            .stroke(Color.accentColor, lineWidth: 5)
+                    }
 
                     // スタート地点
                     if let start = routeCoordinates.first {
@@ -766,15 +835,22 @@ struct FullScreenMapView: View {
                 .ignoresSafeArea(edges: [.horizontal, .top])
                 .safeAreaPadding(.bottom, geometry.safeAreaInsets.bottom)
 
-                // 閉じるボタン
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.headline)
-                        .foregroundStyle(.primary)
-                        .frame(width: 36, height: 36)
-                        .background(.ultraThinMaterial, in: Circle())
+                VStack(alignment: .leading, spacing: 8) {
+                    // 閉じるボタン
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.headline)
+                            .foregroundStyle(.primary)
+                            .frame(width: 36, height: 36)
+                            .background(.ultraThinMaterial, in: Circle())
+                    }
+
+                    // ペース凡例
+                    if !routeSegments.isEmpty {
+                        paceLegend
+                    }
                 }
                 .padding(.top, geometry.safeAreaInsets.top + 8)
                 .padding(.leading, 16)
@@ -782,6 +858,28 @@ struct FullScreenMapView: View {
         }
         .onAppear {
             localCameraPosition = cameraPosition
+        }
+    }
+
+    private var paceLegend: some View {
+        HStack(spacing: 12) {
+            legendItem(color: .green, text: "速い")
+            legendItem(color: .yellow, text: "普通")
+            legendItem(color: .red, text: "遅い")
+        }
+        .font(.caption2)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+    }
+
+    private func legendItem(color: Color, text: String) -> some View {
+        HStack(spacing: 4) {
+            Circle()
+                .fill(color)
+                .frame(width: 8, height: 8)
+            Text(text)
+                .foregroundStyle(.primary)
         }
     }
 }
