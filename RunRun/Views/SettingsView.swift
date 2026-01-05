@@ -81,6 +81,12 @@ struct SettingsView: View {
                         Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0")
                             .foregroundStyle(.secondary)
                     }
+
+                    Link("利用規約", destination: URL(string: "https://sawasige.github.io/runrun-ios/terms.html")!)
+
+                    Link("プライバシーポリシー", destination: URL(string: "https://sawasige.github.io/runrun-ios/privacy.html")!)
+
+                    Link("サポート", destination: URL(string: "https://sawasige.github.io/runrun-ios/support.html")!)
                 }
 
                 #if DEBUG
