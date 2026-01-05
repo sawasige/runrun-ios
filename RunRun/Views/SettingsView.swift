@@ -8,6 +8,9 @@ struct SettingsView: View {
     @State private var lastSyncMessage: String?
     @State private var userProfile: UserProfile?
     @State private var showingProfileEdit = false
+    @State private var showingDeleteConfirmation = false
+    @State private var isDeleting = false
+    @State private var deleteError: String?
     @State private var debugMessage: String?
 
     private let firestoreService = FirestoreService.shared
@@ -43,6 +46,25 @@ struct SettingsView: View {
                 Section("アカウント") {
                     Button("サインアウト", role: .destructive) {
                         try? authService.signOut()
+                    }
+
+                    Button(role: .destructive) {
+                        showingDeleteConfirmation = true
+                    } label: {
+                        HStack {
+                            Text("退会する")
+                            Spacer()
+                            if isDeleting {
+                                ProgressView()
+                            }
+                        }
+                    }
+                    .disabled(isDeleting)
+
+                    if let error = deleteError {
+                        Text(error)
+                            .font(.caption)
+                            .foregroundStyle(.red)
                     }
                 }
 
@@ -132,7 +154,30 @@ struct SettingsView: View {
                     )
                 }
             }
+            .alert("退会確認", isPresented: $showingDeleteConfirmation) {
+                Button("キャンセル", role: .cancel) {}
+                Button("退会する", role: .destructive) {
+                    Task { await deleteAccount() }
+                }
+            } message: {
+                Text("アカウントを削除すると、すべてのデータが完全に削除され、復元できません。本当に退会しますか？")
+            }
         }
+    }
+
+    private func deleteAccount() async {
+        isDeleting = true
+        deleteError = nil
+
+        do {
+            // 再認証してからアカウント削除（Sign in with Appleの確認画面が表示される）
+            try await authService.reauthenticateAndDeleteAccount()
+            // 削除成功後、AuthServiceが自動的にサインアウト状態になる
+        } catch {
+            deleteError = "退会に失敗しました: \(error.localizedDescription)"
+        }
+
+        isDeleting = false
     }
 
     private func loadProfile() async {
