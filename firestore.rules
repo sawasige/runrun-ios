@@ -1,8 +1,28 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 認証済みユーザーのみアクセス可能
-    match /{document=**} {
+    // ユーザープロフィール: 自分のみ書き込み可能
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth.uid == userId;
+
+      // フレンドリスト
+      match /friends/{friendId} {
+        allow read: if request.auth != null;
+        // 自分のリスト、または相手のリストから自分を削除する場合
+        allow write: if request.auth.uid == userId || request.auth.uid == friendId;
+      }
+    }
+
+    // ラン記録: 自分のみ書き込み可能
+    match /runs/{runId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth.uid == request.resource.data.userId;
+      allow update, delete: if request.auth.uid == resource.data.userId;
+    }
+
+    // フレンドリクエスト: 認証済みユーザーならアクセス可能
+    match /friendRequests/{requestId} {
       allow read, write: if request.auth != null;
     }
   }
