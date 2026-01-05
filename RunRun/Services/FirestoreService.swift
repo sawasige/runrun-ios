@@ -335,6 +335,15 @@ final class FirestoreService {
         return doc.exists
     }
 
+    func getNewFriendsCount(userId: String, since date: Date) async throws -> Int {
+        let snapshot = try await usersCollection
+            .document(userId)
+            .collection("friends")
+            .whereField("addedAt", isGreaterThan: date)
+            .getDocuments()
+        return snapshot.documents.count
+    }
+
     // MARK: - User Search
 
     func searchUsers(query: String, excludeUserId: String) async throws -> [UserProfile] {
