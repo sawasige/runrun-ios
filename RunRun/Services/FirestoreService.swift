@@ -216,30 +216,76 @@ final class FirestoreService {
     }
 
     func sendFriendRequest(fromUserId: String, fromDisplayName: String, toUserId: String) async throws {
-        // 24時間以内のリクエストをチェック
-        let canSend = try await canSendFriendRequest(fromUserId: fromUserId, toUserId: toUserId)
-        guard canSend else { return }
+        // 相手から自分へのpendingリクエストがあるかチェック
+        let reverseRequest = try await friendRequestsCollection
+            .whereField("fromUserId", isEqualTo: toUserId)
+            .whereField("toUserId", isEqualTo: fromUserId)
+            .whereField("status", isEqualTo: "pending")
+            .limit(to: 1)
+            .getDocuments()
 
-        let data: [String: Any] = [
-            "fromUserId": fromUserId,
-            "fromDisplayName": fromDisplayName,
-            "toUserId": toUserId,
-            "createdAt": Date(),
-            "status": "pending"
-        ]
-        _ = try await friendRequestsCollection.addDocument(data: data)
-    }
+        if let reverseDoc = reverseRequest.documents.first {
+            // 相手からのリクエストがある場合、自動的にフレンドになる
+            try await acceptFriendRequest(
+                requestId: reverseDoc.documentID,
+                currentUserId: fromUserId,
+                friendUserId: toUserId
+            )
+            return
+        }
 
-    func canSendFriendRequest(fromUserId: String, toUserId: String) async throws -> Bool {
-        let twentyFourHoursAgo = Date().addingTimeInterval(-24 * 60 * 60)
-
+        // 既存のpendingリクエストを検索
         let existing = try await friendRequestsCollection
             .whereField("fromUserId", isEqualTo: fromUserId)
             .whereField("toUserId", isEqualTo: toUserId)
-            .whereField("createdAt", isGreaterThan: twentyFourHoursAgo)
+            .whereField("status", isEqualTo: "pending")
+            .limit(to: 1)
             .getDocuments()
 
-        return existing.documents.isEmpty
+        if let existingDoc = existing.documents.first {
+            // 既存リクエストがある場合
+            let data = existingDoc.data()
+            let createdAt = (data["createdAt"] as? Timestamp)?.dateValue() ?? Date.distantPast
+            let twentyFourHoursAgo = Date().addingTimeInterval(-24 * 60 * 60)
+
+            if createdAt > twentyFourHoursAgo {
+                // 24時間以内なら何もしない
+                return
+            }
+
+            // 24時間経過していれば時間を更新
+            try await friendRequestsCollection.document(existingDoc.documentID).updateData([
+                "createdAt": Date()
+            ])
+        } else {
+            // 新規作成
+            let data: [String: Any] = [
+                "fromUserId": fromUserId,
+                "fromDisplayName": fromDisplayName,
+                "toUserId": toUserId,
+                "createdAt": Date(),
+                "status": "pending"
+            ]
+            _ = try await friendRequestsCollection.addDocument(data: data)
+        }
+    }
+
+    func canSendFriendRequest(fromUserId: String, toUserId: String) async throws -> Bool {
+        let existing = try await friendRequestsCollection
+            .whereField("fromUserId", isEqualTo: fromUserId)
+            .whereField("toUserId", isEqualTo: toUserId)
+            .whereField("status", isEqualTo: "pending")
+            .limit(to: 1)
+            .getDocuments()
+
+        if let existingDoc = existing.documents.first {
+            let data = existingDoc.data()
+            let createdAt = (data["createdAt"] as? Timestamp)?.dateValue() ?? Date.distantPast
+            let twentyFourHoursAgo = Date().addingTimeInterval(-24 * 60 * 60)
+            return createdAt <= twentyFourHoursAgo
+        }
+
+        return true
     }
 
     func getLastFriendRequestDate(fromUserId: String, toUserId: String) async throws -> Date? {
@@ -612,6 +658,33 @@ final class FirestoreService {
             "syncedAt": Date()
         ]
         _ = try await runsCollection.addDocument(data: data)
+    }
+
+    func createDummyFriendRequest(fromUserId: String, fromDisplayName: String, toUserId: String) async throws {
+        // 既存のpendingリクエストを検索
+        let existing = try await friendRequestsCollection
+            .whereField("fromUserId", isEqualTo: fromUserId)
+            .whereField("toUserId", isEqualTo: toUserId)
+            .whereField("status", isEqualTo: "pending")
+            .limit(to: 1)
+            .getDocuments()
+
+        if let existingDoc = existing.documents.first {
+            // 既存があれば時間を更新（24時間制限なし）
+            try await friendRequestsCollection.document(existingDoc.documentID).updateData([
+                "createdAt": Date()
+            ])
+        } else {
+            // 新規作成
+            let data: [String: Any] = [
+                "fromUserId": fromUserId,
+                "fromDisplayName": fromDisplayName,
+                "toUserId": toUserId,
+                "createdAt": Date(),
+                "status": "pending"
+            ]
+            _ = try await friendRequestsCollection.addDocument(data: data)
+        }
     }
     #endif
 

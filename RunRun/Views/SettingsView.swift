@@ -219,9 +219,9 @@ struct SettingsView: View {
                 )
             }
 
-            // 自分にフレンドリクエストを送信
+            // 自分にフレンドリクエストを送信（レート制限なし）
             for (id, name, _) in dummyUsers.prefix(2) {
-                try await firestoreService.sendFriendRequest(
+                try await firestoreService.createDummyFriendRequest(
                     fromUserId: id,
                     fromDisplayName: name,
                     toUserId: currentUserId
