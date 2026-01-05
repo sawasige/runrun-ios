@@ -129,6 +129,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 2A8048F52F02923A001FA4CE /* Build configuration list for PBXNativeTarget "RunRun" */;
 			buildPhases = (
+				2A0349FF2F10LICENSE003DE /* Generate Licenses */,
 				2A8048D02F029239001FA4CE /* Sources */,
 				2A8048D12F029239001FA4CE /* Frameworks */,
 				2A8048D22F029239001FA4CE /* Resources */,
@@ -277,6 +278,22 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		2A0349FF2F10LICENSE003DE /* Generate Licenses */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/RunRun.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved",
+			);
+			name = "Generate Licenses";
+			outputPaths = (
+				"$(SRCROOT)/RunRun/Settings.bundle/com.mono0926.LicensePlist.plist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if which license-plist >/dev/null; then\n  license-plist --output-path \"${SRCROOT}/RunRun/Settings.bundle\" --package-path \"${SRCROOT}/RunRun.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved\"\nfi\n";
+		};
 		2A0349FF2F10DSYM003DECEA /* Upload dSYMs to Crashlytics */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
