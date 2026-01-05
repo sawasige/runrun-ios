@@ -87,6 +87,10 @@ struct SettingsView: View {
                     Link("プライバシーポリシー", destination: URL(string: "https://sawasige.github.io/runrun-ios/privacy.html")!)
 
                     Link("サポート", destination: URL(string: "https://sawasige.github.io/runrun-ios/support.html")!)
+
+                    NavigationLink("ライセンス") {
+                        LicensesView()
+                    }
                 }
 
                 #if DEBUG
