@@ -30,10 +30,11 @@ jobs:
           sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9]*/CURRENT_PROJECT_VERSION = $BUILD_NUMBER/g" RunRun.xcodeproj/project.pbxproj
           echo "Build number set to $BUILD_NUMBER"
 
-      - name: Install Distribution Certificate
+      - name: Install Certificate and Provisioning Profile
         env:
           P12_BASE64: ${{ secrets.DISTRIBUTION_CERTIFICATE_P12 }}
           P12_PASSWORD: ${{ secrets.DISTRIBUTION_CERTIFICATE_PASSWORD }}
+          PROVISIONING_PROFILE_BASE64: ${{ secrets.PROVISIONING_PROFILE }}
         run: |
           # Create temporary keychain
           KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
@@ -49,6 +50,14 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
           security list-keychain -d user -s $KEYCHAIN_PATH
 
+          # Install provisioning profile
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          PROFILE_PATH=$RUNNER_TEMP/profile.mobileprovision
+          echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > $PROFILE_PATH
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(/usr/bin/security cms -D -i $PROFILE_PATH))
+          cp $PROFILE_PATH ~/Library/MobileDevice/Provisioning\ Profiles/$PROFILE_UUID.mobileprovision
+          echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
+
       - name: Build Archive
         run: |
           xcodebuild archive \
@@ -57,10 +66,8 @@ jobs:
             -configuration Release \
             -archivePath $RUNNER_TEMP/RunRun.xcarchive \
             -destination "generic/platform=iOS" \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8 \
-            -authenticationKeyID ${{ secrets.ASC_KEY_ID }} \
-            -authenticationKeyIssuerID ${{ secrets.ASC_ISSUER_ID }}
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution"
 
       - name: Upload dSYMs to Crashlytics
         run: |
@@ -77,7 +84,7 @@ jobs:
 
       - name: Export IPA
         run: |
-          cat > $RUNNER_TEMP/ExportOptions.plist << EOF
+          cat > $RUNNER_TEMP/ExportOptions.plist << PLIST
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
@@ -87,19 +94,22 @@ jobs:
               <key>destination</key>
               <string>upload</string>
               <key>signingStyle</key>
-              <string>automatic</string>
+              <string>manual</string>
+              <key>signingCertificate</key>
+              <string>Apple Distribution</string>
+              <key>provisioningProfiles</key>
+              <dict>
+                  <key>com.himatsubu.RunRun</key>
+                  <string>$PROFILE_UUID</string>
+              </dict>
           </dict>
           </plist>
-          EOF
+          PLIST
 
           xcodebuild -exportArchive \
             -archivePath $RUNNER_TEMP/RunRun.xcarchive \
             -exportOptionsPlist $RUNNER_TEMP/ExportOptions.plist \
-            -exportPath $RUNNER_TEMP/export \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8 \
-            -authenticationKeyID ${{ secrets.ASC_KEY_ID }} \
-            -authenticationKeyIssuerID ${{ secrets.ASC_ISSUER_ID }}
+            -exportPath $RUNNER_TEMP/export
 
       - name: Upload to App Store Connect
         run: |
