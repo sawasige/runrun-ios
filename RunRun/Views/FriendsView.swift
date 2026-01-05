@@ -3,6 +3,7 @@ import FirebaseAuth
 
 struct FriendsView: View {
     @EnvironmentObject private var authService: AuthenticationService
+    @EnvironmentObject private var badgeService: BadgeService
     @State private var friends: [UserProfile] = []
     @State private var friendRequests: [FriendRequest] = []
     @State private var isLoading = true
@@ -79,6 +80,10 @@ struct FriendsView: View {
 
             friends = try await friendsTask
             friendRequests = try await requestsTask
+
+            // バッジをクリア
+            badgeService.markRequestsAsSeen(userId: userId)
+            badgeService.markFriendsAsSeen(userId: userId)
         } catch {
             print("Load error: \(error)")
         }

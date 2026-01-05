@@ -4,6 +4,7 @@ import FirebaseAuth
 struct ContentView: View {
     @EnvironmentObject private var authService: AuthenticationService
     @StateObject private var syncService = SyncService()
+    @StateObject private var badgeService = BadgeService.shared
     @State private var hasCompletedInitialSync = false
 
     var body: some View {
@@ -35,6 +36,7 @@ struct ContentView: View {
                             .tabItem {
                                 Label("フレンド", systemImage: "person.2")
                             }
+                            .badge(badgeService.totalBadgeCount)
 
                         SettingsView()
                             .tabItem {
@@ -42,6 +44,10 @@ struct ContentView: View {
                             }
                     }
                     .environmentObject(syncService)
+                    .environmentObject(badgeService)
+                    .task {
+                        await badgeService.updateBadgeCounts(userId: userId)
+                    }
                 }
             } else {
                 LoginView()
