@@ -29,11 +29,11 @@ final class BadgeService: ObservableObject {
     }
 
     func getLastSeenRequestsDate(userId: String) -> Date {
-        UserDefaults.standard.object(forKey: lastSeenRequestsKey(userId: userId)) as? Date ?? .distantPast
+        UserDefaults.standard.object(forKey: lastSeenRequestsKey(userId: userId)) as? Date ?? Date(timeIntervalSince1970: 0)
     }
 
     func getLastSeenFriendsDate(userId: String) -> Date {
-        UserDefaults.standard.object(forKey: lastSeenFriendsKey(userId: userId)) as? Date ?? .distantPast
+        UserDefaults.standard.object(forKey: lastSeenFriendsKey(userId: userId)) as? Date ?? Date(timeIntervalSince1970: 0)
     }
 
     func markRequestsAsSeen(userId: String) {

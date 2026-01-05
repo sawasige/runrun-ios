@@ -4,7 +4,7 @@ import FirebaseAuth
 struct ContentView: View {
     @EnvironmentObject private var authService: AuthenticationService
     @StateObject private var syncService = SyncService()
-    @StateObject private var badgeService = BadgeService.shared
+    @ObservedObject private var badgeService = BadgeService.shared
     @State private var hasCompletedInitialSync = false
 
     var body: some View {
