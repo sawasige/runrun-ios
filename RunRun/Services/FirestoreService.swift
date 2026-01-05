@@ -239,11 +239,10 @@ final class FirestoreService {
             return
         }
 
-        // 既存のpendingリクエストを検索
+        // 既存リクエストを検索（statusに関係なく）
         let existing = try await friendRequestsCollection
             .whereField("fromUserId", isEqualTo: fromUserId)
             .whereField("toUserId", isEqualTo: toUserId)
-            .whereField("status", isEqualTo: "pending")
             .limit(to: 1)
             .getDocuments()
 
@@ -258,9 +257,11 @@ final class FirestoreService {
                 return
             }
 
-            // 24時間経過していれば時間を更新
+            // 24時間経過していれば再申請（時間とステータスを更新）
+            // Cloud FunctionがcreatedAt更新を検知してPush通知を送信
             try await friendRequestsCollection.document(existingDoc.documentID).updateData([
-                "createdAt": Date()
+                "createdAt": Date(),
+                "status": "pending"
             ])
         } else {
             // 新規作成
