@@ -4,12 +4,21 @@ import UIKit
 import UserNotifications
 import FirebaseMessaging
 
+enum AppTab: Int {
+    case home = 0
+    case record = 1
+    case leaderboard = 2
+    case friends = 3
+    case settings = 4
+}
+
 @MainActor
 final class NotificationService: NSObject, ObservableObject {
     static let shared = NotificationService()
 
     @Published var fcmToken: String?
     @Published var isAuthorized = false
+    @Published var pendingTab: AppTab?
 
     private let firestoreService = FirestoreService.shared
 
@@ -79,12 +88,11 @@ extension NotificationService: UNUserNotificationCenterDelegate {
 
         if let type = userInfo["type"] as? String {
             switch type {
-            case "friend_request":
-                // フレンドリクエスト画面への遷移などを処理
-                print("Friend request notification tapped")
-            case "friend_accepted":
-                // フレンド一覧画面への遷移などを処理
-                print("Friend accepted notification tapped")
+            case "friend_request", "friend_accepted":
+                // フレンドタブに遷移
+                await MainActor.run {
+                    self.pendingTab = .friends
+                }
             default:
                 break
             }
