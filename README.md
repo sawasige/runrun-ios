@@ -51,3 +51,30 @@ Distribution証明書とプロビジョニングプロファイルは1年で期�
 | `ASC_KEY_ID` | App Store Connect APIキーID | 期限なし |
 | `ASC_ISSUER_ID` | App Store Connect Issuer ID | 期限なし |
 | `ASC_PRIVATE_KEY` | App Store Connect APIキー（p8） | 期限なし |
+
+## Cloud Functions
+
+プッシュ通知の送信にFirebase Cloud Functionsを使用しています。
+
+### デプロイ方法
+
+```bash
+cd functions
+npm install
+npm run build
+firebase deploy --only functions
+```
+
+### 関数一覧
+
+| 関数名 | トリガー | 説明 |
+|--------|----------|------|
+| `onFriendRequestCreated` | Firestoreトリガー | フレンドリクエスト作成時に受信者へ通知 |
+| `onFriendRequestAccepted` | Firestoreトリガー | フレンドリクエスト承認時に送信者へ通知 |
+| `sendTestNotification` | HTTPSコール | テスト通知送信（DEBUGビルドのみ使用） |
+
+### ログ確認
+
+```bash
+firebase functions:log
+```
