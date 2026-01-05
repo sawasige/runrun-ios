@@ -55,6 +55,9 @@ jobs:
           PROFILE_PATH=$RUNNER_TEMP/profile.mobileprovision
           echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > $PROFILE_PATH
           PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(/usr/bin/security cms -D -i $PROFILE_PATH))
+          PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print Name" /dev/stdin <<< $(/usr/bin/security cms -D -i $PROFILE_PATH))
+          echo "Profile UUID: $PROFILE_UUID"
+          echo "Profile Name: $PROFILE_NAME"
           cp $PROFILE_PATH ~/Library/MobileDevice/Provisioning\ Profiles/$PROFILE_UUID.mobileprovision
           echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
 
