@@ -239,7 +239,7 @@ final class FirestoreService {
             return
         }
 
-        // 既存リクエストを検索（statusに関係なく）
+        // 既存リクエストを検索（同方向: from → to）
         let existing = try await friendRequestsCollection
             .whereField("fromUserId", isEqualTo: fromUserId)
             .whereField("toUserId", isEqualTo: toUserId)
@@ -247,7 +247,7 @@ final class FirestoreService {
             .getDocuments()
 
         if let existingDoc = existing.documents.first {
-            // 既存リクエストがある場合
+            // 同方向の既存リクエストがある場合
             let data = existingDoc.data()
             let createdAt = (data["createdAt"] as? Timestamp)?.dateValue() ?? Date.distantPast
             let twentyFourHoursAgo = Date().addingTimeInterval(-24 * 60 * 60)
@@ -258,22 +258,51 @@ final class FirestoreService {
             }
 
             // 24時間経過していれば再申請（時間とステータスを更新）
-            // Cloud FunctionがcreatedAt更新を検知してPush通知を送信
             try await friendRequestsCollection.document(existingDoc.documentID).updateData([
                 "createdAt": Date(),
                 "status": "pending"
             ])
-        } else {
-            // 新規作成
-            let data: [String: Any] = [
+            return
+        }
+
+        // 逆方向のリクエストを検索（to → from、rejected含む）
+        let reverseExisting = try await friendRequestsCollection
+            .whereField("fromUserId", isEqualTo: toUserId)
+            .whereField("toUserId", isEqualTo: fromUserId)
+            .limit(to: 1)
+            .getDocuments()
+
+        if let reverseDoc = reverseExisting.documents.first {
+            // 逆方向の既存リクエストがある場合（rejectedなど）
+            let data = reverseDoc.data()
+            let createdAt = (data["createdAt"] as? Timestamp)?.dateValue() ?? Date.distantPast
+            let twentyFourHoursAgo = Date().addingTimeInterval(-24 * 60 * 60)
+
+            if createdAt > twentyFourHoursAgo {
+                // 24時間以内なら何もしない
+                return
+            }
+
+            // 24時間経過していれば、from/toを入れ替えて再利用
+            try await friendRequestsCollection.document(reverseDoc.documentID).updateData([
                 "fromUserId": fromUserId,
                 "fromDisplayName": fromDisplayName,
                 "toUserId": toUserId,
                 "createdAt": Date(),
                 "status": "pending"
-            ]
-            _ = try await friendRequestsCollection.addDocument(data: data)
+            ])
+            return
         }
+
+        // 新規作成
+        let data: [String: Any] = [
+            "fromUserId": fromUserId,
+            "fromDisplayName": fromDisplayName,
+            "toUserId": toUserId,
+            "createdAt": Date(),
+            "status": "pending"
+        ]
+        _ = try await friendRequestsCollection.addDocument(data: data)
     }
 
     func canSendFriendRequest(fromUserId: String, toUserId: String) async throws -> Bool {
