@@ -67,7 +67,9 @@ jobs:
             -archivePath $RUNNER_TEMP/RunRun.xcarchive \
             -destination "generic/platform=iOS" \
             CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY="Apple Distribution"
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            DEVELOPMENT_TEAM=U9296HT99T \
+            PROVISIONING_PROFILE_SPECIFIER=$PROFILE_UUID
 
       - name: Upload dSYMs to Crashlytics
         run: |
