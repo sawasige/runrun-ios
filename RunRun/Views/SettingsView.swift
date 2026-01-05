@@ -1,5 +1,6 @@
 import SwiftUI
 import FirebaseAuth
+import FirebaseFunctions
 
 struct SettingsView: View {
     @EnvironmentObject private var authService: AuthenticationService
@@ -95,6 +96,10 @@ struct SettingsView: View {
 
                 #if DEBUG
                 Section("デバッグ") {
+                    Button("テスト通知を送信") {
+                        Task { await sendTestNotification() }
+                    }
+
                     Button("ダミーユーザーを作成") {
                         Task { await createDummyData() }
                     }
@@ -167,6 +172,23 @@ struct SettingsView: View {
     }
 
     #if DEBUG
+    private func sendTestNotification() async {
+        debugMessage = "送信中..."
+
+        let functions = Functions.functions(region: "asia-northeast1")
+        do {
+            let result = try await functions.httpsCallable("sendTestNotification").call()
+            if let data = result.data as? [String: Any],
+               let message = data["message"] as? String {
+                debugMessage = message
+            } else {
+                debugMessage = "通知を送信しました"
+            }
+        } catch {
+            debugMessage = "エラー: \(error.localizedDescription)"
+        }
+    }
+
     private func createDummyData() async {
         guard let currentUserId = authService.user?.uid else { return }
 

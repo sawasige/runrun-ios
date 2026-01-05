@@ -605,4 +605,18 @@ final class FirestoreService {
         _ = try await runsCollection.addDocument(data: data)
     }
     #endif
+
+    // MARK: - FCM Token
+
+    func updateFCMToken(userId: String, token: String) async throws {
+        try await usersCollection.document(userId).updateData([
+            "fcmToken": token
+        ])
+    }
+
+    func removeFCMToken(userId: String) async throws {
+        try await usersCollection.document(userId).updateData([
+            "fcmToken": FieldValue.delete()
+        ])
+    }
 }
