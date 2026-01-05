@@ -74,71 +74,136 @@ export const onFriendRequestCreated = functions
   });
 
 /**
- * フレンドリクエスト承認時に通知を送信
+ * フレンドリクエスト更新時に通知を送信
+ * - 承認時: 送信者に通知
+ * - 再申請時（createdAt更新）: 受信者に通知
  */
-export const onFriendRequestAccepted = functions
+export const onFriendRequestUpdated = functions
   .region("asia-northeast1")
   .firestore.document("friendRequests/{requestId}")
   .onUpdate(async (change) => {
     const before = change.before.data() as FriendRequest;
     const after = change.after.data() as FriendRequest;
 
-    // ステータスがacceptedに変更された場合のみ処理
-    if (before.status === "accepted" || after.status !== "accepted") {
+    // ケース1: ステータスがacceptedに変更された場合
+    if (before.status !== "accepted" && after.status === "accepted") {
+      await sendAcceptedNotification(after, change.after.id);
       return;
     }
 
-    const fromUserId = after.fromUserId;
-    const toUserId = after.toUserId;
-
-    // 承認者の表示名を取得
-    const accepterDoc = await db.collection("users").doc(toUserId).get();
-    const accepterData = accepterDoc.data() as UserProfile | undefined;
-    const accepterName = accepterData?.displayName || "ユーザー";
-
-    // 送信者のFCMトークンを取得
-    const senderDoc = await db.collection("users").doc(fromUserId).get();
-    if (!senderDoc.exists) {
-      console.log(`User ${fromUserId} not found`);
+    // ケース2: 再申請（createdAtが更新され、statusがpendingのまま）
+    const beforeTime = before.createdAt?.toMillis() || 0;
+    const afterTime = after.createdAt?.toMillis() || 0;
+    if (after.status === "pending" && afterTime > beforeTime) {
+      await sendResendNotification(after, change.after.id);
       return;
-    }
-
-    const senderData = senderDoc.data() as UserProfile;
-    const fcmToken = senderData.fcmToken;
-
-    if (!fcmToken) {
-      console.log(`User ${fromUserId} has no FCM token`);
-      return;
-    }
-
-    // 通知を送信
-    const message: admin.messaging.Message = {
-      token: fcmToken,
-      notification: {
-        title: "フレンド承認",
-        body: `${accepterName}さんがフレンドリクエストを承認しました`,
-      },
-      data: {
-        type: "friend_accepted",
-        userId: toUserId,
-      },
-      apns: {
-        payload: {
-          aps: {
-            sound: "default",
-            badge: 1,
-          },
-        },
-      },
-    };
-
-    try {
-      await admin.messaging().send(message);
-      console.log(`Notification sent to ${fromUserId}`);
-    } catch (error) {
-      console.error(`Error sending notification to ${fromUserId}:`, error);
     }
   });
+
+/**
+ * フレンドリクエスト承認通知を送信
+ */
+async function sendAcceptedNotification(request: FriendRequest, requestId: string) {
+  const fromUserId = request.fromUserId;
+  const toUserId = request.toUserId;
+
+  // 承認者の表示名を取得
+  const accepterDoc = await db.collection("users").doc(toUserId).get();
+  const accepterData = accepterDoc.data() as UserProfile | undefined;
+  const accepterName = accepterData?.displayName || "ユーザー";
+
+  // 送信者のFCMトークンを取得
+  const senderDoc = await db.collection("users").doc(fromUserId).get();
+  if (!senderDoc.exists) {
+    console.log(`User ${fromUserId} not found`);
+    return;
+  }
+
+  const senderData = senderDoc.data() as UserProfile;
+  const fcmToken = senderData.fcmToken;
+
+  if (!fcmToken) {
+    console.log(`User ${fromUserId} has no FCM token`);
+    return;
+  }
+
+  const message: admin.messaging.Message = {
+    token: fcmToken,
+    notification: {
+      title: "フレンド承認",
+      body: `${accepterName}さんがフレンドリクエストを承認しました`,
+    },
+    data: {
+      type: "friend_accepted",
+      userId: toUserId,
+    },
+    apns: {
+      payload: {
+        aps: {
+          sound: "default",
+          badge: 1,
+        },
+      },
+    },
+  };
+
+  try {
+    await admin.messaging().send(message);
+    console.log(`Accepted notification sent to ${fromUserId}`);
+  } catch (error) {
+    console.error(`Error sending notification to ${fromUserId}:`, error);
+  }
+}
+
+/**
+ * フレンドリクエスト再申請通知を送信
+ */
+async function sendResendNotification(request: FriendRequest, requestId: string) {
+  const toUserId = request.toUserId;
+  const fromDisplayName = request.fromDisplayName;
+
+  // 受信者のFCMトークンを取得
+  const userDoc = await db.collection("users").doc(toUserId).get();
+  if (!userDoc.exists) {
+    console.log(`User ${toUserId} not found`);
+    return;
+  }
+
+  const userData = userDoc.data() as UserProfile;
+  const fcmToken = userData.fcmToken;
+
+  if (!fcmToken) {
+    console.log(`User ${toUserId} has no FCM token`);
+    return;
+  }
+
+  const message: admin.messaging.Message = {
+    token: fcmToken,
+    notification: {
+      title: "フレンドリクエスト",
+      body: `${fromDisplayName}さんからフレンドリクエストが届きました`,
+    },
+    data: {
+      type: "friend_request",
+      requestId: requestId,
+    },
+    apns: {
+      payload: {
+        aps: {
+          sound: "default",
+          badge: 1,
+        },
+      },
+    },
+  };
+
+  try {
+    await admin.messaging().send(message);
+    console.log(`Resend notification sent to ${toUserId}`);
+  } catch (error) {
+    console.error(`Error sending notification to ${toUserId}:`, error);
+  }
+}
 
 /**
  * ユーザー削除時にデータをクリーンアップ
