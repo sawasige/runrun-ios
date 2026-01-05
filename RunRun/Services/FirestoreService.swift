@@ -216,6 +216,11 @@ final class FirestoreService {
     }
 
     func sendFriendRequest(fromUserId: String, fromDisplayName: String, toUserId: String) async throws {
+        // すでにフレンドならリクエスト不要
+        if try await isFriend(currentUserId: fromUserId, otherUserId: toUserId) {
+            return
+        }
+
         // 相手から自分へのpendingリクエストがあるかチェック
         let reverseRequest = try await friendRequestsCollection
             .whereField("fromUserId", isEqualTo: toUserId)
