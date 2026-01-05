@@ -141,6 +141,92 @@ export const onFriendRequestAccepted = functions
   });
 
 /**
+ * ユーザー削除時にデータをクリーンアップ
+ */
+export const onUserDeleted = functions
+  .region("asia-northeast1")
+  .auth.user()
+  .onDelete(async (user) => {
+    const userId = user.uid;
+    console.log(`Cleaning up data for deleted user: ${userId}`);
+
+    const batch = db.batch();
+
+    try {
+      // 1. フレンドリクエスト削除（送信したもの）
+      const sentRequests = await db
+        .collection("friendRequests")
+        .where("fromUserId", "==", userId)
+        .get();
+      sentRequests.docs.forEach((doc) => batch.delete(doc.ref));
+      console.log(`Deleting ${sentRequests.size} sent friend requests`);
+
+      // 2. フレンドリクエスト削除（受信したもの）
+      const receivedRequests = await db
+        .collection("friendRequests")
+        .where("toUserId", "==", userId)
+        .get();
+      receivedRequests.docs.forEach((doc) => batch.delete(doc.ref));
+      console.log(`Deleting ${receivedRequests.size} received friend requests`);
+
+      // 3. ラン記録削除
+      const runs = await db
+        .collection("runs")
+        .where("userId", "==", userId)
+        .get();
+      runs.docs.forEach((doc) => batch.delete(doc.ref));
+      console.log(`Deleting ${runs.size} run records`);
+
+      // 4. フレンドのリストから自分を削除
+      const userDoc = await db.collection("users").doc(userId).get();
+      if (userDoc.exists) {
+        // 自分のフレンドリストを取得
+        const friends = await db
+          .collection("users")
+          .doc(userId)
+          .collection("friends")
+          .get();
+
+        // 各フレンドのリストから自分を削除
+        for (const friendDoc of friends.docs) {
+          const friendId = friendDoc.id;
+          const friendRef = db
+            .collection("users")
+            .doc(friendId)
+            .collection("friends")
+            .doc(userId);
+          batch.delete(friendRef);
+        }
+        console.log(`Removing user from ${friends.size} friends' lists`);
+
+        // 自分のフレンドリストを削除
+        friends.docs.forEach((doc) => batch.delete(doc.ref));
+      }
+
+      // 5. ユーザープロフィール削除
+      batch.delete(db.collection("users").doc(userId));
+
+      // バッチ実行
+      await batch.commit();
+      console.log(`Successfully cleaned up data for user: ${userId}`);
+
+      // 6. Storageのアバター画像削除
+      try {
+        const bucket = admin.storage().bucket();
+        await bucket.deleteFiles({
+          prefix: `avatars/${userId}/`,
+        });
+        console.log(`Deleted avatar images for user: ${userId}`);
+      } catch (storageError) {
+        console.log(`No avatar images to delete or error: ${storageError}`);
+      }
+    } catch (error) {
+      console.error(`Error cleaning up user data: ${error}`);
+      throw error;
+    }
+  });
+
+/**
  * テスト用: 自分自身に通知を送信
  */
 export const sendTestNotification = functions

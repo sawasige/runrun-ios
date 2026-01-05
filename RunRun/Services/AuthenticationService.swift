@@ -58,6 +58,47 @@ final class AuthenticationService: ObservableObject {
         try Auth.auth().signOut()
     }
 
+    /// 再認証してからアカウントを削除
+    /// Firebase Authは機密操作（アカウント削除など）に最近の認証を要求するため、
+    /// Sign in with Appleで再認証してから削除する
+    func reauthenticateAndDeleteAccount() async throws {
+        guard let user = Auth.auth().currentUser else {
+            throw AuthError.invalidCredential
+        }
+
+        let nonce = randomNonceString()
+        currentNonce = nonce
+
+        let appleIDProvider = ASAuthorizationAppleIDProvider()
+        let request = appleIDProvider.createRequest()
+        request.requestedScopes = [.fullName, .email]
+        request.nonce = sha256(nonce)
+
+        let result = try await performSignIn(request: request)
+
+        guard let appleIDCredential = result.credential as? ASAuthorizationAppleIDCredential,
+              let appleIDToken = appleIDCredential.identityToken,
+              let idTokenString = String(data: appleIDToken, encoding: .utf8) else {
+            throw AuthError.noIdentityToken
+        }
+
+        guard let nonce = currentNonce else {
+            throw AuthError.invalidCredential
+        }
+
+        let credential = OAuthProvider.appleCredential(
+            withIDToken: idTokenString,
+            rawNonce: nonce,
+            fullName: appleIDCredential.fullName
+        )
+
+        // 再認証
+        try await user.reauthenticate(with: credential)
+
+        // アカウント削除（Cloud Functionでデータクリーンアップが実行される）
+        try await user.delete()
+    }
+
     private func performSignIn(request: ASAuthorizationAppleIDRequest) async throws -> ASAuthorization {
         try await withCheckedThrowingContinuation { continuation in
             let controller = ASAuthorizationController(authorizationRequests: [request])
