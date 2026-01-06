@@ -695,8 +695,8 @@ enum ImageComposer {
         let lineHeight = baseFontSize * 1.4
         let padding = baseFontSize * 0.8
 
-        let dateFont = UIFont.systemFont(ofSize: baseFontSize * 0.7, weight: .medium)
-        let valueFont = UIFont.systemFont(ofSize: baseFontSize, weight: .semibold)
+        let dateFont = UIFont.rounded(ofSize: baseFontSize * 0.7, weight: .medium)
+        let valueFont = UIFont.rounded(ofSize: baseFontSize, weight: .semibold)
 
         var yOffset = height - padding
 
@@ -732,9 +732,12 @@ enum ImageComposer {
             .font: font,
             .foregroundColor: UIColor.black
         ]
+        // HDR対応の明るい白（輝度2.0）
+        let colorSpace = CGColorSpace(name: CGColorSpace.extendedLinearDisplayP3)!
+        let hdrWhite = CGColor(colorSpace: colorSpace, components: [2.0, 2.0, 2.0, 1.0])!
         let fillAttributes: [NSAttributedString.Key: Any] = [
             .font: font,
-            .foregroundColor: UIColor.white
+            .foregroundColor: UIColor(cgColor: hdrWhite)
         ]
 
         let textSize = (text as NSString).size(withAttributes: fillAttributes)
@@ -757,6 +760,18 @@ enum ImageComposer {
             (text as NSString).draw(at: offsetPoint, withAttributes: strokeAttributes)
         }
         (text as NSString).draw(at: drawPoint, withAttributes: fillAttributes)
+    }
+}
+
+// MARK: - UIFont Extension for Rounded Design
+
+extension UIFont {
+    static func rounded(ofSize size: CGFloat, weight: UIFont.Weight) -> UIFont {
+        let systemFont = UIFont.systemFont(ofSize: size, weight: weight)
+        if let descriptor = systemFont.fontDescriptor.withDesign(.rounded) {
+            return UIFont(descriptor: descriptor, size: size)
+        }
+        return systemFont
     }
 }
 
