@@ -48,6 +48,7 @@ struct TimelineView: View {
                             .fontWeight(.bold)
                     }
                     .opacity(showNavBarLogo ? 1 : 0)
+                    .offset(y: showNavBarLogo ? 0 : 8)
                 }
             }
             .refreshable {
@@ -63,37 +64,19 @@ struct TimelineView: View {
 
     private var expandedHeaderView: some View {
         VStack(spacing: 16) {
-            // 上部: ロゴとユーザー情報
-            HStack(spacing: 12) {
-                // 左: ロゴとタイトル
-                VStack(spacing: 4) {
-                    Image("Logo")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(height: 36)
+            // 上部中央: ロゴとタイトル（横並び）
+            HStack(spacing: 8) {
+                Image("Logo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 44)
 
-                    Text("RunRun")
-                        .font(.subheadline)
-                        .fontWeight(.bold)
-                }
-
-                Spacer()
-
-                // 右: アバターと表示名
-                HStack(spacing: 10) {
-                    Text(displayName)
-                        .font(.title3)
-                        .fontWeight(.bold)
-
-                    if let profile = userProfile {
-                        ProfileAvatarView(user: profile, size: 44)
-                    } else {
-                        ProfileAvatarView(iconName: "figure.run", avatarURL: nil, size: 44)
-                    }
-                }
+                Text("RunRun")
+                    .font(.title2)
+                    .fontWeight(.bold)
             }
 
-            // 下部: 今月のサマリ（タップで詳細へ）
+            // 今月のサマリ（タップで詳細へ）
             NavigationLink {
                 MonthDetailView(
                     userId: viewModel.userId,
@@ -101,52 +84,68 @@ struct TimelineView: View {
                     month: Calendar.current.component(.month, from: Date())
                 )
             } label: {
-                VStack(spacing: 8) {
-                    Text(currentMonthLabel)
-                        .font(.headline)
-                        .foregroundStyle(.primary)
-
-                    HStack(spacing: 0) {
-                        // 距離
-                        VStack(spacing: 4) {
-                            Text("距離")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text(String(format: "%.1f", monthlyDistance))
-                                .font(.title)
-                                .fontWeight(.bold)
-                                .foregroundStyle(.primary)
-                            Text("km")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        .frame(maxWidth: .infinity)
-
-                        Divider()
-                            .frame(height: 40)
-
-                        // 回数
-                        VStack(spacing: 4) {
-                            Text("回数")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text("\(monthlyRunCount)")
-                                .font(.title)
-                                .fontWeight(.bold)
-                                .foregroundStyle(.primary)
-                            Text("回")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        .frame(maxWidth: .infinity)
-
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                            .padding(.trailing, 8)
+                HStack(spacing: 0) {
+                    // 左: プロフィール
+                    if let profile = userProfile {
+                        ProfileAvatarView(user: profile, size: 56)
+                    } else {
+                        ProfileAvatarView(iconName: "figure.run", avatarURL: nil, size: 56)
                     }
+
+                    Divider()
+                        .frame(height: 56)
+                        .padding(.horizontal, 12)
+
+                    // 右: 今月の記録
+                    VStack(spacing: 6) {
+                        Text(currentMonthLabel)
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundStyle(.primary)
+
+                        HStack(spacing: 0) {
+                            // 距離
+                            VStack(spacing: 2) {
+                                Text("距離")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                Text(String(format: "%.1f", monthlyDistance))
+                                    .font(.title3)
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(.primary)
+                                Text("km")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .frame(maxWidth: .infinity)
+
+                            Divider()
+                                .frame(height: 40)
+
+                            // 回数
+                            VStack(spacing: 2) {
+                                Text("回数")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                Text("\(monthlyRunCount)")
+                                    .font(.title3)
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(.primary)
+                                Text("回")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .padding(.leading, 4)
                 }
-                .padding(.vertical, 12)
+                .padding(12)
                 .background(Color(.secondarySystemBackground))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
