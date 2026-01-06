@@ -134,13 +134,17 @@ struct MonthDetailView: View {
         List {
             if let user = userProfile {
                 Section {
-                    HStack(spacing: 16) {
-                        ProfileAvatarView(user: user, size: 50)
+                    NavigationLink {
+                        ProfileView(user: user)
+                    } label: {
+                        HStack(spacing: 16) {
+                            ProfileAvatarView(user: user, size: 50)
 
-                        Text(user.displayName)
-                            .font(.headline)
+                            Text(user.displayName)
+                                .font(.headline)
 
-                        Spacer()
+                            Spacer()
+                        }
                     }
                 }
             }
