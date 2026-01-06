@@ -5,6 +5,9 @@ struct ProfileAvatarView: View {
     let avatarURL: URL?
     let size: CGFloat
 
+    @State private var cachedImage: Image?
+    @State private var isLoading = false
+
     init(user: UserProfile, size: CGFloat = 40) {
         self.iconName = user.iconName
         self.avatarURL = user.avatarURL
@@ -19,28 +22,29 @@ struct ProfileAvatarView: View {
 
     var body: some View {
         Group {
-            if let avatarURL = avatarURL {
-                AsyncImage(url: avatarURL) { phase in
-                    switch phase {
-                    case .empty:
-                        ProgressView()
-                            .frame(width: size, height: size)
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    case .failure:
-                        iconView
-                    @unknown default:
-                        iconView
-                    }
-                }
-                .frame(width: size, height: size)
-                .clipShape(Circle())
+            if let image = cachedImage {
+                image
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: size, height: size)
+                    .clipShape(Circle())
+            } else if isLoading {
+                ProgressView()
+                    .frame(width: size, height: size)
             } else {
                 iconView
             }
         }
+        .task(id: avatarURL) {
+            await loadImage()
+        }
+    }
+
+    private func loadImage() async {
+        guard let url = avatarURL else { return }
+        isLoading = true
+        cachedImage = await ImageCacheService.shared.image(for: url)
+        isLoading = false
     }
 
     private var iconView: some View {
