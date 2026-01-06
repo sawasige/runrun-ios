@@ -4,6 +4,7 @@ import CoreLocation
 import HealthKit
 import PhotosUI
 import Charts
+import ImageIO
 
 struct RunDetailView: View {
     let record: RunningRecord
@@ -452,7 +453,6 @@ struct RunExportPreviewView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var composedHEIFData: Data?
-    @State private var previewImage: UIImage?
     @State private var isProcessing = false
     @State private var isSaving = false
     @State private var showSaveSuccess = false
@@ -463,11 +463,8 @@ struct RunExportPreviewView: View {
             ZStack {
                 Color.black.ignoresSafeArea()
 
-                if let image = previewImage {
-                    // TODO: HDRプレビュー対応（現在はSDR表示、保存はHDR）
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFit()
+                if let data = composedHEIFData {
+                    HDRImageView(imageData: data)
                 } else if isProcessing {
                     ProgressView()
                         .tint(.white)
@@ -533,9 +530,6 @@ struct RunExportPreviewView: View {
 
         await MainActor.run {
             composedHEIFData = result
-            if let heifData = result {
-                previewImage = UIImage(data: heifData)
-            }
             isProcessing = false
         }
     }
@@ -760,6 +754,51 @@ enum ImageComposer {
             (text as NSString).draw(at: offsetPoint, withAttributes: strokeAttributes)
         }
         (text as NSString).draw(at: drawPoint, withAttributes: fillAttributes)
+    }
+}
+
+// MARK: - HDR Image View
+
+struct HDRImageView: UIViewRepresentable {
+    let imageData: Data
+
+    func makeUIView(context: Context) -> UIView {
+        let containerView = UIView()
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
+        imageView.preferredImageDynamicRange = .high
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        containerView.addSubview(imageView)
+        NSLayoutConstraint.activate([
+            imageView.topAnchor.constraint(equalTo: containerView.topAnchor),
+            imageView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
+            imageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            imageView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor)
+        ])
+        imageView.tag = 100
+        return containerView
+    }
+
+    func updateUIView(_ containerView: UIView, context: Context) {
+        if let imageView = containerView.viewWithTag(100) as? UIImageView {
+            imageView.image = loadHDRImage(from: imageData)
+        }
+    }
+
+    private func loadHDRImage(from data: Data) -> UIImage? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil) else {
+            return nil
+        }
+        // iOS 17+: HDRデコードを要求
+        let options: [CFString: Any] = [
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceShouldAllowFloat: true,
+            kCGImageSourceDecodeRequest: kCGImageSourceDecodeToHDR
+        ]
+        guard let cgImage = CGImageSourceCreateImageAtIndex(source, 0, options as CFDictionary) else {
+            return nil
+        }
+        return UIImage(cgImage: cgImage)
     }
 }
 
