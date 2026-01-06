@@ -191,7 +191,7 @@ struct SettingsView: View {
                 userProfile = profile
             } else {
                 // プロフィールが存在しない場合は作成
-                let displayName = authService.user?.displayName ?? "ランナー"
+                let displayName = authService.user?.displayName ?? String(localized: "ランナー")
                 try await firestoreService.createUserProfile(
                     userId: userId,
                     displayName: displayName,

@@ -134,6 +134,6 @@ struct RunningRecord: Identifiable, Equatable, Hashable {
 
     var formattedStepCount: String? {
         guard let steps = stepCount else { return nil }
-        return "\(steps) 歩"
+        return String(format: String(localized: "%d steps", comment: "Step count format"), steps)
     }
 }

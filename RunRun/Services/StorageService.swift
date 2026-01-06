@@ -36,7 +36,7 @@ enum StorageError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidImage:
-            return "画像の変換に失敗しました"
+            return String(localized: "画像の変換に失敗しました")
         }
     }
 }

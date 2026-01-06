@@ -41,9 +41,9 @@ struct YearlySummaryView: View {
         let hours = Int(totalDuration) / 3600
         let minutes = (Int(totalDuration) % 3600) / 60
         if hours > 0 {
-            return "\(hours)時間\(minutes)分"
+            return String(format: String(localized: "%dh %dm", comment: "Duration format"), hours, minutes)
         } else {
-            return "\(minutes)分"
+            return String(format: String(localized: "%dm", comment: "Minutes only"), minutes)
         }
     }
 
@@ -87,7 +87,7 @@ struct YearlySummaryView: View {
             Section("総合") {
                 LabeledContent("総距離", value: formattedTotalDistance)
                 LabeledContent("総時間", value: formattedTotalDuration)
-                LabeledContent("ラン回数", value: "\(totalRuns)回")
+                LabeledContent("ラン回数", value: String(format: String(localized: "%d runs", comment: "Run count"), totalRuns))
             }
 
             // 効率
@@ -99,9 +99,9 @@ struct YearlySummaryView: View {
             // ハイライト
             if let best = bestMonth, best.totalDistanceInKilometers > 0 {
                 Section("ハイライト") {
-                    LabeledContent("ベスト月", value: "\(best.month)月 (\(best.formattedTotalDistance))")
+                    LabeledContent("ベスト月", value: "\(best.shortMonthName) (\(best.formattedTotalDistance))")
                     if let mostActive = monthlyStats.filter({ $0.runCount > 0 }).max(by: { $0.runCount < $1.runCount }) {
-                        LabeledContent("最多ラン月", value: "\(mostActive.month)月 (\(mostActive.runCount)回)")
+                        LabeledContent("最多ラン月", value: "\(mostActive.shortMonthName) (\(String(format: String(localized: "%d runs", comment: "Run count"), mostActive.runCount)))")
                     }
                 }
             }
@@ -113,7 +113,7 @@ struct YearlySummaryView: View {
                 }
             }
         }
-        .navigationTitle(String(year) + "年サマリー")
+        .navigationTitle(String(format: String(localized: "%d Yearly Summary", comment: "Year summary navigation title"), year))
         .toolbar {
             if let user = userProfile {
                 ToolbarItem(placement: .primaryAction) {
@@ -130,13 +130,13 @@ struct YearlySummaryView: View {
     private var yearlyChart: some View {
         Chart(monthlyStats) { stats in
             BarMark(
-                x: .value("月", "\(stats.month)月"),
-                y: .value("距離", stats.totalDistanceInKilometers)
+                x: .value(String(localized: "月"), stats.shortMonthName),
+                y: .value(String(localized: "距離"), stats.totalDistanceInKilometers)
             )
             .foregroundStyle(Color.accentColor.gradient)
 
             if let best = bestMonth, stats.month == best.month {
-                RuleMark(y: .value("ベスト", best.totalDistanceInKilometers))
+                RuleMark(y: .value(String(localized: "ベスト"), best.totalDistanceInKilometers))
                     .foregroundStyle(.orange)
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 5]))
             }
@@ -150,14 +150,14 @@ private struct MonthSummaryRow: View {
 
     var body: some View {
         HStack {
-            Text("\(stats.month)月")
+            Text(stats.shortMonthName)
                 .frame(width: 40, alignment: .leading)
 
             if stats.runCount > 0 {
                 Spacer()
-                Text("\(stats.runCount)回")
+                Text(String(format: String(localized: "%d runs", comment: "Run count"), stats.runCount))
                     .foregroundStyle(.secondary)
-                    .frame(width: 40)
+                    .frame(width: 60)
                 Text(stats.formattedTotalDistance)
                     .fontWeight(.medium)
                     .frame(width: 80, alignment: .trailing)

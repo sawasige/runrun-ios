@@ -13,8 +13,8 @@ struct TimelineView: View {
     private var currentMonthLabel: String {
         let now = Date()
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ja_JP")
-        formatter.dateFormat = "yyyy年M月"
+        formatter.locale = Locale.current
+        formatter.setLocalizedDateFormatFromTemplate("yMMMM")
         return formatter.string(from: now)
     }
 

@@ -14,7 +14,17 @@ final class MonthDetailViewModel: ObservableObject {
     private let firestoreService = FirestoreService.shared
 
     var title: String {
-        "\(year)年\(month)月"
+        var components = DateComponents()
+        components.year = year
+        components.month = month
+        components.day = 1
+        guard let date = Calendar.current.date(from: components) else {
+            return "\(year)/\(month)"
+        }
+        let formatter = DateFormatter()
+        formatter.locale = Locale.current
+        formatter.setLocalizedDateFormatFromTemplate("yMMMM")
+        return formatter.string(from: date)
     }
 
     var totalDistance: Double {
