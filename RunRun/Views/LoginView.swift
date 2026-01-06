@@ -21,7 +21,7 @@ struct LoginView: View {
                     .font(.largeTitle)
                     .fontWeight(.bold)
 
-                Text("ランニング記録を共有しよう")
+                Text("Share your running records")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }

@@ -15,7 +15,7 @@ struct LicensesView: View {
                 LicenseDetailView(title: license.title, text: license.licenseText)
             }
         }
-        .navigationTitle("ライセンス")
+        .navigationTitle("Licenses")
         .task {
             loadLicenses()
         }

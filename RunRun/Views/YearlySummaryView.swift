@@ -84,30 +84,30 @@ struct YearlySummaryView: View {
             }
 
             // メイン統計
-            Section("総合") {
-                LabeledContent("総距離", value: formattedTotalDistance)
-                LabeledContent("総時間", value: formattedTotalDuration)
-                LabeledContent("ラン回数", value: String(format: String(localized: "%d runs", comment: "Run count"), totalRuns))
+            Section("Overall") {
+                LabeledContent("Total Distance", value: formattedTotalDistance)
+                LabeledContent("Total Time", value: formattedTotalDuration)
+                LabeledContent("Run Count", value: String(format: String(localized: "%d runs", comment: "Run count"), totalRuns))
             }
 
             // 効率
-            Section("効率") {
-                LabeledContent("平均ペース", value: formattedAveragePace)
-                LabeledContent("平均距離/回", value: formattedAverageDistancePerRun)
+            Section("Efficiency") {
+                LabeledContent("Average Pace", value: formattedAveragePace)
+                LabeledContent("Avg Distance/Run", value: formattedAverageDistancePerRun)
             }
 
             // ハイライト
             if let best = bestMonth, best.totalDistanceInKilometers > 0 {
-                Section("ハイライト") {
-                    LabeledContent("ベスト月", value: "\(best.shortMonthName) (\(best.formattedTotalDistance))")
+                Section("Highlights") {
+                    LabeledContent("Best Month", value: "\(best.shortMonthName) (\(best.formattedTotalDistance))")
                     if let mostActive = monthlyStats.filter({ $0.runCount > 0 }).max(by: { $0.runCount < $1.runCount }) {
-                        LabeledContent("最多ラン月", value: "\(mostActive.shortMonthName) (\(String(format: String(localized: "%d runs", comment: "Run count"), mostActive.runCount)))")
+                        LabeledContent("Most Runs Month", value: "\(mostActive.shortMonthName) (\(String(format: String(localized: "%d runs", comment: "Run count"), mostActive.runCount)))")
                     }
                 }
             }
 
             // 月別詳細
-            Section("月別詳細") {
+            Section("Monthly Details") {
                 ForEach(monthlyStats.reversed()) { stats in
                     MonthSummaryRow(stats: stats)
                 }
@@ -130,13 +130,13 @@ struct YearlySummaryView: View {
     private var yearlyChart: some View {
         Chart(monthlyStats) { stats in
             BarMark(
-                x: .value(String(localized: "月"), stats.shortMonthName),
-                y: .value(String(localized: "距離"), stats.totalDistanceInKilometers)
+                x: .value(String(localized: "Month"), stats.shortMonthName),
+                y: .value(String(localized: "Distance"), stats.totalDistanceInKilometers)
             )
             .foregroundStyle(Color.accentColor.gradient)
 
             if let best = bestMonth, stats.month == best.month {
-                RuleMark(y: .value(String(localized: "ベスト"), best.totalDistanceInKilometers))
+                RuleMark(y: .value(String(localized: "Best"), best.totalDistanceInKilometers))
                     .foregroundStyle(.orange)
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 5]))
             }

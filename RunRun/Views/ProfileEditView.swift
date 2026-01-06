@@ -27,7 +27,7 @@ struct ProfileEditView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("プロフィール画像") {
+                Section("Profile Photo") {
                     HStack {
                         Spacer()
                         VStack(spacing: 12) {
@@ -35,11 +35,11 @@ struct ProfileEditView: View {
                                 .frame(width: 100, height: 100)
 
                             PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                                Text("写真を選択")
+                                Text("Select Photo")
                             }
 
                             if avatarImage != nil || currentAvatarURL != nil {
-                                Button("写真を削除", role: .destructive) {
+                                Button("Remove Photo", role: .destructive) {
                                     avatarImage = nil
                                     currentAvatarURL = nil
                                     selectedPhoto = nil
@@ -52,7 +52,7 @@ struct ProfileEditView: View {
                     .padding(.vertical, 8)
                 }
 
-                Section("アイコン（写真がない場合に表示）") {
+                Section("Icon (shown when no photo)") {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 50))], spacing: 12) {
                         ForEach(UserProfile.availableIcons, id: \.self) { icon in
                             Button {
@@ -71,8 +71,8 @@ struct ProfileEditView: View {
                     .padding(.vertical, 8)
                 }
 
-                Section("表示名") {
-                    TextField("表示名", text: $displayName)
+                Section("Display Name") {
+                    TextField("Display Name", text: $displayName)
                         .textContentType(.name)
                 }
 
@@ -83,17 +83,17 @@ struct ProfileEditView: View {
                     }
                 }
             }
-            .navigationTitle("プロフィール編集")
+            .navigationTitle("Edit Profile")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("キャンセル") {
+                    Button("Cancel") {
                         dismiss()
                     }
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("保存") {
+                    Button("Save") {
                         Task { await save() }
                     }
                     .disabled(displayName.isEmpty || isSaving)
@@ -103,7 +103,7 @@ struct ProfileEditView: View {
                 if isSaving {
                     Color.black.opacity(0.3)
                         .ignoresSafeArea()
-                    ProgressView("保存中...")
+                    ProgressView("Saving...")
                         .padding()
                         .background(.regularMaterial)
                         .cornerRadius(10)
@@ -182,5 +182,5 @@ struct ProfileEditView: View {
 }
 
 #Preview {
-    ProfileEditView(userId: "test", currentDisplayName: "ランナー", currentIcon: "figure.run", currentAvatarURL: nil)
+    ProfileEditView(userId: "test", currentDisplayName: "Runner", currentIcon: "figure.run", currentAvatarURL: nil)
 }

@@ -10,11 +10,11 @@ enum HealthKitError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .notAvailable:
-            return String(localized: "HealthKitはこのデバイスで利用できません")
+            return String(localized: "HealthKit is not available on this device")
         case .authorizationDenied:
-            return String(localized: "ヘルスケアへのアクセスが許可されていません")
+            return String(localized: "Health data access is not authorized")
         case .queryFailed(let error):
-            return String(localized: "データの取得に失敗しました") + ": \(error.localizedDescription)"
+            return String(localized: "Failed to fetch data") + ": \(error.localizedDescription)"
         }
     }
 }

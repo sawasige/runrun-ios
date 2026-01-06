@@ -15,7 +15,7 @@ struct UserSearchView: View {
         NavigationStack {
             List {
                 if searchResults.isEmpty && !searchText.isEmpty {
-                    Text("ユーザーが見つかりません")
+                    Text("No users found")
                         .foregroundStyle(.secondary)
                 }
                 ForEach(searchResults) { user in
@@ -27,12 +27,12 @@ struct UserSearchView: View {
                     )
                 }
             }
-            .navigationTitle("ユーザー検索")
+            .navigationTitle("Search Users")
             .navigationBarTitleDisplayMode(.inline)
-            .searchable(text: $searchText, prompt: "表示名で検索")
+            .searchable(text: $searchText, prompt: "Search by display name")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("閉じる") {
+                    Button("Close") {
                         dismiss()
                     }
                 }
@@ -115,11 +115,11 @@ struct UserSearchRow: View {
             Spacer()
 
             if isFriend {
-                Text("フレンド")
+                Text("Friend")
                     .font(.caption)
                     .foregroundStyle(.green)
             } else if requestSent || isSending {
-                Text("送信済み")
+                Text("Sent")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {

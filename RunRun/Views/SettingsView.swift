@@ -18,7 +18,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("プロフィール") {
+                Section("Profile") {
                     HStack(spacing: 16) {
                         ProfileAvatarView(
                             iconName: userProfile?.iconName ?? "figure.run",
@@ -27,7 +27,7 @@ struct SettingsView: View {
                         )
 
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(userProfile?.displayName ?? "読み込み中...")
+                            Text(userProfile?.displayName ?? String(localized: "Loading..."))
                                 .font(.headline)
                             if let email = authService.user?.email {
                                 Text(email)
@@ -38,13 +38,13 @@ struct SettingsView: View {
                     }
                     .padding(.vertical, 4)
 
-                    Button("プロフィールを編集") {
+                    Button("Edit Profile") {
                         showingProfileEdit = true
                     }
                 }
 
-                Section("アカウント") {
-                    Button("サインアウト", role: .destructive) {
+                Section("Account") {
+                    Button("Sign Out", role: .destructive) {
                         try? authService.signOut()
                     }
 
@@ -52,7 +52,7 @@ struct SettingsView: View {
                         showingDeleteConfirmation = true
                     } label: {
                         HStack {
-                            Text("退会する")
+                            Text("Delete Account")
                             Spacer()
                             if isDeleting {
                                 ProgressView()
@@ -68,12 +68,12 @@ struct SettingsView: View {
                     }
                 }
 
-                Section("データ同期") {
+                Section("Data Sync") {
                     Button {
                         Task { await syncData() }
                     } label: {
                         HStack {
-                            Text("再同期")
+                            Text("Re-sync")
                             Spacer()
                             if syncService.isSyncing {
                                 ProgressView()
@@ -89,44 +89,44 @@ struct SettingsView: View {
                     }
                 }
 
-                Section("ヘルスケア") {
-                    Button("ヘルスケア設定を開く") {
+                Section("HealthKit") {
+                    Button("Open Health Settings") {
                         if let url = URL(string: "x-apple-health://") {
                             UIApplication.shared.open(url)
                         }
                     }
                 }
 
-                Section("アプリ情報") {
+                Section("App Info") {
                     HStack {
-                        Text("バージョン")
+                        Text("Version")
                         Spacer()
                         Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0")
                             .foregroundStyle(.secondary)
                     }
 
-                    Link("利用規約", destination: URL(string: "https://sawasige.github.io/runrun-ios/terms.html")!)
+                    Link("Terms of Service", destination: URL(string: "https://sawasige.github.io/runrun-ios/terms.html")!)
 
-                    Link("プライバシーポリシー", destination: URL(string: "https://sawasige.github.io/runrun-ios/privacy.html")!)
+                    Link("Privacy Policy", destination: URL(string: "https://sawasige.github.io/runrun-ios/privacy.html")!)
 
-                    Link("サポート", destination: URL(string: "https://sawasige.github.io/runrun-ios/support.html")!)
+                    Link("Support", destination: URL(string: "https://sawasige.github.io/runrun-ios/support.html")!)
 
-                    NavigationLink("ライセンス") {
+                    NavigationLink("Licenses") {
                         LicensesView()
                     }
                 }
 
                 #if DEBUG
-                Section("デバッグ") {
-                    Button("テスト通知を送信") {
+                Section("Debug") {
+                    Button("Send Test Notification") {
                         Task { await sendTestNotification() }
                     }
 
-                    Button("ダミーユーザーを作成") {
+                    Button("Create Dummy Users") {
                         Task { await createDummyData() }
                     }
 
-                    Button("Crashlyticsテスト", role: .destructive) {
+                    Button("Crashlytics Test", role: .destructive) {
                         fatalError("Crashlytics test crash")
                     }
 
@@ -138,7 +138,7 @@ struct SettingsView: View {
                 }
                 #endif
             }
-            .navigationTitle("設定")
+            .navigationTitle("Settings")
             .task {
                 await loadProfile()
             }
@@ -157,13 +157,13 @@ struct SettingsView: View {
                     )
                 }
             }
-            .alert("退会確認", isPresented: $showingDeleteConfirmation) {
-                Button("キャンセル", role: .cancel) {}
-                Button("退会する", role: .destructive) {
+            .alert("Confirm Account Deletion", isPresented: $showingDeleteConfirmation) {
+                Button("Cancel", role: .cancel) {}
+                Button("Delete Account", role: .destructive) {
                     Task { await deleteAccount() }
                 }
             } message: {
-                Text("アカウントを削除すると、すべてのデータが完全に削除され、復元できません。本当に退会しますか？")
+                Text("Deleting your account will permanently remove all your data and cannot be undone. Are you sure?")
             }
         }
     }
@@ -177,7 +177,7 @@ struct SettingsView: View {
             try await authService.reauthenticateAndDeleteAccount()
             // 削除成功後、AuthServiceが自動的にサインアウト状態になる
         } catch {
-            deleteError = "退会に失敗しました: \(error.localizedDescription)"
+            deleteError = String(localized: "Failed to delete account") + ": \(error.localizedDescription)"
         }
 
         isDeleting = false
@@ -191,7 +191,7 @@ struct SettingsView: View {
                 userProfile = profile
             } else {
                 // プロフィールが存在しない場合は作成
-                let displayName = authService.user?.displayName ?? String(localized: "ランナー")
+                let displayName = authService.user?.displayName ?? String(localized: "Runner")
                 try await firestoreService.createUserProfile(
                     userId: userId,
                     displayName: displayName,
@@ -211,17 +211,17 @@ struct SettingsView: View {
         await syncService.syncHealthKitData(userId: userId)
 
         if let error = syncService.error {
-            lastSyncMessage = "同期エラー: \(error.localizedDescription)"
+            lastSyncMessage = String(localized: "Sync error") + ": \(error.localizedDescription)"
         } else if syncService.syncedCount > 0 {
-            lastSyncMessage = "\(syncService.syncedCount)件の新規記録を同期しました"
+            lastSyncMessage = String(format: String(localized: "%d new records synced"), syncService.syncedCount)
         } else {
-            lastSyncMessage = "同期済みです"
+            lastSyncMessage = String(localized: "Already synced")
         }
     }
 
     #if DEBUG
     private func sendTestNotification() async {
-        debugMessage = "送信中..."
+        debugMessage = "Sending..."
 
         let functions = Functions.functions(region: "asia-northeast1")
         do {
@@ -230,26 +230,26 @@ struct SettingsView: View {
                let message = data["message"] as? String {
                 debugMessage = message
             } else {
-                debugMessage = "通知を送信しました"
+                debugMessage = "Notification sent"
             }
         } catch {
-            debugMessage = "エラー: \(error.localizedDescription)"
+            debugMessage = "Error: \(error.localizedDescription)"
         }
     }
 
     private func createDummyData() async {
         guard let currentUserId = authService.user?.uid else { return }
 
-        debugMessage = "作成中..."
+        debugMessage = "Creating..."
 
         do {
             // ダミーユーザーを作成
             let dummyUsers = [
-                ("dummy1", "田中太郎", 8.5),
-                ("dummy2", "鈴木花子", 12.3),
-                ("dummy3", "佐藤次郎", 4.5),
-                ("dummy4", "山田美咲", 15.0),
-                ("dummy5", "高橋健一", 6.8)
+                ("dummy1", "Taro Tanaka", 8.5),
+                ("dummy2", "Hanako Suzuki", 12.3),
+                ("dummy3", "Jiro Sato", 4.5),
+                ("dummy4", "Misaki Yamada", 15.0),
+                ("dummy5", "Kenichi Takahashi", 6.8)
             ]
 
             for (id, name, distance) in dummyUsers {
@@ -276,9 +276,9 @@ struct SettingsView: View {
                 )
             }
 
-            debugMessage = "ダミーユーザー5人とリクエスト2件を作成しました"
+            debugMessage = "Created 5 dummy users and 2 requests"
         } catch {
-            debugMessage = "エラー: \(error.localizedDescription)"
+            debugMessage = "Error: \(error.localizedDescription)"
         }
     }
     #endif

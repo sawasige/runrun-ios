@@ -33,15 +33,15 @@ struct ProfileView: View {
                 .padding(.vertical, 16)
             }
 
-            Section("統計") {
+            Section("Statistics") {
                 HStack {
-                    Label("総距離", systemImage: "figure.run")
+                    Label("Total Distance", systemImage: "figure.run")
                     Spacer()
                     Text(String(format: "%.1f km", totalDistance))
                         .foregroundStyle(.secondary)
                 }
                 HStack {
-                    Label("ラン回数", systemImage: "number")
+                    Label("Run Count", systemImage: "number")
                     Spacer()
                     Text(String(format: String(localized: "%d runs", comment: "Run count"), totalRuns))
                         .foregroundStyle(.secondary)
@@ -52,7 +52,7 @@ struct ProfileView: View {
                 NavigationLink {
                     MonthlyRunningView(user: user)
                 } label: {
-                    Label("記録を見る", systemImage: "chart.bar")
+                    Label("View Records", systemImage: "chart.bar")
                 }
             }
 
@@ -73,7 +73,7 @@ struct ProfileView: View {
                                 if isProcessing {
                                     ProgressView()
                                 } else {
-                                    Label("フレンドを解除", systemImage: "person.badge.minus")
+                                    Label("Remove Friend", systemImage: "person.badge.minus")
                                 }
                                 Spacer()
                             }
@@ -88,7 +88,7 @@ struct ProfileView: View {
                                 if isProcessing {
                                     ProgressView()
                                 } else {
-                                    Label("フレンド申請を送る", systemImage: "person.badge.plus")
+                                    Label("Send Friend Request", systemImage: "person.badge.plus")
                                 }
                                 Spacer()
                             }
@@ -96,7 +96,7 @@ struct ProfileView: View {
                         .disabled(isProcessing)
                     } else {
                         VStack(spacing: 4) {
-                            Text("申請済み")
+                            Text("Request Sent")
                                 .foregroundStyle(.secondary)
                             if let lastDate = lastRequestDate {
                                 Text(remainingTimeText(from: lastDate))
@@ -109,7 +109,7 @@ struct ProfileView: View {
                 }
             }
         }
-        .navigationTitle("プロフィール")
+        .navigationTitle("Profile")
         .navigationBarTitleDisplayMode(.inline)
         .task {
             await loadData()
@@ -161,7 +161,7 @@ struct ProfileView: View {
         let remaining = endDate.timeIntervalSince(Date())
 
         if remaining <= 0 {
-            return String(localized: "まもなく再申請可能")
+            return String(localized: "Can request again soon")
         }
 
         let hours = Int(remaining) / 3600
@@ -184,7 +184,7 @@ struct ProfileView: View {
             let profile = try await firestoreService.getUserProfile(userId: currentUserId)
             try await firestoreService.sendFriendRequest(
                 fromUserId: currentUserId,
-                fromDisplayName: profile?.displayName ?? String(localized: "ユーザー"),
+                fromDisplayName: profile?.displayName ?? String(localized: "User"),
                 toUserId: toUserId
             )
             canSendRequest = false
@@ -220,7 +220,7 @@ struct ProfileView: View {
     NavigationStack {
         ProfileView(user: UserProfile(
             id: "test",
-            displayName: "テストユーザー",
+            displayName: "Test User",
             email: nil,
             iconName: "figure.run"
         ))

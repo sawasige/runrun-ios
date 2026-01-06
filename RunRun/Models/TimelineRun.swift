@@ -86,9 +86,9 @@ struct TimelineDayGroup: Identifiable {
         formatter.locale = Locale.current
 
         if calendar.isDateInToday(date) {
-            return String(localized: "今日")
+            return String(localized: "Today")
         } else if calendar.isDateInYesterday(date) {
-            return String(localized: "昨日")
+            return String(localized: "Yesterday")
         } else {
             formatter.setLocalizedDateFormatFromTemplate("MMMdE")
             return formatter.string(from: date)

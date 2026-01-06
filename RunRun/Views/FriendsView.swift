@@ -19,7 +19,7 @@ struct FriendsView: View {
                 } else {
                     List {
                         if !friendRequests.isEmpty {
-                            Section("リクエスト") {
+                            Section("Requests") {
                                 ForEach(friendRequests) { request in
                                     FriendRequestRow(
                                         request: request,
@@ -30,9 +30,9 @@ struct FriendsView: View {
                             }
                         }
 
-                        Section("フレンド (\(friends.count))") {
+                        Section("Friends (\(friends.count))") {
                             if friends.isEmpty {
-                                Text("フレンドがいません")
+                                Text("No friends yet")
                                     .foregroundStyle(.secondary)
                             } else {
                                 ForEach(friends) { friend in
@@ -48,7 +48,7 @@ struct FriendsView: View {
                     }
                 }
             }
-            .navigationTitle("フレンド")
+            .navigationTitle("Friends")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
@@ -149,7 +149,7 @@ struct FriendRequestRow: View {
             VStack(alignment: .leading) {
                 Text(request.fromDisplayName)
                     .font(.headline)
-                Text("フレンドリクエスト")
+                Text("Friend Request")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

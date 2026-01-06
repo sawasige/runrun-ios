@@ -167,19 +167,19 @@ struct MonthDetailView: View {
 
             Section {
                 HStack {
-                    Text("合計")
+                    Text("Total")
                     Spacer()
                     Text(viewModel.formattedTotalDistance)
                         .fontWeight(.bold)
                 }
                 HStack {
-                    Text("回数")
+                    Text("Runs")
                     Spacer()
                     Text(String(format: String(localized: "%d runs", comment: "Run count"), viewModel.records.count))
                 }
             }
 
-            Section("ランニング記録") {
+            Section("Running Records") {
                 ForEach(viewModel.records) { record in
                     NavigationLink {
                         RunDetailView(
@@ -218,8 +218,8 @@ struct MonthDetailView: View {
 
         return Chart(viewModel.records) { record in
             BarMark(
-                x: .value("日", record.date, unit: .day),
-                y: .value("距離", record.distanceInKilometers)
+                x: .value("Day", record.date, unit: .day),
+                y: .value("Distance", record.distanceInKilometers)
             )
             .foregroundStyle(Color.accentColor.gradient)
         }
@@ -238,7 +238,7 @@ struct MonthDetailView: View {
             Image(systemName: "figure.run")
                 .font(.system(size: 50))
                 .foregroundStyle(.secondary)
-            Text("この月のランニング記録はありません")
+            Text("No running records for this month")
                 .foregroundStyle(.secondary)
         }
     }
