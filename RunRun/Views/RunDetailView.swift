@@ -52,7 +52,8 @@ struct RunDetailView: View {
 
     private var formattedTime: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
+        formatter.dateFormat = "H時m分"
+        formatter.locale = Locale(identifier: "ja_JP")
         return formatter.string(from: record.date)
     }
 
@@ -142,167 +143,171 @@ struct RunDetailView: View {
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             List {
-                // 地図セクション
-            if !routeCoordinates.isEmpty {
-                Section {
-                    ZStack(alignment: .bottomTrailing) {
-                        mapContent(isExpanded: false)
-                            .allowsHitTesting(false)
-
-                        Button {
-                            showFullScreenMap = true
+                // ユーザー情報セクション（他人の記録の場合）
+                if let user = userProfile {
+                    Section {
+                        NavigationLink {
+                            ProfileView(user: user)
                         } label: {
-                            Image(systemName: "arrow.up.left.and.arrow.down.right")
-                                .font(.caption)
-                                .padding(8)
-                                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
-                        }
-                        .padding(8)
-                    }
-                    .frame(height: 250)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
-                }
-            } else if isLoadingRoute {
-                Section {
-                    HStack {
-                        Spacer()
-                        ProgressView()
-                            .padding()
-                        Spacer()
-                    }
-                }
-            }
-
-            // ユーザー情報セクション（他人の記録の場合）
-            if let user = userProfile {
-                Section {
-                    NavigationLink {
-                        ProfileView(user: user)
-                    } label: {
-                        HStack(spacing: 12) {
-                            ProfileAvatarView(user: user, size: 40)
-                            Text(user.displayName)
-                                .font(.headline)
-                            Spacer()
-                        }
-                    }
-                }
-            }
-
-            // ヘッダーセクション
-            Section {
-                VStack(spacing: 16) {
-                    Text(formattedDate)
-                        .font(.headline)
-                    Text(formattedTime)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-
-                    HStack(spacing: 32) {
-                        StatItem(value: record.formattedDistance, label: "距離")
-                        StatItem(value: record.formattedDuration, label: "時間")
-                        StatItem(value: record.formattedPace, label: "ペース")
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
-            }
-
-            // スプリットセクション
-            if !splits.isEmpty {
-                Section("スプリット") {
-                    ForEach(splits) { split in
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                Text(split.formattedKilometer)
+                            HStack(spacing: 12) {
+                                ProfileAvatarView(user: user, size: 40)
+                                Text(user.displayName)
+                                    .font(.headline)
                                 Spacer()
-                                Text(split.formattedPace)
-                                    .fontWeight(.medium)
-                                    .monospacedDigit()
-                                Text("/km")
-                                    .foregroundStyle(.secondary)
-                            }
-
-                            // 心拍数行
-                            if let avgHR = split.formattedAverageHeartRate {
-                                HStack(spacing: 12) {
-                                    Label("\(avgHR) bpm", systemImage: "heart.fill")
-                                        .foregroundStyle(.red)
-                                    if let maxHR = split.maxHeartRate {
-                                        Text("max \(Int(maxHR))")
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
-                                .font(.caption)
                             }
                         }
-                        .padding(.vertical, 2)
                     }
                 }
-            }
 
-            // 心拍数推移グラフ
-            if !heartRateSamples.isEmpty {
-                Section("心拍数推移") {
-                    HeartRateChartView(samples: heartRateSamples)
-                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                // 記録サマリセクション
+                Section {
+                    VStack(spacing: 16) {
+                        HStack(spacing: 4) {
+                            Text(formattedTime)
+                                .font(.headline)
+                            Text("スタート")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        HStack(spacing: 32) {
+                            StatItem(value: record.formattedDistance, label: "距離")
+                            StatItem(value: record.formattedDuration, label: "時間")
+                            StatItem(value: record.formattedPace, label: "ペース")
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                }
+
+                // 地図セクション（自分の記録のみ）
+                if isOwnRecord {
+                    if !routeCoordinates.isEmpty {
+                        Section {
+                            ZStack(alignment: .bottomTrailing) {
+                                mapContent(isExpanded: false)
+                                    .allowsHitTesting(false)
+
+                                Button {
+                                    showFullScreenMap = true
+                                } label: {
+                                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                        .font(.caption)
+                                        .padding(8)
+                                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
+                                }
+                                .padding(8)
+                            }
+                            .frame(height: 250)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .listRowInsets(EdgeInsets())
+                            .listRowBackground(Color.clear)
+                        }
+                    } else if isLoadingRoute {
+                        Section {
+                            HStack {
+                                Spacer()
+                                ProgressView()
+                                    .padding()
+                                Spacer()
+                            }
+                        }
+                    }
+                }
+
+                // スプリットセクション（自分の記録のみ）
+                if isOwnRecord && !splits.isEmpty {
+                    Section("スプリット") {
+                        ForEach(splits) { split in
+                            VStack(alignment: .leading, spacing: 4) {
+                                HStack {
+                                    Text(split.formattedKilometer)
+                                    Spacer()
+                                    Text(split.formattedPace)
+                                        .fontWeight(.medium)
+                                        .monospacedDigit()
+                                    Text("/km")
+                                        .foregroundStyle(.secondary)
+                                }
+
+                                // 心拍数行
+                                if let avgHR = split.formattedAverageHeartRate {
+                                    HStack(spacing: 12) {
+                                        Label("\(avgHR) bpm", systemImage: "heart.fill")
+                                            .foregroundStyle(.red)
+                                        if let maxHR = split.maxHeartRate {
+                                            Text("max \(Int(maxHR))")
+                                                .foregroundStyle(.secondary)
+                                        }
+                                    }
+                                    .font(.caption)
+                                }
+                            }
+                            .padding(.vertical, 2)
+                        }
+                    }
+                }
+
+                // 心拍数推移グラフ（自分の記録のみ）
+                if isOwnRecord && !heartRateSamples.isEmpty {
+                    Section("心拍数推移") {
+                        HeartRateChartView(samples: heartRateSamples)
+                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    }
+                }
+
+                // 心拍数セクション
+                if record.averageHeartRate != nil || record.maxHeartRate != nil || record.minHeartRate != nil {
+                    Section("心拍数") {
+                        if let avg = record.formattedAverageHeartRate {
+                            LabeledContent("平均", value: avg)
+                        }
+                        if let max = record.formattedMaxHeartRate {
+                            LabeledContent("最大", value: max)
+                        }
+                        if let min = record.formattedMinHeartRate {
+                            LabeledContent("最小", value: min)
+                        }
+                    }
+                }
+
+                // 効率セクション
+                if record.cadence != nil || record.strideLength != nil || record.stepCount != nil {
+                    Section("効率") {
+                        if let cadence = record.formattedCadence {
+                            LabeledContent("ケイデンス", value: cadence)
+                        }
+                        if let stride = record.formattedStrideLength {
+                            LabeledContent("ストライド", value: stride)
+                        }
+                        if let steps = record.formattedStepCount {
+                            LabeledContent("歩数", value: steps)
+                        }
+                    }
+                }
+
+                // エネルギーセクション
+                if let calories = record.formattedCalories {
+                    Section("エネルギー") {
+                        LabeledContent("消費カロリー", value: calories)
+                    }
+                }
+
+                // フローティングボタン分の余白
+                Section {
+                    Color.clear
+                        .frame(height: 60)
+                        .listRowBackground(Color.clear)
                 }
             }
-
-            // 心拍数セクション
-            if record.averageHeartRate != nil || record.maxHeartRate != nil || record.minHeartRate != nil {
-                Section("心拍数") {
-                    if let avg = record.formattedAverageHeartRate {
-                        LabeledContent("平均", value: avg)
-                    }
-                    if let max = record.formattedMaxHeartRate {
-                        LabeledContent("最大", value: max)
-                    }
-                    if let min = record.formattedMinHeartRate {
-                        LabeledContent("最小", value: min)
-                    }
-                }
-            }
-
-            // 効率セクション
-            if record.cadence != nil || record.strideLength != nil || record.stepCount != nil {
-                Section("効率") {
-                    if let cadence = record.formattedCadence {
-                        LabeledContent("ケイデンス", value: cadence)
-                    }
-                    if let stride = record.formattedStrideLength {
-                        LabeledContent("ストライド", value: stride)
-                    }
-                    if let steps = record.formattedStepCount {
-                        LabeledContent("歩数", value: steps)
-                    }
-                }
-            }
-
-            // エネルギーセクション
-            if let calories = record.formattedCalories {
-                Section("エネルギー") {
-                    LabeledContent("消費カロリー", value: calories)
-                }
-            }
-
-            // フローティングボタン分の余白
-            Section {
-                Color.clear
-                    .frame(height: 60)
-                    .listRowBackground(Color.clear)
-            }
-        }
 
             // フローティング前後移動ボタン
             runNavigationButtons
                 .padding()
                 .padding(.bottom, 8)
         }
-        .navigationTitle("ランニング詳細")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle(formattedDate)
+        .navigationBarTitleDisplayMode(.large)
         .toolbar {
             if let user = userProfile {
                 ToolbarItem(placement: .primaryAction) {
