@@ -15,18 +15,18 @@ enum SyncPhase {
         case .idle:
             return ""
         case .connecting:
-            return "HealthKitに接続中..."
+            return String(localized: "HealthKitに接続中...")
         case .fetching:
-            return "データを取得中..."
+            return String(localized: "データを取得中...")
         case .syncing(let current, let total):
-            return "同期中... \(current)/\(total)件"
+            return String(localized: "同期中...") + " \(current)/\(total)"
         case .completed(let count):
             if count > 0 {
-                return "\(count)件の新規記録を同期しました"
+                return String(format: String(localized: "%d件の新規記録を同期しました"), count)
             }
-            return "同期完了"
+            return String(localized: "同期完了")
         case .failed:
-            return "同期に失敗しました"
+            return String(localized: "同期に失敗しました")
         }
     }
 

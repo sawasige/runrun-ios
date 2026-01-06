@@ -83,14 +83,14 @@ struct TimelineDayGroup: Identifiable {
     var formattedDate: String {
         let calendar = Calendar.current
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ja_JP")
+        formatter.locale = Locale.current
 
         if calendar.isDateInToday(date) {
-            return "今日"
+            return String(localized: "今日")
         } else if calendar.isDateInYesterday(date) {
-            return "昨日"
+            return String(localized: "昨日")
         } else {
-            formatter.dateFormat = "M月d日 (E)"
+            formatter.setLocalizedDateFormatFromTemplate("MMMdE")
             return formatter.string(from: date)
         }
     }

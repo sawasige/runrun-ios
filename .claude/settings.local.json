@@ -4,7 +4,9 @@
       "Bash(xcodebuild:*)",
       "WebSearch",
       "Bash(gh run view:*)",
-      "Bash(gh run list:*)"
+      "Bash(gh run list:*)",
+      "Bash(gh run watch:*)",
+      "Bash(find:*)"
     ]
   }
 }

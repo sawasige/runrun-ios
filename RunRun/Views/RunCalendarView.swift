@@ -7,7 +7,9 @@ struct RunCalendarView: View {
     @Binding var selectedRecord: RunningRecord?
 
     private let calendar = Calendar.current
-    private let weekdaySymbols = ["日", "月", "火", "水", "木", "金", "土"]
+    private var weekdaySymbols: [String] {
+        calendar.veryShortStandaloneWeekdaySymbols
+    }
 
     private var firstDayOfMonth: Date {
         calendar.date(from: DateComponents(year: year, month: month, day: 1))!

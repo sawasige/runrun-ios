@@ -175,7 +175,7 @@ struct MonthDetailView: View {
                 HStack {
                     Text("回数")
                     Spacer()
-                    Text("\(viewModel.records.count)回")
+                    Text(String(format: String(localized: "%d runs", comment: "Run count"), viewModel.records.count))
                 }
             }
 
@@ -261,8 +261,8 @@ struct RunningRecordRow: View {
 
     private var formattedDate: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "M/d (E)"
-        formatter.locale = Locale(identifier: "ja_JP")
+        formatter.locale = Locale.current
+        formatter.setLocalizedDateFormatFromTemplate("MdEEE")
         return formatter.string(from: record.date)
     }
 

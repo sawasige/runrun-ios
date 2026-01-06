@@ -43,7 +43,7 @@ struct ProfileView: View {
                 HStack {
                     Label("ラン回数", systemImage: "number")
                     Spacer()
-                    Text("\(totalRuns)回")
+                    Text(String(format: String(localized: "%d runs", comment: "Run count"), totalRuns))
                         .foregroundStyle(.secondary)
                 }
             }
@@ -161,16 +161,16 @@ struct ProfileView: View {
         let remaining = endDate.timeIntervalSince(Date())
 
         if remaining <= 0 {
-            return "まもなく再申請可能"
+            return String(localized: "まもなく再申請可能")
         }
 
         let hours = Int(remaining) / 3600
         let minutes = (Int(remaining) % 3600) / 60
 
         if hours > 0 {
-            return "あと\(hours)時間\(minutes)分で再申請可能"
+            return String(format: String(localized: "Can request again in %dh %dm", comment: "Remaining time with hours"), hours, minutes)
         } else {
-            return "あと\(minutes)分で再申請可能"
+            return String(format: String(localized: "Can request again in %dm", comment: "Remaining time minutes only"), minutes)
         }
     }
 
@@ -184,7 +184,7 @@ struct ProfileView: View {
             let profile = try await firestoreService.getUserProfile(userId: currentUserId)
             try await firestoreService.sendFriendRequest(
                 fromUserId: currentUserId,
-                fromDisplayName: profile?.displayName ?? "ユーザー",
+                fromDisplayName: profile?.displayName ?? String(localized: "ユーザー"),
                 toUserId: toUserId
             )
             canSendRequest = false

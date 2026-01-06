@@ -45,15 +45,15 @@ struct RunDetailView: View {
 
     private var formattedDate: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy年M月d日 (E)"
-        formatter.locale = Locale(identifier: "ja_JP")
+        formatter.locale = Locale.current
+        formatter.setLocalizedDateFormatFromTemplate("yMMMdEEEE")
         return formatter.string(from: record.date)
     }
 
     private var formattedTime: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "H時m分"
-        formatter.locale = Locale(identifier: "ja_JP")
+        formatter.locale = Locale.current
+        formatter.timeStyle = .short
         return formatter.string(from: record.date)
     }
 
@@ -175,9 +175,9 @@ struct RunDetailView: View {
                         }
 
                         HStack(spacing: 32) {
-                            StatItem(value: record.formattedDistance, label: "距離")
-                            StatItem(value: record.formattedDuration, label: "時間")
-                            StatItem(value: record.formattedPace, label: "ペース")
+                            StatItem(value: record.formattedDistance, label: String(localized: "距離"))
+                            StatItem(value: record.formattedDuration, label: String(localized: "時間"))
+                            StatItem(value: record.formattedPace, label: String(localized: "ペース"))
                         }
                     }
                     .frame(maxWidth: .infinity)
@@ -840,8 +840,9 @@ enum ImageComposer {
         lines.append((record.formattedDistance, valueFont))
 
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy/M/d HH:mm"
-        dateFormatter.locale = Locale(identifier: "ja_JP")
+        dateFormatter.locale = Locale.current
+        dateFormatter.dateStyle = .short
+        dateFormatter.timeStyle = .short
         lines.append((dateFormatter.string(from: record.date), dateFont))
 
         for (text, font) in lines {

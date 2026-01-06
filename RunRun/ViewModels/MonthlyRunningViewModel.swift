@@ -31,9 +31,9 @@ final class MonthlyRunningViewModel: ObservableObject {
         let hours = Int(totalDuration) / 3600
         let minutes = (Int(totalDuration) % 3600) / 60
         if hours > 0 {
-            return "\(hours)時間\(minutes)分"
+            return String(format: String(localized: "%dh %dm", comment: "Duration format"), hours, minutes)
         }
-        return "\(minutes)分"
+        return String(format: String(localized: "%dm", comment: "Minutes only"), minutes)
     }
 
     var averageDistancePerRun: Double {

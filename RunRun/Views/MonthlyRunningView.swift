@@ -17,7 +17,7 @@ struct MonthlyRunningView: View {
     }
 
     private var navigationTitle: String {
-        userProfile != nil ? "記録" : "ランニング記録"
+        userProfile != nil ? String(localized: "記録") : String(localized: "ランニング記録")
     }
 
     /// リストには今月までの月のみ表示（未来の月は除外）
@@ -80,9 +80,9 @@ struct MonthlyRunningView: View {
 
     private var yearPickerSection: some View {
         VStack(spacing: 12) {
-            Picker("年", selection: $viewModel.selectedYear) {
+            Picker(String(localized: "年"), selection: $viewModel.selectedYear) {
                 ForEach(viewModel.availableYears, id: \.self) { year in
-                    Text(verbatim: "\(year)年").tag(year)
+                    Text(MonthlyRunningStats.formattedYear(year)).tag(year)
                 }
             }
             .pickerStyle(.segmented)
@@ -201,8 +201,8 @@ struct MonthlyRunningView: View {
     private var monthlyChart: some View {
         Chart(viewModel.monthlyStats) { stats in
             BarMark(
-                x: .value("月", "\(stats.month)月"),
-                y: .value("距離", stats.totalDistanceInKilometers)
+                x: .value(String(localized: "月"), stats.shortMonthName),
+                y: .value(String(localized: "距離"), stats.totalDistanceInKilometers)
             )
             .foregroundStyle(Color.accentColor.gradient)
         }
@@ -233,7 +233,7 @@ struct MonthlyStatsRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(stats.formattedMonth)
                     .font(.headline)
-                Text("\(stats.runCount)回")
+                Text(String(format: String(localized: "%d runs", comment: "Run count"), stats.runCount))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

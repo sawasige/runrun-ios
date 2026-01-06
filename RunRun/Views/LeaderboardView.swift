@@ -1,9 +1,16 @@
 import SwiftUI
 import FirebaseAuth
 
-enum LeaderboardFilter: String, CaseIterable {
-    case all = "全員"
-    case friends = "フレンド"
+enum LeaderboardFilter: CaseIterable {
+    case all
+    case friends
+
+    var localizedName: String {
+        switch self {
+        case .all: return String(localized: "全員")
+        case .friends: return String(localized: "フレンド")
+        }
+    }
 }
 
 struct LeaderboardView: View {
@@ -37,8 +44,10 @@ struct LeaderboardView: View {
     }
 
     private func monthLabel(for date: Date) -> String {
-        let month = calendar.component(.month, from: date)
-        return "\(month)月"
+        let formatter = DateFormatter()
+        formatter.locale = Locale.current
+        formatter.setLocalizedDateFormatFromTemplate("MMM")
+        return formatter.string(from: date)
     }
 
     var body: some View {
@@ -47,7 +56,7 @@ struct LeaderboardView: View {
                 VStack(spacing: 8) {
                     Picker("フィルター", selection: $selectedFilter) {
                         ForEach(LeaderboardFilter.allCases, id: \.self) { filter in
-                            Text(filter.rawValue).tag(filter)
+                            Text(filter.localizedName).tag(filter)
                         }
                     }
                     .pickerStyle(.segmented)
@@ -151,7 +160,7 @@ struct LeaderboardRow: View {
                     .font(.headline)
                     .foregroundStyle(isCurrentUser ? Color.accentColor : .primary)
 
-                Text("\(user.totalRuns)回のラン")
+                Text(String(format: String(localized: "%d runs", comment: "Run count"), user.totalRuns))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

@@ -30,7 +30,7 @@ struct FriendsView: View {
                             }
                         }
 
-                        Section("フレンド (\(friends.count)人)") {
+                        Section("フレンド (\(friends.count))") {
                             if friends.isEmpty {
                                 Text("フレンドがいません")
                                     .foregroundStyle(.secondary)

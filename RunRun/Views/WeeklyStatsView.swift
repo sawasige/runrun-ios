@@ -157,7 +157,7 @@ private struct WeeklyStatRow: View {
 
             if stat.runCount > 0 {
                 HStack(spacing: 16) {
-                    Label("\(stat.runCount)回", systemImage: "figure.run")
+                    Label(String(format: String(localized: "%d runs", comment: "Run count"), stat.runCount), systemImage: "figure.run")
                     Label(stat.formattedAveragePace, systemImage: "speedometer")
                 }
                 .font(.caption)
