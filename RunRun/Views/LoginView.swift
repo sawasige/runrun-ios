@@ -11,9 +11,11 @@ struct LoginView: View {
             Spacer()
 
             VStack(spacing: 16) {
-                Image(systemName: "figure.run.circle.fill")
-                    .font(.system(size: 80))
-                    .foregroundStyle(Color.accentColor)
+                Image("Logo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 120, height: 120)
+                    .clipShape(RoundedRectangle(cornerRadius: 24))
 
                 Text("RunRun")
                     .font(.largeTitle)

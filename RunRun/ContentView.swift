@@ -14,6 +14,7 @@ struct ContentView: View {
             if authService.isAuthenticated {
                 if !hasCompletedInitialSync {
                     SyncProgressView(syncService: syncService)
+                        .transition(.opacity)
                         .task {
                             await performInitialSync()
                         }
@@ -68,6 +69,7 @@ struct ContentView: View {
                             notificationService.pendingTab = nil
                         }
                     }
+                    .transition(.opacity)
                 }
             } else {
                 LoginView()
@@ -78,7 +80,9 @@ struct ContentView: View {
     private func performInitialSync() async {
         guard let userId = authService.user?.uid else { return }
         await syncService.syncHealthKitData(userId: userId)
-        hasCompletedInitialSync = true
+        withAnimation(.easeInOut(duration: 0.3)) {
+            hasCompletedInitialSync = true
+        }
     }
 }
 
