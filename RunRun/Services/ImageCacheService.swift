@@ -4,7 +4,7 @@ import CryptoKit
 actor ImageCacheService {
     static let shared = ImageCacheService()
 
-    private let memoryCache = NSCache<NSString, CachedImage>()
+    private let memoryCache = NSCache<NSString, CachedUIImage>()
     private let cacheExpiration: TimeInterval = 3600 // 1時間
     private let cacheDirectory: URL
 
@@ -55,19 +55,19 @@ actor ImageCacheService {
         // 1. メモリキャッシュから取得
         if let cached = memoryCache.object(forKey: key as NSString) {
             if Date().timeIntervalSince(cached.timestamp) < cacheExpiration {
-                return cached.image
+                return Image(uiImage: cached.uiImage)
             } else {
                 memoryCache.removeObject(forKey: key as NSString)
             }
         }
 
         // 2. ディスクキャッシュから取得
-        if let (image, timestamp) = loadFromDisk(key: key) {
+        if let (uiImage, timestamp) = loadFromDisk(key: key) {
             if Date().timeIntervalSince(timestamp) < cacheExpiration {
                 // メモリキャッシュにも保存
-                let cachedImage = CachedImage(image: image, timestamp: timestamp)
-                memoryCache.setObject(cachedImage, forKey: key as NSString)
-                return image
+                let cached = CachedUIImage(uiImage: uiImage, timestamp: timestamp)
+                memoryCache.setObject(cached, forKey: key as NSString)
+                return Image(uiImage: uiImage)
             } else {
                 // 期限切れなので削除
                 removeFromDisk(key: key)
@@ -78,17 +78,16 @@ actor ImageCacheService {
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             guard let uiImage = UIImage(data: data) else { return nil }
-            let image = Image(uiImage: uiImage)
             let timestamp = Date()
 
             // メモリキャッシュに保存
-            let cachedImage = CachedImage(image: image, timestamp: timestamp)
-            memoryCache.setObject(cachedImage, forKey: key as NSString)
+            let cached = CachedUIImage(uiImage: uiImage, timestamp: timestamp)
+            memoryCache.setObject(cached, forKey: key as NSString)
 
             // ディスクキャッシュに保存
             saveToDisk(key: key, data: data, timestamp: timestamp)
 
-            return image
+            return Image(uiImage: uiImage)
         } catch {
             return nil
         }
@@ -107,7 +106,7 @@ actor ImageCacheService {
         return hash.compactMap { String(format: "%02x", $0) }.joined()
     }
 
-    private func loadFromDisk(key: String) -> (Image, Date)? {
+    private func loadFromDisk(key: String) -> (UIImage, Date)? {
         let imageURL = cacheDirectory.appendingPathComponent(key)
         let metaURL = cacheDirectory.appendingPathComponent("\(key).meta")
 
@@ -118,7 +117,7 @@ actor ImageCacheService {
             return nil
         }
 
-        return (Image(uiImage: uiImage), timestamp)
+        return (uiImage, timestamp)
     }
 
     private func saveToDisk(key: String, data: Data, timestamp: Date) {
@@ -140,12 +139,13 @@ actor ImageCacheService {
     }
 }
 
-private final class CachedImage {
-    let image: Image
+// UIImageを保持するクラス（Sendable対応）
+private final class CachedUIImage: @unchecked Sendable {
+    let uiImage: UIImage
     let timestamp: Date
 
-    init(image: Image, timestamp: Date) {
-        self.image = image
+    nonisolated init(uiImage: UIImage, timestamp: Date) {
+        self.uiImage = uiImage
         self.timestamp = timestamp
     }
 }
