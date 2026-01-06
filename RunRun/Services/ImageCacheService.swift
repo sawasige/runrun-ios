@@ -15,6 +15,38 @@ actor ImageCacheService {
         let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
         cacheDirectory = caches.appendingPathComponent("ImageCache", isDirectory: true)
         try? FileManager.default.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
+
+        // 起動時に期限切れキャッシュを削除
+        Task {
+            await cleanupExpiredCache()
+        }
+    }
+
+    private func cleanupExpiredCache() {
+        guard let files = try? FileManager.default.contentsOfDirectory(
+            at: cacheDirectory,
+            includingPropertiesForKeys: nil
+        ) else { return }
+
+        let metaFiles = files.filter { $0.pathExtension == "meta" }
+
+        for metaURL in metaFiles {
+            guard let metaData = try? Data(contentsOf: metaURL),
+                  let timestamp = try? JSONDecoder().decode(Date.self, from: metaData) else {
+                // メタデータが読めない場合は削除
+                try? FileManager.default.removeItem(at: metaURL)
+                let imageURL = metaURL.deletingPathExtension()
+                try? FileManager.default.removeItem(at: imageURL)
+                continue
+            }
+
+            if Date().timeIntervalSince(timestamp) >= cacheExpiration {
+                // 期限切れなので削除
+                try? FileManager.default.removeItem(at: metaURL)
+                let imageURL = metaURL.deletingPathExtension()
+                try? FileManager.default.removeItem(at: imageURL)
+            }
+        }
     }
 
     func image(for url: URL) async -> Image? {
