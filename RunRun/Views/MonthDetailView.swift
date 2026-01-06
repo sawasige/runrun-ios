@@ -4,34 +4,108 @@ import Charts
 struct MonthDetailView: View {
     @StateObject private var viewModel: MonthDetailViewModel
     let userProfile: UserProfile?
+    let userId: String
     @State private var selectedCalendarRecord: RunningRecord?
+    @State private var currentYear: Int
+    @State private var currentMonth: Int
+    @State private var hasLoadedOnce = false
 
     init(userId: String, year: Int, month: Int) {
         self.userProfile = nil
+        self.userId = userId
+        _currentYear = State(initialValue: year)
+        _currentMonth = State(initialValue: month)
         _viewModel = StateObject(wrappedValue: MonthDetailViewModel(userId: userId, year: year, month: month))
     }
 
     init(user: UserProfile, year: Int, month: Int) {
         self.userProfile = user
+        self.userId = user.id ?? ""
+        _currentYear = State(initialValue: year)
+        _currentMonth = State(initialValue: month)
         _viewModel = StateObject(wrappedValue: MonthDetailViewModel(userId: user.id ?? "", year: year, month: month))
     }
 
-    var body: some View {
-        Group {
-            if viewModel.isLoading {
-                ProgressView()
-            } else if let error = viewModel.error {
-                errorView(error: error)
-            } else if viewModel.records.isEmpty {
-                emptyView
-            } else {
-                recordsList
+    private var isCurrentMonth: Bool {
+        let now = Date()
+        let calendar = Calendar.current
+        return currentYear == calendar.component(.year, from: now) &&
+               currentMonth == calendar.component(.month, from: now)
+    }
+
+    private func goToPreviousMonth() {
+        if currentMonth == 1 {
+            currentMonth = 12
+            currentYear -= 1
+        } else {
+            currentMonth -= 1
+        }
+    }
+
+    private func goToNextMonth() {
+        if currentMonth == 12 {
+            currentMonth = 1
+            currentYear += 1
+        } else {
+            currentMonth += 1
+        }
+    }
+
+    private var monthNavigationButtons: some View {
+        HStack(spacing: 0) {
+            Button {
+                goToPreviousMonth()
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .frame(width: 50, height: 50)
             }
+
+            Divider()
+                .frame(height: 30)
+
+            Button {
+                goToNextMonth()
+            } label: {
+                Image(systemName: "chevron.right")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .frame(width: 50, height: 50)
+            }
+            .disabled(isCurrentMonth)
+            .opacity(isCurrentMonth ? 0.3 : 1)
+        }
+        .background(.regularMaterial)
+        .clipShape(Capsule())
+        .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
+    }
+
+    var body: some View {
+        ZStack(alignment: .bottomTrailing) {
+            Group {
+                if viewModel.isLoading && !hasLoadedOnce {
+                    ProgressView()
+                } else if let error = viewModel.error {
+                    errorView(error: error)
+                } else if viewModel.records.isEmpty {
+                    emptyView
+                } else {
+                    recordsList
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            // フローティング月切り替えボタン
+            monthNavigationButtons
+                .padding()
+                .padding(.bottom, 8)
         }
         .navigationTitle(viewModel.title)
+        .navigationBarTitleDisplayMode(.large)
         .toolbar {
-            if let user = userProfile {
-                ToolbarItem(placement: .primaryAction) {
+            ToolbarItem(placement: .topBarTrailing) {
+                if let user = userProfile {
                     NavigationLink {
                         ProfileView(user: user)
                     } label: {
@@ -42,6 +116,17 @@ struct MonthDetailView: View {
         }
         .task {
             await viewModel.onAppear()
+            hasLoadedOnce = true
+        }
+        .onChange(of: currentYear) { _, _ in
+            Task {
+                await viewModel.updateMonth(year: currentYear, month: currentMonth)
+            }
+        }
+        .onChange(of: currentMonth) { _, _ in
+            Task {
+                await viewModel.updateMonth(year: currentYear, month: currentMonth)
+            }
         }
     }
 
@@ -98,6 +183,13 @@ struct MonthDetailView: View {
                         RunningRecordRow(record: record)
                     }
                 }
+            }
+
+            // フローティングボタン分の余白
+            Section {
+                Color.clear
+                    .frame(height: 60)
+                    .listRowBackground(Color.clear)
             }
         }
         .navigationDestination(item: $selectedCalendarRecord) { record in
