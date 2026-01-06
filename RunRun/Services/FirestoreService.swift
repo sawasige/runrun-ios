@@ -541,6 +541,59 @@ final class FirestoreService {
         }
     }
 
+    // MARK: - Adjacent Runs
+
+    enum RunDirection {
+        case previous
+        case next
+    }
+
+    func getAdjacentRun(userId: String, currentDate: Date, direction: RunDirection) async throws -> RunningRecord? {
+        let query: Query
+        // Firestoreの日付比較精度の問題を回避するため、1ミリ秒のオフセットを追加
+        let epsilon: TimeInterval = 0.001
+
+        switch direction {
+        case .previous:
+            let offsetDate = currentDate.addingTimeInterval(-epsilon)
+            query = runsCollection
+                .whereField("userId", isEqualTo: userId)
+                .whereField("date", isLessThan: offsetDate)
+                .order(by: "date", descending: true)
+                .limit(to: 1)
+        case .next:
+            let offsetDate = currentDate.addingTimeInterval(epsilon)
+            query = runsCollection
+                .whereField("userId", isEqualTo: userId)
+                .whereField("date", isGreaterThan: offsetDate)
+                .order(by: "date", descending: false)
+                .limit(to: 1)
+        }
+
+        let snapshot = try await query.getDocuments()
+        guard let doc = snapshot.documents.first else { return nil }
+        let data = doc.data()
+
+        guard let timestamp = data["date"] as? Timestamp,
+              let distance = data["distanceKm"] as? Double,
+              let duration = data["durationSeconds"] as? TimeInterval else {
+            return nil
+        }
+
+        return RunningRecord(
+            date: timestamp.dateValue(),
+            distanceKm: distance,
+            durationSeconds: duration,
+            caloriesBurned: data["caloriesBurned"] as? Double,
+            averageHeartRate: data["averageHeartRate"] as? Double,
+            maxHeartRate: data["maxHeartRate"] as? Double,
+            minHeartRate: data["minHeartRate"] as? Double,
+            cadence: data["cadence"] as? Double,
+            strideLength: data["strideLength"] as? Double,
+            stepCount: data["stepCount"] as? Int
+        )
+    }
+
     // MARK: - Weekly Stats
 
     func getUserWeeklyStats(userId: String, weeks: Int = 12) async throws -> [WeeklyRunningStats] {

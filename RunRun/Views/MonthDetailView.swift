@@ -178,7 +178,12 @@ struct MonthDetailView: View {
             Section("ランニング記録") {
                 ForEach(viewModel.records) { record in
                     NavigationLink {
-                        RunDetailView(record: record, isOwnRecord: userProfile == nil, userProfile: userProfile)
+                        RunDetailView(
+                            record: record,
+                            isOwnRecord: userProfile == nil,
+                            userProfile: userProfile,
+                            userId: viewModel.userId
+                        )
                     } label: {
                         RunningRecordRow(record: record)
                     }
@@ -193,7 +198,12 @@ struct MonthDetailView: View {
             }
         }
         .navigationDestination(item: $selectedCalendarRecord) { record in
-            RunDetailView(record: record, isOwnRecord: userProfile == nil, userProfile: userProfile)
+            RunDetailView(
+                record: record,
+                isOwnRecord: userProfile == nil,
+                userProfile: userProfile,
+                userId: viewModel.userId
+            )
         }
     }
 

@@ -5,11 +5,25 @@ import HealthKit
 import PhotosUI
 import Charts
 import ImageIO
+import FirebaseAuth
 
 struct RunDetailView: View {
-    let record: RunningRecord
-    var isOwnRecord: Bool = true
-    var userProfile: UserProfile?
+    @State private var record: RunningRecord
+    let isOwnRecord: Bool
+    let userProfile: UserProfile?
+    let userId: String?
+    @State private var previousRecord: RunningRecord?
+    @State private var nextRecord: RunningRecord?
+    @State private var isLoadingAdjacent = false
+
+    private let firestoreService = FirestoreService.shared
+
+    init(record: RunningRecord, isOwnRecord: Bool = true, userProfile: UserProfile? = nil, userId: String? = nil) {
+        _record = State(initialValue: record)
+        self.isOwnRecord = isOwnRecord
+        self.userProfile = userProfile
+        self.userId = userId ?? (isOwnRecord ? nil : userProfile?.id)
+    }
 
     @State private var routeLocations: [CLLocation] = []
     @State private var splits: [Split] = []
@@ -42,9 +56,93 @@ struct RunDetailView: View {
         return formatter.string(from: record.date)
     }
 
+    private var canGoToPrevious: Bool {
+        previousRecord != nil
+    }
+
+    private var canGoToNext: Bool {
+        nextRecord != nil
+    }
+
+    private func goToPrevious() {
+        guard let prev = previousRecord else { return }
+        record = prev
+        resetAllData()
+        Task {
+            await loadRouteData()
+            await loadAdjacentRecords()
+        }
+    }
+
+    private func goToNext() {
+        guard let next = nextRecord else { return }
+        record = next
+        resetAllData()
+        Task {
+            await loadRouteData()
+            await loadAdjacentRecords()
+        }
+    }
+
+    private func resetAllData() {
+        // 前後レコードをリセット（ボタン状態を更新）
+        previousRecord = nil
+        nextRecord = nil
+        // ルートデータをリセット
+        routeLocations = []
+        splits = []
+        heartRateSamples = []
+        routeSegments = []
+    }
+
+    private func loadAdjacentRecords() async {
+        guard let uid = userId ?? Auth.auth().currentUser?.uid else { return }
+        isLoadingAdjacent = true
+
+        async let prevTask = firestoreService.getAdjacentRun(userId: uid, currentDate: record.date, direction: .previous)
+        async let nextTask = firestoreService.getAdjacentRun(userId: uid, currentDate: record.date, direction: .next)
+
+        previousRecord = try? await prevTask
+        nextRecord = try? await nextTask
+        isLoadingAdjacent = false
+    }
+
+    private var runNavigationButtons: some View {
+        HStack(spacing: 0) {
+            Button {
+                goToPrevious()
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .frame(width: 50, height: 50)
+            }
+            .disabled(!canGoToPrevious)
+            .opacity(canGoToPrevious ? 1 : 0.3)
+
+            Divider()
+                .frame(height: 30)
+
+            Button {
+                goToNext()
+            } label: {
+                Image(systemName: "chevron.right")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .frame(width: 50, height: 50)
+            }
+            .disabled(!canGoToNext)
+            .opacity(canGoToNext ? 1 : 0.3)
+        }
+        .background(.regularMaterial)
+        .clipShape(Capsule())
+        .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
+    }
+
     var body: some View {
-        List {
-            // 地図セクション
+        ZStack(alignment: .bottomTrailing) {
+            List {
+                // 地図セクション
             if !routeCoordinates.isEmpty {
                 Section {
                     ZStack(alignment: .bottomTrailing) {
@@ -189,6 +287,19 @@ struct RunDetailView: View {
                     LabeledContent("消費カロリー", value: calories)
                 }
             }
+
+            // フローティングボタン分の余白
+            Section {
+                Color.clear
+                    .frame(height: 60)
+                    .listRowBackground(Color.clear)
+            }
+        }
+
+            // フローティング前後移動ボタン
+            runNavigationButtons
+                .padding()
+                .padding(.bottom, 8)
         }
         .navigationTitle("ランニング詳細")
         .navigationBarTitleDisplayMode(.inline)
@@ -235,6 +346,7 @@ struct RunDetailView: View {
         }
         .task {
             await loadRouteData()
+            await loadAdjacentRecords()
         }
         .fullScreenCover(isPresented: $showExportPreview) {
             if let imageData = exportImageData {
