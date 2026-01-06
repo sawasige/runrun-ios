@@ -89,7 +89,11 @@ struct RunDetailView: View {
         // 前後レコードをリセット（ボタン状態を更新）
         previousRecord = nil
         nextRecord = nil
-        // ルートデータをリセット
+        // ルートデータはリセットしない（チラつき防止）
+        // 新しいデータが読み込まれた時に更新される
+    }
+
+    private func clearRouteData() {
         routeLocations = []
         splits = []
         heartRateSamples = []
@@ -455,7 +459,10 @@ struct RunDetailView: View {
         defer { isLoadingRoute = false }
 
         // 該当日のワークアウトを検索
-        guard let workout = await findWorkout(for: record.date) else { return }
+        guard let workout = await findWorkout(for: record.date) else {
+            clearRouteData()
+            return
+        }
 
         // ルートと心拍数サンプルを並列取得
         async let locationsTask = healthKitService.fetchWorkoutRoute(for: workout)
@@ -463,7 +470,10 @@ struct RunDetailView: View {
 
         let (locations, hrSamples) = await (locationsTask, hrSamplesTask)
 
-        guard !locations.isEmpty else { return }
+        guard !locations.isEmpty else {
+            clearRouteData()
+            return
+        }
 
         // ロケーション配列を保存
         routeLocations = locations
