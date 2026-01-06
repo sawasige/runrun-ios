@@ -2,6 +2,7 @@ import Foundation
 import Combine
 import AuthenticationServices
 import FirebaseAuth
+import FirebaseAnalytics
 import CryptoKit
 
 enum AuthError: LocalizedError {
@@ -55,6 +56,8 @@ final class AuthenticationService: ObservableObject {
     }
 
     func signOut() throws {
+        AnalyticsService.logEvent("logout")
+        AnalyticsService.setUserId(nil)
         try Auth.auth().signOut()
     }
 
@@ -140,6 +143,12 @@ final class AuthenticationService: ObservableObject {
                 email: authResult.user.email
             )
         }
+
+        // Analytics
+        AnalyticsService.setUserId(userId)
+        AnalyticsService.logEvent(AnalyticsEventLogin, parameters: [
+            AnalyticsParameterMethod: "apple"
+        ])
     }
 
     private func randomNonceString(length: Int = 32) -> String {

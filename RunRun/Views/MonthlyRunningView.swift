@@ -64,6 +64,9 @@ struct MonthlyRunningView: View {
             .task {
                 await viewModel.onAppear()
             }
+            .onAppear {
+                AnalyticsService.logScreenView("MonthlyRunning")
+            }
             .refreshable {
                 await viewModel.refresh()
             }

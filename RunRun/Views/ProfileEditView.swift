@@ -169,6 +169,9 @@ struct ProfileEditView: View {
                 iconName: selectedIcon,
                 avatarURL: newAvatarURL
             )
+            AnalyticsService.logEvent("update_profile", parameters: [
+                "has_avatar": newAvatarURL != nil
+            ])
             dismiss()
         } catch {
             errorMessage = error.localizedDescription

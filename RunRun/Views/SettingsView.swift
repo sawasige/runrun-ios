@@ -142,6 +142,9 @@ struct SettingsView: View {
             .task {
                 await loadProfile()
             }
+            .onAppear {
+                AnalyticsService.logScreenView("Settings")
+            }
             .sheet(isPresented: $showingProfileEdit, onDismiss: {
                 Task { await loadProfile() }
             }) {

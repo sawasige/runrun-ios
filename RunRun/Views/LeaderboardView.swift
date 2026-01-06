@@ -102,6 +102,9 @@ struct LeaderboardView: View {
             .task {
                 await loadLeaderboard()
             }
+            .onAppear {
+                AnalyticsService.logScreenView("Leaderboard")
+            }
             .onChange(of: selectedDate) {
                 Task { await loadLeaderboard() }
             }

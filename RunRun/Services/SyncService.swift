@@ -108,6 +108,9 @@ final class SyncService: ObservableObject {
                 )
                 syncedCount = count
                 phase = .completed(count: count)
+                AnalyticsService.logEvent("sync_completed", parameters: [
+                    "record_count": count
+                ])
             }
         } catch {
             self.error = error
