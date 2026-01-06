@@ -354,6 +354,9 @@ struct RunDetailView: View {
             }
         }
         .task {
+            AnalyticsService.logEvent("view_run_detail", parameters: [
+                "is_own_record": isOwnRecord
+            ])
             await loadRouteData()
             await loadAdjacentRecords()
         }

@@ -67,6 +67,9 @@ struct FriendsView: View {
             .task {
                 await loadData()
             }
+            .onAppear {
+                AnalyticsService.logScreenView("Friends")
+            }
         }
     }
 
@@ -101,6 +104,7 @@ struct FriendsView: View {
                 currentUserId: userId,
                 friendUserId: request.fromUserId
             )
+            AnalyticsService.logEvent("accept_friend_request")
             await loadData()
         } catch {
             print("Accept error: \(error)")

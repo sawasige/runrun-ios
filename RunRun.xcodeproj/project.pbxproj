@@ -14,6 +14,7 @@
 		2A0349E82F04FEE3003DECEA /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 2A0349E72F04FEE3003DECEA /* FirebaseStorage */; };
 		2A0349F02F05MSG0003DECEA /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 2A0349EF2F05MSG0003DECEA /* FirebaseMessaging */; };
 		2A0349F22F05FNC0003DECEA /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = 2A0349F12F05FNC0003DECEA /* FirebaseFunctions */; };
+		2A0349F42F05ANA0003DECEA /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 2A0349F32F05ANA0003DECEA /* FirebaseAnalytics */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -70,6 +71,7 @@
 				2A03494E2F02A709003DECEA /* FirebaseFirestore in Frameworks */,
 				2A0349F02F05MSG0003DECEA /* FirebaseMessaging in Frameworks */,
 				2A0349F22F05FNC0003DECEA /* FirebaseFunctions in Frameworks */,
+				2A0349F42F05ANA0003DECEA /* FirebaseAnalytics in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -154,6 +156,7 @@
 				2A0349E72F04FEE3003DECEA /* FirebaseStorage */,
 				2A0349EF2F05MSG0003DECEA /* FirebaseMessaging */,
 				2A0349F12F05FNC0003DECEA /* FirebaseFunctions */,
+				2A0349F32F05ANA0003DECEA /* FirebaseAnalytics */,
 			);
 			productName = RunRun;
 			productReference = 2A8048D42F029239001FA4CE /* RunRun.app */;
@@ -729,6 +732,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 2A0349482F02A709003DECEA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFunctions;
+		};
+		2A0349F32F05ANA0003DECEA /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2A0349482F02A709003DECEA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

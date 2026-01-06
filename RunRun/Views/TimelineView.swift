@@ -59,6 +59,9 @@ struct TimelineView: View {
                 await viewModel.onAppear()
                 await loadMonthlySummary()
             }
+            .onAppear {
+                AnalyticsService.logScreenView("Timeline")
+            }
         }
     }
 

@@ -91,6 +91,7 @@ struct UserSearchView: View {
                 fromDisplayName: profile.displayName,
                 toUserId: toUserId
             )
+            AnalyticsService.logEvent("send_friend_request")
             sentRequests.insert(toUserId)
         } catch {
             print("Send request error: \(error)")
