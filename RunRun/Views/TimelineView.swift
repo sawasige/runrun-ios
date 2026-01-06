@@ -81,14 +81,9 @@ struct TimelineView: View {
 
                 // 右: アバターと表示名
                 HStack(spacing: 10) {
-                    VStack(alignment: .trailing, spacing: 2) {
-                        Text(displayName)
-                            .font(.title3)
-                            .fontWeight(.bold)
-                        Text(currentMonthLabel)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+                    Text(displayName)
+                        .font(.title3)
+                        .fontWeight(.bold)
 
                     if let profile = userProfile {
                         ProfileAvatarView(user: profile, size: 44)
@@ -98,42 +93,64 @@ struct TimelineView: View {
                 }
             }
 
-            // 下部: 今月のサマリ
-            HStack(spacing: 0) {
-                // 距離
-                VStack(spacing: 4) {
-                    Text("距離")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Text(String(format: "%.1f", monthlyDistance))
-                        .font(.title)
-                        .fontWeight(.bold)
-                    Text("km")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity)
+            // 下部: 今月のサマリ（タップで詳細へ）
+            NavigationLink {
+                MonthDetailView(
+                    userId: viewModel.userId,
+                    year: Calendar.current.component(.year, from: Date()),
+                    month: Calendar.current.component(.month, from: Date())
+                )
+            } label: {
+                VStack(spacing: 8) {
+                    Text(currentMonthLabel)
+                        .font(.headline)
+                        .foregroundStyle(.primary)
 
-                Divider()
-                    .frame(height: 40)
+                    HStack(spacing: 0) {
+                        // 距離
+                        VStack(spacing: 4) {
+                            Text("距離")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text(String(format: "%.1f", monthlyDistance))
+                                .font(.title)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.primary)
+                            Text("km")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
 
-                // 回数
-                VStack(spacing: 4) {
-                    Text("回数")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Text("\(monthlyRunCount)")
-                        .font(.title)
-                        .fontWeight(.bold)
-                    Text("回")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        Divider()
+                            .frame(height: 40)
+
+                        // 回数
+                        VStack(spacing: 4) {
+                            Text("回数")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text("\(monthlyRunCount)")
+                                .font(.title)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.primary)
+                            Text("回")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                            .padding(.trailing, 8)
+                    }
                 }
-                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(Color(.secondarySystemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
             }
-            .padding(.vertical, 12)
-            .background(Color(.secondarySystemBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .buttonStyle(.plain)
         }
         .padding(.horizontal)
         .padding(.vertical, 16)

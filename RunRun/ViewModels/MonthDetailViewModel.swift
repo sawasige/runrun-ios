@@ -6,10 +6,10 @@ final class MonthDetailViewModel: ObservableObject {
     @Published private(set) var records: [RunningRecord] = []
     @Published private(set) var isLoading = false
     @Published private(set) var error: Error?
+    @Published private(set) var year: Int
+    @Published private(set) var month: Int
 
     let userId: String
-    let year: Int
-    let month: Int
 
     private let firestoreService = FirestoreService.shared
 
@@ -32,6 +32,12 @@ final class MonthDetailViewModel: ObservableObject {
     }
 
     func onAppear() async {
+        await loadRecords()
+    }
+
+    func updateMonth(year: Int, month: Int) async {
+        self.year = year
+        self.month = month
         await loadRecords()
     }
 
