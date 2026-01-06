@@ -47,7 +47,7 @@ final class FirestoreService {
 
         return UserProfile(
             id: snapshot.documentID,
-            displayName: data["displayName"] as? String ?? "ランナー",
+            displayName: data["displayName"] as? String ?? "Runner",
             email: data["email"] as? String,
             iconName: data["iconName"] as? String ?? "figure.run",
             avatarURL: avatarURL,
@@ -159,7 +159,7 @@ final class FirestoreService {
             }
             return UserProfile(
                 id: doc.documentID,
-                displayName: data["displayName"] as? String ?? "ランナー",
+                displayName: data["displayName"] as? String ?? "Runner",
                 email: data["email"] as? String,
                 iconName: data["iconName"] as? String ?? "figure.run",
                 avatarURL: avatarURL,
@@ -446,7 +446,7 @@ final class FirestoreService {
             }
             return UserProfile(
                 id: doc.documentID,
-                displayName: data["displayName"] as? String ?? "ランナー",
+                displayName: data["displayName"] as? String ?? "Runner",
                 email: data["email"] as? String,
                 iconName: data["iconName"] as? String ?? "figure.run",
                 avatarURL: avatarURL,
@@ -706,7 +706,7 @@ final class FirestoreService {
                     distanceKm: distance,
                     durationSeconds: duration,
                     userId: runUserId,
-                    displayName: profile?.displayName ?? "ランナー",
+                    displayName: profile?.displayName ?? "Runner",
                     avatarURL: profile?.avatarURL,
                     iconName: profile?.iconName ?? "figure.run",
                     caloriesBurned: data["caloriesBurned"] as? Double,

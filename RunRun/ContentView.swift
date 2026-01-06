@@ -22,32 +22,32 @@ struct ContentView: View {
                     TabView(selection: $selectedTab) {
                         TimelineView(userId: userId)
                             .tabItem {
-                                Label("ホーム", systemImage: "house")
+                                Label("Home", systemImage: "house")
                             }
                             .tag(AppTab.home)
 
                         MonthlyRunningView(userId: userId)
                             .tabItem {
-                                Label("記録", systemImage: "figure.run")
+                                Label("Records", systemImage: "figure.run")
                             }
                             .tag(AppTab.record)
 
                         LeaderboardView()
                             .tabItem {
-                                Label("ランキング", systemImage: "trophy")
+                                Label("Leaderboard", systemImage: "trophy")
                             }
                             .tag(AppTab.leaderboard)
 
                         FriendsView()
                             .tabItem {
-                                Label("フレンド", systemImage: "person.2")
+                                Label("Friends", systemImage: "person.2")
                             }
                             .badge(badgeService.totalBadgeCount)
                             .tag(AppTab.friends)
 
                         SettingsView()
                             .tabItem {
-                                Label("設定", systemImage: "gear")
+                                Label("Settings", systemImage: "gear")
                             }
                             .tag(AppTab.settings)
                     }

@@ -29,7 +29,7 @@ struct WeeklyStatsView: View {
                 statsContent
             }
         }
-        .navigationTitle("週間推移")
+        .navigationTitle("Weekly Trends")
         .toolbar {
             if let user = userProfile {
                 ToolbarItem(placement: .primaryAction) {
@@ -69,7 +69,7 @@ struct WeeklyStatsView: View {
                     .frame(height: 200)
             }
 
-            Section("週間データ") {
+            Section("Weekly Data") {
                 ForEach(weeklyStats.reversed()) { stat in
                     WeeklyStatRow(stat: stat)
                 }
@@ -80,15 +80,15 @@ struct WeeklyStatsView: View {
     private var weeklyChart: some View {
         Chart(weeklyStats) { stat in
             LineMark(
-                x: .value("週", stat.weekStartDate, unit: .weekOfYear),
-                y: .value("距離", stat.totalDistanceInKilometers)
+                x: .value("Week", stat.weekStartDate, unit: .weekOfYear),
+                y: .value("Distance", stat.totalDistanceInKilometers)
             )
             .foregroundStyle(Color.accentColor)
             .symbol(.circle)
 
             AreaMark(
-                x: .value("週", stat.weekStartDate, unit: .weekOfYear),
-                y: .value("距離", stat.totalDistanceInKilometers)
+                x: .value("Week", stat.weekStartDate, unit: .weekOfYear),
+                y: .value("Distance", stat.totalDistanceInKilometers)
             )
             .foregroundStyle(Color.accentColor.opacity(0.1))
         }
@@ -106,7 +106,7 @@ struct WeeklyStatsView: View {
             Image(systemName: "chart.line.uptrend.xyaxis")
                 .font(.system(size: 50))
                 .foregroundStyle(.secondary)
-            Text("データがありません")
+            Text("No data available")
                 .foregroundStyle(.secondary)
         }
     }

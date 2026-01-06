@@ -17,7 +17,7 @@ struct MonthlyRunningView: View {
     }
 
     private var navigationTitle: String {
-        userProfile != nil ? String(localized: "記録") : String(localized: "ランニング記録")
+        userProfile != nil ? String(localized: "Records") : String(localized: "Running Records")
     }
 
     /// リストには今月までの月のみ表示（未来の月は除外）
@@ -80,7 +80,7 @@ struct MonthlyRunningView: View {
 
     private var yearPickerSection: some View {
         VStack(spacing: 12) {
-            Picker(String(localized: "年"), selection: $viewModel.selectedYear) {
+            Picker(String(localized: "Year"), selection: $viewModel.selectedYear) {
                 ForEach(viewModel.availableYears, id: \.self) { year in
                     Text(MonthlyRunningStats.formattedYear(year)).tag(year)
                 }
@@ -89,7 +89,7 @@ struct MonthlyRunningView: View {
             .padding(.horizontal)
 
             HStack {
-                Text("年間合計")
+                Text("Yearly Total")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Spacer()
@@ -110,7 +110,7 @@ struct MonthlyRunningView: View {
             Spacer()
             ProgressView()
                 .scaleEffect(1.5)
-            Text("読み込み中...")
+            Text("Loading...")
                 .foregroundStyle(.secondary)
                 .padding(.top)
             Spacer()
@@ -126,7 +126,7 @@ struct MonthlyRunningView: View {
             Text(error.localizedDescription)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
-            Button("再読み込み") {
+            Button("Reload") {
                 Task {
                     await viewModel.refresh()
                 }
@@ -160,12 +160,12 @@ struct MonthlyRunningView: View {
                     .frame(height: 200)
             }
 
-            Section("年間サマリー") {
+            Section("Yearly Summary") {
                 NavigationLink {
                     YearlySummaryView(year: viewModel.selectedYear, monthlyStats: viewModel.monthlyStats, userProfile: userProfile)
                 } label: {
                     HStack {
-                        Label("詳細を見る", systemImage: "chart.bar.doc.horizontal")
+                        Label("View Details", systemImage: "chart.bar.doc.horizontal")
                         Spacer()
                         Text(viewModel.formattedTotalYearlyDistance)
                             .foregroundStyle(.secondary)
@@ -173,15 +173,15 @@ struct MonthlyRunningView: View {
                 }
             }
 
-            Section("週間推移") {
+            Section("Weekly Trends") {
                 NavigationLink {
                     WeeklyStatsView(userId: viewModel.userId, userProfile: userProfile)
                 } label: {
-                    Label("過去12週間の推移", systemImage: "chart.line.uptrend.xyaxis")
+                    Label("Last 12 Weeks", systemImage: "chart.line.uptrend.xyaxis")
                 }
             }
 
-            Section("月別記録") {
+            Section("Monthly Records") {
                 ForEach(filteredMonthlyStats.reversed()) { stats in
                     NavigationLink {
                         if let user = userProfile {
@@ -201,8 +201,8 @@ struct MonthlyRunningView: View {
     private var monthlyChart: some View {
         Chart(viewModel.monthlyStats) { stats in
             BarMark(
-                x: .value(String(localized: "月"), stats.shortMonthName),
-                y: .value(String(localized: "距離"), stats.totalDistanceInKilometers)
+                x: .value(String(localized: "Month"), stats.shortMonthName),
+                y: .value(String(localized: "Distance"), stats.totalDistanceInKilometers)
             )
             .foregroundStyle(Color.accentColor.gradient)
         }

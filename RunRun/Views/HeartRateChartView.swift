@@ -29,8 +29,8 @@ struct HeartRateChartView: View {
         Chart {
             ForEach(chartData) { sample in
                 LineMark(
-                    x: .value(String(localized: "時間"), sample.elapsedSeconds / 60),
-                    y: .value(String(localized: "心拍数"), sample.bpm)
+                    x: .value(String(localized: "Duration"), sample.elapsedSeconds / 60),
+                    y: .value(String(localized: "Heart Rate"), sample.bpm)
                 )
                 .foregroundStyle(Color.red.gradient)
                 .interpolationMethod(.catmullRom)
@@ -38,14 +38,14 @@ struct HeartRateChartView: View {
 
             ForEach(chartData) { sample in
                 AreaMark(
-                    x: .value(String(localized: "時間"), sample.elapsedSeconds / 60),
-                    y: .value(String(localized: "心拍数"), sample.bpm)
+                    x: .value(String(localized: "Duration"), sample.elapsedSeconds / 60),
+                    y: .value(String(localized: "Heart Rate"), sample.bpm)
                 )
                 .foregroundStyle(Color.red.opacity(0.1))
                 .interpolationMethod(.catmullRom)
             }
 
-            RuleMark(y: .value(String(localized: "平均"), avgBPM))
+            RuleMark(y: .value(String(localized: "Average"), avgBPM))
                 .foregroundStyle(.orange)
                 .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 5]))
                 .annotation(position: .top, alignment: .trailing) {
@@ -55,7 +55,7 @@ struct HeartRateChartView: View {
                 }
         }
         .chartYAxisLabel("bpm")
-        .chartXAxisLabel(String(localized: "分"))
+        .chartXAxisLabel(String(localized: "min"))
         .chartYScale(domain: yAxisDomain)
         .chartXAxis {
             AxisMarks(values: .automatic(desiredCount: 5))

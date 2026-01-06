@@ -232,11 +232,11 @@
 				};
 			};
 			buildConfigurationList = 2A8048CF2F029239001FA4CE /* Build configuration list for PBXProject "RunRun" */;
-			developmentRegion = ja;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				ja,
 				en,
+				ja,
 				Base,
 			);
 			mainGroup = 2A8048CB2F029239001FA4CE;

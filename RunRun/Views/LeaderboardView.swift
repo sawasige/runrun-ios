@@ -7,8 +7,8 @@ enum LeaderboardFilter: CaseIterable {
 
     var localizedName: String {
         switch self {
-        case .all: return String(localized: "全員")
-        case .friends: return String(localized: "フレンド")
+        case .all: return String(localized: "All")
+        case .friends: return String(localized: "Friends")
         }
     }
 }
@@ -54,14 +54,14 @@ struct LeaderboardView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 VStack(spacing: 8) {
-                    Picker("フィルター", selection: $selectedFilter) {
+                    Picker("Filter", selection: $selectedFilter) {
                         ForEach(LeaderboardFilter.allCases, id: \.self) { filter in
                             Text(filter.localizedName).tag(filter)
                         }
                     }
                     .pickerStyle(.segmented)
 
-                    Picker("月", selection: $selectedDate) {
+                    Picker("Month", selection: $selectedDate) {
                         ForEach(availableMonths, id: \.self) { date in
                             Text(monthLabel(for: date)).tag(date)
                         }
@@ -77,15 +77,15 @@ struct LeaderboardView: View {
                         Spacer()
                     } else if let error = errorMessage {
                         ContentUnavailableView(
-                            "読み込みエラー",
+                            "Loading Error",
                             systemImage: "exclamationmark.triangle",
                             description: Text(error)
                         )
                     } else if users.isEmpty {
                         ContentUnavailableView(
-                            "ランキングなし",
+                            "No Rankings",
                             systemImage: "trophy",
-                            description: Text("この月のデータがありません")
+                            description: Text("No data for this month")
                         )
                     } else {
                         List {
@@ -104,7 +104,7 @@ struct LeaderboardView: View {
                     }
                 }
             }
-            .navigationTitle("ランキング")
+            .navigationTitle("Leaderboard")
             .refreshable {
                 await loadLeaderboard()
             }

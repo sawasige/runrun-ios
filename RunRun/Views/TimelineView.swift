@@ -109,7 +109,7 @@ struct TimelineView: View {
                         HStack(spacing: 0) {
                             // 距離
                             VStack(spacing: 2) {
-                                Text("距離")
+                                Text("Distance")
                                     .font(.caption2)
                                     .foregroundStyle(.secondary)
                                 Text(String(format: "%.1f", monthlyDistance))
@@ -127,14 +127,14 @@ struct TimelineView: View {
 
                             // 回数
                             VStack(spacing: 2) {
-                                Text("回数")
+                                Text("Runs")
                                     .font(.caption2)
                                     .foregroundStyle(.secondary)
                                 Text("\(monthlyRunCount)")
                                     .font(.title3)
                                     .fontWeight(.bold)
                                     .foregroundStyle(.primary)
-                                Text("回")
+                                Text("runs")
                                     .font(.caption2)
                                     .foregroundStyle(.secondary)
                             }
@@ -200,7 +200,7 @@ struct TimelineView: View {
             Spacer()
             ProgressView()
                 .scaleEffect(1.5)
-            Text("読み込み中...")
+            Text("Loading...")
                 .foregroundStyle(.secondary)
                 .padding(.top)
             Spacer()
@@ -209,9 +209,9 @@ struct TimelineView: View {
 
     private var emptyView: some View {
         ContentUnavailableView(
-            "まだ記録がありません",
+            "No records yet",
             systemImage: "figure.run",
-            description: Text("あなたとフレンドのランニング記録がここに表示されます")
+            description: Text("Your and your friends' running records will appear here")
         )
     }
 
@@ -225,7 +225,7 @@ struct TimelineView: View {
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
                 .textSelection(.enabled)
-            Button("再読み込み") {
+            Button("Reload") {
                 Task {
                     await viewModel.refresh()
                 }

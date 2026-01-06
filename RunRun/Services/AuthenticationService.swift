@@ -13,11 +13,11 @@ enum AuthError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .signInFailed(let error):
-            return String(localized: "サインインに失敗しました") + ": \(error.localizedDescription)"
+            return String(localized: "Sign in failed") + ": \(error.localizedDescription)"
         case .noIdentityToken:
-            return String(localized: "認証トークンの取得に失敗しました")
+            return String(localized: "Failed to get authentication token")
         case .invalidCredential:
-            return String(localized: "認証情報が無効です")
+            return String(localized: "Invalid credentials")
         }
     }
 }
@@ -136,7 +136,7 @@ final class AuthenticationService: ObservableObject {
         let userId = authResult.user.uid
         let existingProfile = try? await firestoreService.getUserProfile(userId: userId)
         if existingProfile == nil {
-            let displayName = appleIDCredential.fullName?.givenName ?? String(localized: "ランナー")
+            let displayName = appleIDCredential.fullName?.givenName ?? String(localized: "Runner")
             try await firestoreService.createUserProfile(
                 userId: userId,
                 displayName: displayName,

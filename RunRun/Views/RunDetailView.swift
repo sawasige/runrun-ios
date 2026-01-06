@@ -169,15 +169,15 @@ struct RunDetailView: View {
                         HStack(spacing: 4) {
                             Text(formattedTime)
                                 .font(.headline)
-                            Text("スタート")
+                            Text("Start")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
 
                         HStack(spacing: 32) {
-                            StatItem(value: record.formattedDistance, label: String(localized: "距離"))
-                            StatItem(value: record.formattedDuration, label: String(localized: "時間"))
-                            StatItem(value: record.formattedPace, label: String(localized: "ペース"))
+                            StatItem(value: record.formattedDistance, label: String(localized: "Distance"))
+                            StatItem(value: record.formattedDuration, label: String(localized: "Duration"))
+                            StatItem(value: record.formattedPace, label: String(localized: "Pace"))
                         }
                     }
                     .frame(maxWidth: .infinity)
@@ -221,7 +221,7 @@ struct RunDetailView: View {
 
                 // スプリットセクション（自分の記録のみ）
                 if isOwnRecord && !splits.isEmpty {
-                    Section("スプリット") {
+                    Section("Splits") {
                         ForEach(splits) { split in
                             VStack(alignment: .leading, spacing: 4) {
                                 HStack {
@@ -254,7 +254,7 @@ struct RunDetailView: View {
 
                 // 心拍数推移グラフ（自分の記録のみ）
                 if isOwnRecord && !heartRateSamples.isEmpty {
-                    Section("心拍数推移") {
+                    Section("Heart Rate Graph") {
                         HeartRateChartView(samples: heartRateSamples)
                             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                     }
@@ -262,38 +262,38 @@ struct RunDetailView: View {
 
                 // 心拍数セクション
                 if record.averageHeartRate != nil || record.maxHeartRate != nil || record.minHeartRate != nil {
-                    Section("心拍数") {
+                    Section("Heart Rate") {
                         if let avg = record.formattedAverageHeartRate {
-                            LabeledContent("平均", value: avg)
+                            LabeledContent("Average", value: avg)
                         }
                         if let max = record.formattedMaxHeartRate {
-                            LabeledContent("最大", value: max)
+                            LabeledContent("Max", value: max)
                         }
                         if let min = record.formattedMinHeartRate {
-                            LabeledContent("最小", value: min)
+                            LabeledContent("Min", value: min)
                         }
                     }
                 }
 
                 // 効率セクション
                 if record.cadence != nil || record.strideLength != nil || record.stepCount != nil {
-                    Section("効率") {
+                    Section("Efficiency") {
                         if let cadence = record.formattedCadence {
-                            LabeledContent("ケイデンス", value: cadence)
+                            LabeledContent("Cadence", value: cadence)
                         }
                         if let stride = record.formattedStrideLength {
-                            LabeledContent("ストライド", value: stride)
+                            LabeledContent("Stride", value: stride)
                         }
                         if let steps = record.formattedStepCount {
-                            LabeledContent("歩数", value: steps)
+                            LabeledContent("Steps", value: steps)
                         }
                     }
                 }
 
                 // エネルギーセクション
                 if let calories = record.formattedCalories {
-                    Section("エネルギー") {
-                        LabeledContent("消費カロリー", value: calories)
+                    Section("Energy") {
+                        LabeledContent("Calories Burned", value: calories)
                     }
                 }
 
@@ -413,7 +413,7 @@ struct RunDetailView: View {
             if isExpanded {
                 // スタート地点
                 if let start = routeCoordinates.first {
-                    Annotation("スタート", coordinate: start) {
+                    Annotation("Start", coordinate: start) {
                         ZStack {
                             Circle()
                                 .fill(.green)
@@ -427,7 +427,7 @@ struct RunDetailView: View {
 
                 // ゴール地点
                 if let goal = routeCoordinates.last {
-                    Annotation("ゴール", coordinate: goal) {
+                    Annotation("Goal", coordinate: goal) {
                         ZStack {
                             Circle()
                                 .fill(.red)
@@ -600,14 +600,14 @@ struct RunExportPreviewView: View {
                         .tint(.white)
                 }
             }
-            .navigationTitle("プレビュー")
+            .navigationTitle("Preview")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarBackground(Color.black, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("キャンセル") {
+                    Button("Cancel") {
                         dismiss()
                     }
                 }
@@ -630,14 +630,14 @@ struct RunExportPreviewView: View {
             .task {
                 await composeImage()
             }
-            .alert("保存完了", isPresented: $showSaveSuccess) {
+            .alert("Saved", isPresented: $showSaveSuccess) {
                 Button("OK") {
                     dismiss()
                 }
             } message: {
-                Text("写真に保存しました")
+                Text("Saved to Photos")
             }
-            .alert("エラー", isPresented: .init(
+            .alert("Error", isPresented: .init(
                 get: { saveError != nil },
                 set: { if !$0 { saveError = nil } }
             )) {
@@ -674,7 +674,7 @@ struct RunExportPreviewView: View {
             // 写真ライブラリへのアクセス許可を確認
             let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
             guard status == .authorized || status == .limited else {
-                saveError = "写真へのアクセスが許可されていません"
+                saveError = String(localized: "Photo access not authorized")
                 return
             }
 
@@ -1001,7 +1001,7 @@ struct FullScreenMapView: View {
 
                     // スタート地点
                     if let start = routeCoordinates.first {
-                        Annotation("スタート", coordinate: start) {
+                        Annotation("Start", coordinate: start) {
                             ZStack {
                                 Circle()
                                     .fill(.green)
@@ -1015,7 +1015,7 @@ struct FullScreenMapView: View {
 
                     // ゴール地点
                     if let goal = routeCoordinates.last {
-                        Annotation("ゴール", coordinate: goal) {
+                        Annotation("Goal", coordinate: goal) {
                             ZStack {
                                 Circle()
                                     .fill(.red)
@@ -1073,9 +1073,9 @@ struct FullScreenMapView: View {
 
     private var paceLegend: some View {
         HStack(spacing: 12) {
-            legendItem(color: .green, text: "速い")
-            legendItem(color: .yellow, text: "普通")
-            legendItem(color: .red, text: "遅い")
+            legendItem(color: .green, text: String(localized: "Fast"))
+            legendItem(color: .yellow, text: String(localized: "Normal"))
+            legendItem(color: .red, text: String(localized: "Slow"))
         }
         .font(.caption2)
         .padding(.horizontal, 10)
