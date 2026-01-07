@@ -15,7 +15,30 @@ struct GradientRouteMapView: UIViewRepresentable {
         mapView.delegate = context.coordinator
         mapView.mapType = .standard
         mapView.showsCompass = true
-        mapView.showsScale = true
+        mapView.showsScale = false  // デフォルトのスケールを非表示
+
+        // セーフエリアのギリギリ内側にコンパスを配置
+        let safeArea = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first?.windows.first?.safeAreaInsets ?? .zero
+        mapView.insetsLayoutMarginsFromSafeArea = false
+        mapView.layoutMargins = UIEdgeInsets(
+            top: safeArea.top + 8,
+            left: 8,
+            bottom: safeArea.bottom + 8,
+            right: 8
+        )
+
+        // カスタムスケールを右下に配置
+        let scaleView = MKScaleView(mapView: mapView)
+        scaleView.scaleVisibility = .adaptive  // ズーム時のみ表示
+        scaleView.translatesAutoresizingMaskIntoConstraints = false
+        mapView.addSubview(scaleView)
+        NSLayoutConstraint.activate([
+            scaleView.trailingAnchor.constraint(equalTo: mapView.trailingAnchor, constant: -16),
+            scaleView.bottomAnchor.constraint(equalTo: mapView.safeAreaLayoutGuide.bottomAnchor, constant: -8)
+        ])
+
         return mapView
     }
 
