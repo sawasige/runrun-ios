@@ -29,6 +29,7 @@ struct UserSearchView: View {
             }
             .navigationTitle("Search Users")
             .navigationBarTitleDisplayMode(.inline)
+            .analyticsScreen("UserSearch")
             .searchable(text: $searchText, prompt: "Search by display name")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

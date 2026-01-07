@@ -312,6 +312,7 @@ struct RunDetailView: View {
         }
         .navigationTitle(formattedDate)
         .navigationBarTitleDisplayMode(.large)
+        .analyticsScreen("RunDetail")
         .toolbar {
             if let user = userProfile {
                 ToolbarItem(placement: .primaryAction) {

@@ -114,6 +114,7 @@ struct YearlySummaryView: View {
             }
         }
         .navigationTitle(String(format: String(localized: "%d Yearly Summary", comment: "Year summary navigation title"), year))
+        .analyticsScreen("YearlySummary")
         .toolbar {
             if let user = userProfile {
                 ToolbarItem(placement: .primaryAction) {

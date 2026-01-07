@@ -78,3 +78,52 @@ firebase deploy --only functions
 ```bash
 firebase functions:log
 ```
+
+## Analytics
+
+Firebase Analyticsでユーザー行動を計測しています。
+
+### スクリーン (screen_view)
+
+| Screen Name | 画面 | ファイル |
+|-------------|------|---------|
+| `Login` | ログイン画面 | LoginView.swift |
+| `Timeline` | ホーム（タイムライン） | TimelineView.swift |
+| `MonthlyRunning` | 月別記録一覧 | MonthlyRunningView.swift |
+| `MonthDetail` | 月の詳細 | MonthDetailView.swift |
+| `RunDetail` | ラン詳細 | RunDetailView.swift |
+| `WeeklyStats` | 週間推移 | WeeklyStatsView.swift |
+| `YearlySummary` | 年間サマリー | YearlySummaryView.swift |
+| `Leaderboard` | ランキング | LeaderboardView.swift |
+| `Friends` | フレンド一覧 | FriendsView.swift |
+| `UserSearch` | ユーザー検索 | UserSearchView.swift |
+| `Profile` | プロフィール | ProfileView.swift |
+| `ProfileEdit` | プロフィール編集 | ProfileEditView.swift |
+| `Settings` | 設定 | SettingsView.swift |
+| `Licenses` | ライセンス | LicensesView.swift |
+
+### イベント (logEvent)
+
+| Event Name | 説明 | パラメータ |
+|------------|------|-----------|
+| `login` | ログイン成功 | `method`: "apple" |
+| `logout` | ログアウト | - |
+| `sync_completed` | データ同期完了 | `synced_count`: 同期件数 |
+| `view_run_detail` | ラン詳細閲覧 | `distance_km`, `duration_seconds` |
+| `update_profile` | プロフィール更新 | `changed_avatar`, `changed_icon` |
+| `send_friend_request` | フレンド申請送信 | - |
+| `accept_friend_request` | フレンド申請承認 | - |
+
+### 使い方
+
+画面に計測を追加する場合:
+
+```swift
+.analyticsScreen("ScreenName")
+```
+
+イベントを送信する場合:
+
+```swift
+AnalyticsService.logEvent("event_name", parameters: ["key": "value"])
+```

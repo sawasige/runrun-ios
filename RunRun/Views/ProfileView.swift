@@ -111,6 +111,7 @@ struct ProfileView: View {
         }
         .navigationTitle("Profile")
         .navigationBarTitleDisplayMode(.inline)
+        .analyticsScreen("Profile")
         .task {
             await loadData()
         }
