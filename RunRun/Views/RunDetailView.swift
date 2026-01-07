@@ -994,7 +994,7 @@ struct FullScreenMapView: View {
                     goalCoordinate: routeCoordinates.last,
                     kilometerPoints: kilometerPoints
                 )
-                .ignoresSafeArea(edges: [.horizontal, .top])
+                .ignoresSafeArea()
 
                 VStack(alignment: .leading, spacing: 8) {
                     // 閉じるボタン
