@@ -1,4 +1,5 @@
 import FirebaseAnalytics
+import SwiftUI
 
 enum AnalyticsService {
     static func logEvent(_ name: String, parameters: [String: Any]? = nil) {
@@ -22,5 +23,22 @@ enum AnalyticsService {
         Analytics.logEvent(AnalyticsEventScreenView, parameters: [
             AnalyticsParameterScreenName: screenName
         ])
+    }
+}
+
+struct AnalyticsScreen: ViewModifier {
+    let screenName: String
+
+    func body(content: Content) -> some View {
+        content
+            .onAppear {
+                AnalyticsService.logScreenView(screenName)
+            }
+    }
+}
+
+extension View {
+    func analyticsScreen(_ name: String) -> some View {
+        modifier(AnalyticsScreen(screenName: name))
     }
 }

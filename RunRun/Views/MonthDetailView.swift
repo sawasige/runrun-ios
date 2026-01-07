@@ -103,6 +103,7 @@ struct MonthDetailView: View {
         }
         .navigationTitle(viewModel.title)
         .navigationBarTitleDisplayMode(.large)
+        .analyticsScreen("MonthDetail")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 if let user = userProfile {

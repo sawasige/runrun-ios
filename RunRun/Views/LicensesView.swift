@@ -16,6 +16,7 @@ struct LicensesView: View {
             }
         }
         .navigationTitle("Licenses")
+        .analyticsScreen("Licenses")
         .task {
             loadLicenses()
         }

@@ -30,6 +30,7 @@ struct WeeklyStatsView: View {
             }
         }
         .navigationTitle("Weekly Trends")
+        .analyticsScreen("WeeklyStats")
         .toolbar {
             if let user = userProfile {
                 ToolbarItem(placement: .primaryAction) {
