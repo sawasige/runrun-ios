@@ -339,8 +339,7 @@ struct RunDetailView: View {
                 routeSegments: routeSegments,
                 fastPace: percentiles.fast,
                 slowPace: percentiles.slow,
-                kilometerPoints: calculateKilometerPoints(),
-                cameraPosition: mapCameraPosition
+                kilometerPoints: calculateKilometerPoints()
             )
         }
         .photosPicker(
@@ -980,71 +979,22 @@ struct FullScreenMapView: View {
     let fastPace: TimeInterval
     let slowPace: TimeInterval
     let kilometerPoints: [KilometerPoint]
-    let cameraPosition: MapCameraPosition
 
     @Environment(\.dismiss) private var dismiss
-    @State private var localCameraPosition: MapCameraPosition = .automatic
 
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .topLeading) {
-                Map(position: $localCameraPosition) {
-                    // ペース別色分けルート
-                    if !routeSegments.isEmpty {
-                        ForEach(routeSegments) { segment in
-                            MapPolyline(coordinates: segment.coordinates)
-                                .stroke(segment.color(fastPace: fastPace, slowPace: slowPace), lineWidth: 5)
-                        }
-                    } else {
-                        MapPolyline(coordinates: routeCoordinates)
-                            .stroke(Color.accentColor, lineWidth: 5)
-                    }
-
-                    // スタート地点
-                    if let start = routeCoordinates.first {
-                        Annotation("Start", coordinate: start) {
-                            ZStack {
-                                Circle()
-                                    .fill(.green)
-                                    .frame(width: 32, height: 32)
-                                Image(systemName: "flag.fill")
-                                    .font(.system(size: 16))
-                                    .foregroundStyle(.white)
-                            }
-                        }
-                    }
-
-                    // ゴール地点
-                    if let goal = routeCoordinates.last {
-                        Annotation("Goal", coordinate: goal) {
-                            ZStack {
-                                Circle()
-                                    .fill(.red)
-                                    .frame(width: 32, height: 32)
-                                Image(systemName: "flag.checkered")
-                                    .font(.system(size: 16))
-                                    .foregroundStyle(.white)
-                            }
-                        }
-                    }
-
-                    // 1kmごとのマーカー
-                    ForEach(kilometerPoints) { point in
-                        Annotation("\(point.kilometer)km", coordinate: point.coordinate) {
-                            ZStack {
-                                Circle()
-                                    .fill(.orange)
-                                    .frame(width: 28, height: 28)
-                                Text("\(point.kilometer)")
-                                    .font(.system(size: 12, weight: .bold))
-                                    .foregroundStyle(.white)
-                            }
-                        }
-                    }
-                }
-                .mapStyle(.standard(elevation: .realistic))
+                // グラデーションルートマップ
+                GradientRouteMapView(
+                    routeSegments: routeSegments,
+                    fastPace: fastPace,
+                    slowPace: slowPace,
+                    startCoordinate: routeCoordinates.first,
+                    goalCoordinate: routeCoordinates.last,
+                    kilometerPoints: kilometerPoints
+                )
                 .ignoresSafeArea(edges: [.horizontal, .top])
-                .safeAreaPadding(.bottom, geometry.safeAreaInsets.bottom)
 
                 VStack(alignment: .leading, spacing: 8) {
                     // 閉じるボタン
@@ -1066,9 +1016,6 @@ struct FullScreenMapView: View {
                 .padding(.top, geometry.safeAreaInsets.top + 8)
                 .padding(.leading, 16)
             }
-        }
-        .onAppear {
-            localCameraPosition = cameraPosition
         }
     }
 
