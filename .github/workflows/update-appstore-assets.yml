@@ -14,11 +14,14 @@ on:
 
 jobs:
   update-assets:
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 60
     env:
       FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: 120
       FASTLANE_XCODEBUILD_SETTINGS_RETRIES: 6
+      APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
 
     steps:
       - name: Checkout
@@ -34,23 +37,8 @@ jobs:
         if: ${{ inputs.update_screenshots }}
         run: brew install imagemagick
 
-      - name: Setup App Store Connect API Key
-        env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
-        run: |
-          cat > fastlane/api_key.json << EOF
-          {
-            "key_id": "$ASC_KEY_ID",
-            "issuer_id": "$ASC_ISSUER_ID",
-            "key": "$ASC_PRIVATE_KEY",
-            "in_house": false
-          }
-          EOF
-
       - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_16.2.app
+        run: sudo xcode-select -s /Applications/Xcode_26.2.app
 
       - name: Capture Screenshots
         if: ${{ inputs.update_screenshots }}

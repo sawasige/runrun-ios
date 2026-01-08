@@ -1,8 +1,8 @@
 # スクリーンショット撮影設定
 
 devices([
-  "iPhone 17 Pro Max",         # 6.9インチ
-  "iPad Pro 13-inch (M5)"      # 12.9インチ
+  "iPhone 17 Pro Max",         # 6.9インチ (App Store用)
+  "iPad Pro 13-inch (M5)"      # 13インチ (App Store用)
 ])
 
 languages(["ja"])
