@@ -15,7 +15,10 @@ on:
 jobs:
   update-assets:
     runs-on: macos-15
-    timeout-minutes: 30
+    timeout-minutes: 60
+    env:
+      FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: 120
+      FASTLANE_XCODEBUILD_SETTINGS_RETRIES: 6
 
     steps:
       - name: Checkout
