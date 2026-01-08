@@ -35,8 +35,15 @@ Carthage/Build/
 # fastlane
 fastlane/report.xml
 fastlane/Preview.html
-fastlane/screenshots/**/*.png
+fastlane/screenshots/**/*.html
 fastlane/test_output
+fastlane/README.md
+
+# 審査用個人情報（コミット禁止）
+fastlane/metadata/review_information/
+
+# App Store Connect API Key（コミット禁止）
+fastlane/api_key.json
 
 # Code Injection
 iOSInjectionProject/

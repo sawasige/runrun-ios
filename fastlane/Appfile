@@ -1,0 +1,3 @@
+app_identifier "com.himatsubu.RunRun"
+
+# 認証はAPI Key経由（fastlane/api_key.json または環境変数）
