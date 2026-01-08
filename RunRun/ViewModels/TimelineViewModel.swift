@@ -42,6 +42,14 @@ final class TimelineViewModel: ObservableObject {
     }
 
     func loadInitial() async {
+        // スクリーンショットモードではモックデータを使用
+        if ScreenshotMode.isEnabled {
+            runs = MockDataProvider.timelineRuns
+            isLoading = false
+            hasMore = false
+            return
+        }
+
         isLoading = true
         error = nil
 

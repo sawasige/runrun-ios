@@ -56,7 +56,9 @@ final class MonthlyRunningViewModel: ObservableObject {
 
     init(userId: String) {
         self.userId = userId
-        self.selectedYear = Calendar.current.component(.year, from: Date())
+        let currentYear = Calendar.current.component(.year, from: Date())
+        // スクリーンショットモードでは前年を表示
+        self.selectedYear = ScreenshotMode.isEnabled ? currentYear - 1 : currentYear
     }
 
     func onAppear() async {
@@ -64,6 +66,13 @@ final class MonthlyRunningViewModel: ObservableObject {
     }
 
     func loadMonthlyStats() async {
+        // スクリーンショットモードではモックデータを使用
+        if ScreenshotMode.isEnabled {
+            monthlyStats = MockDataProvider.monthlyStats.filter { $0.year == selectedYear }
+            isLoading = false
+            return
+        }
+
         isLoading = true
         error = nil
 

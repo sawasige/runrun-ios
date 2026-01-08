@@ -52,6 +52,13 @@ final class MonthDetailViewModel: ObservableObject {
     }
 
     func loadRecords() async {
+        // スクリーンショットモードならモックデータを使用
+        if ScreenshotMode.isEnabled {
+            records = MockDataProvider.monthDetailRecords
+            isLoading = false
+            return
+        }
+
         isLoading = true
         error = nil
 

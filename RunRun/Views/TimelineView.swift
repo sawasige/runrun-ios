@@ -170,6 +170,15 @@ struct TimelineView: View {
     }
 
     private func loadMonthlySummary() async {
+        // スクリーンショットモードではモックデータを使用
+        if ScreenshotMode.isEnabled {
+            monthlyDistance = 68.5
+            monthlyRunCount = 12
+            userProfile = MockDataProvider.currentUser
+            displayName = MockDataProvider.currentUser.displayName
+            return
+        }
+
         let calendar = Calendar.current
         let now = Date()
         let year = calendar.component(.year, from: now)

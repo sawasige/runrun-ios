@@ -182,7 +182,7 @@ struct MonthlyRunningView: View {
             }
 
             Section("Monthly Records") {
-                ForEach(filteredMonthlyStats.reversed()) { stats in
+                ForEach(Array(filteredMonthlyStats.reversed().enumerated()), id: \.element.id) { index, stats in
                     NavigationLink {
                         if let user = userProfile {
                             MonthDetailView(user: user, year: stats.year, month: stats.month)
@@ -192,6 +192,7 @@ struct MonthlyRunningView: View {
                     } label: {
                         MonthlyStatsRow(stats: stats)
                     }
+                    .accessibilityIdentifier(index == 0 ? "first_month_row" : "month_row_\(index)")
                 }
             }
         }

@@ -43,6 +43,7 @@ struct RunRunApp: App {
             ContentView()
                 .environmentObject(authService)
                 .environmentObject(notificationService)
+                .preferredColorScheme(ScreenshotMode.isEnabled ? .light : nil)
                 .onChange(of: authService.user) { _, newUser in
                     Task {
                         if let userId = newUser?.uid {
