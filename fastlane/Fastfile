@@ -1,0 +1,49 @@
+default_platform(:ios)
+
+platform :ios do
+  before_all do
+    setup_api_key
+  end
+
+  desc "メタデータとスクリーンショットをアップロード"
+  lane :upload_metadata do
+    deliver(
+      skip_binary_upload: true,
+      skip_app_version_update: true,
+      force: true
+    )
+  end
+
+  desc "スクリーンショットのみアップロード"
+  lane :upload_screenshots do
+    deliver(
+      skip_binary_upload: true,
+      skip_metadata: true,
+      force: true
+    )
+  end
+
+  desc "メタデータをダウンロード"
+  lane :download_metadata do
+    sh("bundle exec fastlane deliver download_metadata --api_key_path ../fastlane/api_key.json")
+    sh("bundle exec fastlane deliver download_screenshots --api_key_path ../fastlane/api_key.json")
+  end
+end
+
+def setup_api_key
+  # CI環境: 環境変数から読み込み
+  if ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"]
+    app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
+      key_content: ENV["APP_STORE_CONNECT_API_KEY_KEY"]
+    )
+  # ローカル環境: JSONファイルから読み込み
+  elsif File.exist?("../fastlane/api_key.json")
+    app_store_connect_api_key(
+      key_filepath: "fastlane/api_key.json"
+    )
+  else
+    UI.user_error!("API key not found. Create fastlane/api_key.json from api_key.json.template")
+  end
+end
