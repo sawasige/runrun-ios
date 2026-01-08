@@ -201,6 +201,7 @@ struct RunDetailView: View {
                                         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
                                 }
                                 .padding(8)
+                                .accessibilityIdentifier("expand_map_button")
                             }
                             .frame(height: 250)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -460,6 +461,20 @@ struct RunDetailView: View {
     private func loadRouteData() async {
         isLoadingRoute = true
         defer { isLoadingRoute = false }
+
+        // スクリーンショットモードならモックデータを使用
+        if ScreenshotMode.isEnabled {
+            routeSegments = MockDataProvider.imperialPalaceRouteSegments
+            // routeLocationsも設定（地図表示の条件に必要）
+            routeLocations = routeSegments.flatMap { segment in
+                segment.coordinates.map { CLLocation(latitude: $0.latitude, longitude: $0.longitude) }
+            }
+            mapCameraPosition = .region(MKCoordinateRegion(
+                center: MockDataProvider.routeCenter,
+                span: MKCoordinateSpan(latitudeDelta: 0.025, longitudeDelta: 0.025)
+            ))
+            return
+        }
 
         // 該当日のワークアウトを検索
         guard let workout = await findWorkout(for: record.date) else {

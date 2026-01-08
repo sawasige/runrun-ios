@@ -1,0 +1,23 @@
+# スクリーンショット撮影設定
+
+devices([
+  "iPhone 17 Pro Max",         # 6.9インチ
+  "iPad Pro 13-inch (M5)"      # 12.9インチ
+])
+
+languages(["ja"])
+
+scheme("RunRun")
+output_directory("./fastlane/screenshots")
+clear_previous_screenshots(true)
+
+# スクリーンショットモードで起動
+launch_arguments([
+  "--screenshots"
+])
+
+# シミュレータの外観をライトモードに（重要：erase_simulator後に適用）
+dark_mode(false)
+
+# テストが失敗しても続行
+stop_after_first_error(false)

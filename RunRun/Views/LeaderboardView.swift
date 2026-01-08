@@ -124,6 +124,13 @@ struct LeaderboardView: View {
     }
 
     private func loadLeaderboard() async {
+        // スクリーンショットモードではモックデータを使用
+        if ScreenshotMode.isEnabled {
+            users = MockDataProvider.leaderboardUsers
+            isLoading = false
+            return
+        }
+
         guard let userId = authService.user?.uid else { return }
 
         isLoading = true

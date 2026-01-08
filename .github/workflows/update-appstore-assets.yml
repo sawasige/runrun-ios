@@ -1,0 +1,77 @@
+name: Update App Store Assets
+
+on:
+  workflow_dispatch:
+    inputs:
+      update_screenshots:
+        description: 'スクリーンショットを更新'
+        type: boolean
+        default: true
+      update_metadata:
+        description: 'メタデータ（テキスト）を更新'
+        type: boolean
+        default: true
+
+jobs:
+  update-assets:
+    runs-on: macos-15
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Install ImageMagick
+        if: ${{ inputs.update_screenshots }}
+        run: brew install imagemagick
+
+      - name: Setup App Store Connect API Key
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          cat > fastlane/api_key.json << EOF
+          {
+            "key_id": "$ASC_KEY_ID",
+            "issuer_id": "$ASC_ISSUER_ID",
+            "key": "$ASC_PRIVATE_KEY",
+            "in_house": false
+          }
+          EOF
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.2.app
+
+      - name: Capture Screenshots
+        if: ${{ inputs.update_screenshots }}
+        run: bundle exec fastlane screenshots
+
+      - name: Add Frames to Screenshots
+        if: ${{ inputs.update_screenshots }}
+        run: bundle exec fastlane add_frames
+
+      - name: Upload Screenshots to App Store Connect
+        if: ${{ inputs.update_screenshots }}
+        run: bundle exec fastlane upload_screenshots
+
+      - name: Upload Metadata to App Store Connect
+        if: ${{ inputs.update_metadata }}
+        run: bundle exec fastlane upload_metadata
+
+      - name: Summary
+        run: |
+          echo "## App Store Assets Updated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ inputs.update_screenshots }}" = "true" ]; then
+            echo "- ✅ Screenshots updated" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ inputs.update_metadata }}" = "true" ]; then
+            echo "- ✅ Metadata updated" >> $GITHUB_STEP_SUMMARY
+          fi

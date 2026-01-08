@@ -181,7 +181,7 @@ struct MonthDetailView: View {
             }
 
             Section("Running Records") {
-                ForEach(viewModel.records) { record in
+                ForEach(Array(viewModel.records.enumerated()), id: \.element.id) { index, record in
                     NavigationLink {
                         RunDetailView(
                             record: record,
@@ -192,6 +192,7 @@ struct MonthDetailView: View {
                     } label: {
                         RunningRecordRow(record: record)
                     }
+                    .accessibilityIdentifier(index == 0 ? "first_run_row" : "run_row_\(index)")
                 }
             }
 
