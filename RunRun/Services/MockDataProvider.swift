@@ -255,8 +255,8 @@ struct MockDataProvider {
         components.month = 12
         let december = calendar.date(from: components)!
 
-        // 12月の様々な日にデータを配置（10件）
-        let daysWithRuns = [28, 25, 22, 19, 16, 13, 10, 7, 4, 1]
+        // 12月の様々な日にデータを配置（10件）- 不規則な間隔
+        let daysWithRuns = [30, 28, 26, 23, 18, 15, 11, 8, 3, 1]
 
         return daysWithRuns.enumerated().map { index, day in
             var dateComponents = DateComponents()
