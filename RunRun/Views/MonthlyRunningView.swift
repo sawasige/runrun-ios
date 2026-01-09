@@ -6,7 +6,7 @@ struct MonthlyRunningView: View {
 
     let userProfile: UserProfile?
 
-    init(userId: String, userName: String? = nil) {
+    init(userId: String) {
         self.userProfile = nil
         _viewModel = StateObject(wrappedValue: MonthlyRunningViewModel(userId: userId))
     }
@@ -38,13 +38,17 @@ struct MonthlyRunningView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                yearPickerSection
-
+            Group {
                 if viewModel.isLoading {
-                    loadingView
+                    VStack(spacing: 0) {
+                        yearPickerSection
+                        loadingView
+                    }
                 } else if let error = viewModel.error {
-                    errorView(error: error)
+                    VStack(spacing: 0) {
+                        yearPickerSection
+                        errorView(error: error)
+                    }
                 } else {
                     statsListView
                 }
@@ -139,6 +143,13 @@ struct MonthlyRunningView: View {
 
     private var statsListView: some View {
         List {
+            // 年ピッカーセクション（スクロール領域内）
+            Section {
+                yearPickerSection
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+            }
+
             // ユーザー情報セクション（他人の記録の場合）
             if let user = userProfile {
                 Section {
