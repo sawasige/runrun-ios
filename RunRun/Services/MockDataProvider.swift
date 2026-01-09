@@ -260,23 +260,24 @@ struct MockDataProvider {
         let calendar = Calendar.current
         let now = Date()
         let currentYear = calendar.component(.year, from: now)
+        let currentMonth = calendar.component(.month, from: now)
 
-        // 前年12月のデータを使用（monthlyStatsが前年データのため）
+        // 今月のデータを使用（20日まで）
         var components = DateComponents()
-        components.year = currentYear - 1
-        components.month = 12
-        let december = calendar.date(from: components)!
+        components.year = currentYear
+        components.month = currentMonth
+        let baseDate = calendar.date(from: components)!
 
-        // 12月の様々な日にデータを配置（10件）- 不規則な間隔
-        let daysWithRuns = [30, 28, 26, 23, 18, 15, 11, 8, 3, 1]
+        // 今月の様々な日にデータを配置（10件）- 20日まで
+        let daysWithRuns = [20, 18, 15, 12, 10, 8, 5, 3, 2, 1]
 
         return daysWithRuns.enumerated().map { index, day in
             var dateComponents = DateComponents()
-            dateComponents.year = currentYear - 1
-            dateComponents.month = 12
+            dateComponents.year = currentYear
+            dateComponents.month = currentMonth
             dateComponents.day = day
             dateComponents.hour = Int.random(in: 6...9) // 朝ラン
-            let date = calendar.date(from: dateComponents) ?? december
+            let date = calendar.date(from: dateComponents) ?? baseDate
 
             let distance = Double.random(in: 3000...12000)
             return RunningRecord(

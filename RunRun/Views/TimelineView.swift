@@ -154,6 +154,7 @@ struct TimelineView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier("timeline_month_summary")
         }
         .padding(.horizontal)
         .padding(.vertical, 16)

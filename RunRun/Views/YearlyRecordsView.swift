@@ -197,8 +197,8 @@ struct YearlyRecordsView: View {
                         }
                     } label: {
                         MonthlyStatsRow(stats: stats)
+                            .accessibilityIdentifier(index == 0 ? "first_month_row" : "month_row_\(index)")
                     }
-                    .accessibilityIdentifier(index == 0 ? "first_month_row" : "month_row_\(index)")
                 }
             }
         }
