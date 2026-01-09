@@ -6,14 +6,14 @@ struct YearlyRecordsView: View {
 
     let userProfile: UserProfile?
 
-    init(userId: String) {
+    init(userId: String, initialYear: Int? = nil) {
         self.userProfile = nil
-        _viewModel = StateObject(wrappedValue: YearlyRecordsViewModel(userId: userId))
+        _viewModel = StateObject(wrappedValue: YearlyRecordsViewModel(userId: userId, initialYear: initialYear))
     }
 
-    init(user: UserProfile) {
+    init(user: UserProfile, initialYear: Int? = nil) {
         self.userProfile = user
-        _viewModel = StateObject(wrappedValue: YearlyRecordsViewModel(userId: user.id ?? ""))
+        _viewModel = StateObject(wrappedValue: YearlyRecordsViewModel(userId: user.id ?? "", initialYear: initialYear))
     }
 
     private var navigationTitle: String {
@@ -200,14 +200,6 @@ struct YearlyRecordsView: View {
                     if let mostActive = viewModel.mostActiveMonth {
                         LabeledContent("Most Runs Month", value: "\(mostActive.shortMonthName) (\(String(format: String(localized: "%d runs", comment: "Run count"), mostActive.runCount)))")
                     }
-                }
-            }
-
-            Section("Weekly Trends") {
-                NavigationLink {
-                    WeeklyStatsView(userId: viewModel.userId, userProfile: userProfile)
-                } label: {
-                    Label("Last 12 Weeks", systemImage: "chart.line.uptrend.xyaxis")
                 }
             }
 

@@ -70,11 +70,15 @@ final class YearlyRecordsViewModel: ObservableObject {
         return Array((currentYear - 5)...currentYear).reversed()
     }
 
-    init(userId: String) {
+    init(userId: String, initialYear: Int? = nil) {
         self.userId = userId
         let currentYear = Calendar.current.component(.year, from: Date())
-        // スクリーンショットモードでは前年を表示
-        self.selectedYear = ScreenshotMode.isEnabled ? currentYear - 1 : currentYear
+        if let initialYear = initialYear {
+            self.selectedYear = initialYear
+        } else {
+            // スクリーンショットモードでは前年を表示
+            self.selectedYear = ScreenshotMode.isEnabled ? currentYear - 1 : currentYear
+        }
     }
 
     func onAppear() async {
