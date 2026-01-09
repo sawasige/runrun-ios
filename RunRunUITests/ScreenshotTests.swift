@@ -37,21 +37,21 @@ final class ScreenshotTests: XCTestCase {
         snapshot("01_Timeline")
 
         // 2. 記録タブ
-        if let recordsTab = findTabOrSidebarItem("記録") {
+        if let recordsTab = findTabOrSidebarItem("記録", "Records") {
             recordsTab.tap()
             sleep(2)
             snapshot("02_Records")
         }
 
         // 3. ランキング
-        if let leaderboardTab = findTabOrSidebarItem("ランキング") {
+        if let leaderboardTab = findTabOrSidebarItem("ランキング", "Leaderboard") {
             leaderboardTab.tap()
             sleep(1)
             snapshot("03_Leaderboard")
         }
 
         // 4. 月詳細画面
-        if let recordsTab = findTabOrSidebarItem("記録") {
+        if let recordsTab = findTabOrSidebarItem("記録", "Records") {
             recordsTab.tap()
         }
         sleep(1)
@@ -78,30 +78,32 @@ final class ScreenshotTests: XCTestCase {
         }
     }
 
-    /// タブバーまたはサイドバーから指定されたラベルを持つ要素を探す（iPad対応）
-    private func findTabOrSidebarItem(_ label: String, timeout: TimeInterval = 5) -> XCUIElement? {
-        // まずタブバーから探す（iPhone/iPad共通）
-        let tabButton = app.tabBars.buttons[label]
-        if tabButton.waitForExistence(timeout: timeout) {
-            return tabButton
-        }
-
-        // iPadのフローティングタブバーでは複数マッチする場合がある
-        // firstMatchを使用して最初のマッチを取得
-        let buttons = app.buttons.matching(identifier: label)
-        if buttons.count > 0 {
-            let firstButton = buttons.firstMatch
-            if firstButton.waitForExistence(timeout: 1) {
-                return firstButton
+    /// タブバーまたはサイドバーから指定されたラベルを持つ要素を探す（iPad対応・多言語対応）
+    private func findTabOrSidebarItem(_ labels: String..., timeout: TimeInterval = 5) -> XCUIElement? {
+        for label in labels {
+            // まずタブバーから探す（iPhone/iPad共通）
+            let tabButton = app.tabBars.buttons[label]
+            if tabButton.waitForExistence(timeout: timeout / TimeInterval(labels.count)) {
+                return tabButton
             }
-        }
 
-        // labelでも検索
-        let buttonsByLabel = app.buttons.matching(NSPredicate(format: "label == %@", label))
-        if buttonsByLabel.count > 0 {
-            let firstButton = buttonsByLabel.firstMatch
-            if firstButton.waitForExistence(timeout: 1) {
-                return firstButton
+            // iPadのフローティングタブバーでは複数マッチする場合がある
+            // firstMatchを使用して最初のマッチを取得
+            let buttons = app.buttons.matching(identifier: label)
+            if buttons.count > 0 {
+                let firstButton = buttons.firstMatch
+                if firstButton.waitForExistence(timeout: 1) {
+                    return firstButton
+                }
+            }
+
+            // labelでも検索
+            let buttonsByLabel = app.buttons.matching(NSPredicate(format: "label == %@", label))
+            if buttonsByLabel.count > 0 {
+                let firstButton = buttonsByLabel.firstMatch
+                if firstButton.waitForExistence(timeout: 1) {
+                    return firstButton
+                }
             }
         }
 
@@ -143,29 +145,38 @@ final class ScreenshotTests: XCTestCase {
         return nil
     }
 
-    /// システムダイアログを閉じる
+    /// システムダイアログを閉じる（日英対応）
     private func dismissSystemDialogs() {
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
 
-        // Apple Account確認ダイアログ
-        let notNowButton = springboard.buttons["今はしない"]
-        if notNowButton.waitForExistence(timeout: 2) {
-            notNowButton.tap()
-            sleep(1)
+        // Apple Account確認ダイアログ（日本語/英語）
+        for label in ["今はしない", "Not Now"] {
+            let notNowButton = springboard.buttons[label]
+            if notNowButton.waitForExistence(timeout: 1) {
+                notNowButton.tap()
+                sleep(1)
+                break
+            }
         }
 
-        // 通知パーミッションダイアログ
-        let allowButton = springboard.buttons["許可"]
-        if allowButton.waitForExistence(timeout: 2) {
-            allowButton.tap()
-            sleep(1)
+        // 通知パーミッションダイアログ（日本語/英語）
+        for label in ["許可", "Allow"] {
+            let allowButton = springboard.buttons[label]
+            if allowButton.waitForExistence(timeout: 1) {
+                allowButton.tap()
+                sleep(1)
+                break
+            }
         }
 
-        // 「許可しない」で閉じる場合
-        let dontAllowButton = springboard.buttons["許可しない"]
-        if dontAllowButton.waitForExistence(timeout: 1) {
-            dontAllowButton.tap()
-            sleep(1)
+        // 「許可しない」で閉じる場合（日本語/英語）
+        for label in ["許可しない", "Don't Allow"] {
+            let dontAllowButton = springboard.buttons[label]
+            if dontAllowButton.waitForExistence(timeout: 1) {
+                dontAllowButton.tap()
+                sleep(1)
+                break
+            }
         }
     }
 }
