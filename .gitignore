@@ -65,3 +65,4 @@ iOSInjectionProject/
 *.xcconfig
 !*.xcconfig.template
 # GoogleService-Info.plist は Firebase 設定に必要なためコミットする
+.claude/settings.local.json
