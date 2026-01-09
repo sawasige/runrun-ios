@@ -1,9 +1,6 @@
 name: Release to App Store
 
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
 
 jobs:
@@ -116,3 +113,8 @@ jobs:
             -t ios \
             --apiKey ${{ secrets.ASC_KEY_ID }} \
             --apiIssuer ${{ secrets.ASC_ISSUER_ID }}
+
+      - name: Tag build
+        run: |
+          git tag build-${{ github.run_number }}
+          git push origin build-${{ github.run_number }}
