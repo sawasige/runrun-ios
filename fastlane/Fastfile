@@ -42,64 +42,20 @@ platform :ios do
     capture_screenshots
   end
 
-  desc "スクリーンショットにテキストと装飾を追加"
+  desc "スクリーンショットにデバイスフレームとテキストを追加"
   lane :add_frames do
-    # キーワードとタイトルの定義
-    texts = {
-      "01_Timeline" => { keyword: "仲間と走ろう", title: "フレンドのランニング活動をチェック" },
-      "02_Records" => { keyword: "月間の記録", title: "月ごとの走行距離と回数を一覧表示" },
-      "03_Leaderboard" => { keyword: "ランキング", title: "フレンドと月間走行距離を競おう" },
-      "04_MonthDetail" => { keyword: "走行履歴", title: "月内の全ランニング記録を確認" },
-      "05_RunDetail" => { keyword: "詳細分析", title: "ペース・心拍数・消費カロリーを詳しく" },
-      "06_FullMap" => { keyword: "ルート表示", title: "ペースに応じたグラデーションで可視化" }
-    }
+    # Frameitでフレーム追加
+    frameit(
+      white: true,
+      path: "./fastlane/screenshots"
+    )
 
-    screenshots_path = File.expand_path("../screenshots/ja", __FILE__)
-    Dir.glob("#{screenshots_path}/*.png").each do |file|
-      next if file.include?("_framed")
-
-      # スクリーンショット名からキーを取得
-      key = texts.keys.find { |k| file.include?(k) }
-      next unless key
-
-      keyword = texts[key][:keyword]
-      title = texts[key][:title]
-      output = file.gsub(".png", "_framed.png")
-
-      UI.message("Processing: #{File.basename(file)}")
-
-      # デバイスに応じた設定
-      if file.include?("iPhone")
-        final_width, final_height = 1320, 2868
-        text_height, keyword_size, title_size = 350, 90, 38
-        shadow_size, margin = 25, 30
-      else
-        final_width, final_height = 2048, 2732
-        text_height, keyword_size, title_size = 400, 100, 44
-        shadow_size, margin = 35, 40
-      end
-
-      ss_area_height = final_height - text_height - margin
-      ss_width = final_width - margin * 2
-
-      # ImageMagickでフレーム追加
-      sh("magick -size #{final_width}x#{final_height} gradient:'#FFE0E0'-'#FFFFFF' " \
-         "\\( '#{file}' -resize #{ss_width}x#{ss_area_height} " \
-         "\\( +clone -background black -shadow 50x#{shadow_size}+0+8 \\) " \
-         "+swap -background none -layers merge +repage \\) " \
-         "-gravity South -geometry +0+#{margin} -composite " \
-         "-gravity North " \
-         "-font '/System/Library/Fonts/ヒラギノ角ゴシック W7.ttc' " \
-         "-pointsize #{keyword_size} -fill '#E03131' " \
-         "-annotate +0+90 '#{keyword}' " \
-         "-font '/System/Library/Fonts/ヒラギノ角ゴシック W4.ttc' " \
-         "-pointsize #{title_size} -fill '#555555' " \
-         "-annotate +0+210 '#{title}' " \
-         "-background white -flatten '#{output}'")
-
-      # アルファチャンネル除去 & 圧縮
-      sh("magick '#{output}' -background white -alpha remove -alpha off '#{output}'")
-      sh("pngquant --force --quality=80-95 --output '#{output}' '#{output}'")
+    # アルファチャンネル除去 & 圧縮（App Store Connect対応）
+    screenshots_path = File.expand_path("../screenshots", __FILE__)
+    Dir.glob("#{screenshots_path}/**/*_framed.png").each do |file|
+      UI.message("Post-processing: #{File.basename(file)}")
+      sh("magick '#{file}' -background white -alpha remove -alpha off '#{file}'")
+      sh("pngquant --force --quality=80-95 --output '#{file}' '#{file}'")
     end
 
     UI.success("フレーム追加完了!")
