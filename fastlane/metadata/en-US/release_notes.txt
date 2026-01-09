@@ -1,0 +1,10 @@
+【New Features】
+・Added English language support
+・Pace-based gradient display on expanded map
+・Added buttons to navigate between runs in run detail view
+
+【Improvements】
+・Redesigned home screen header
+・Improved HDR support and text display for image export
+・Better performance with profile image caching
+・Improved login screen design

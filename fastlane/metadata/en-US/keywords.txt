@@ -1,0 +1,1 @@
+running,jogging,marathon,Strava,Nike,Garmin,adidas,asics,Fitbit,Runkeeper,distance,pace,friends

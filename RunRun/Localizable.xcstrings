@@ -1752,6 +1752,54 @@
           }
         }
       }
+    },
+    "PrivacyPolicyURL": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "https://sawasige.github.io/runrun-ios/en/privacy.html"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "https://sawasige.github.io/runrun-ios/privacy.html"
+          }
+        }
+      }
+    },
+    "SupportURL": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "https://sawasige.github.io/runrun-ios/en/support.html"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "https://sawasige.github.io/runrun-ios/support.html"
+          }
+        }
+      }
+    },
+    "TermsOfServiceURL": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "https://sawasige.github.io/runrun-ios/en/terms.html"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "https://sawasige.github.io/runrun-ios/terms.html"
+          }
+        }
+      }
     }
   },
   "version": "1.1"

@@ -105,11 +105,11 @@ struct SettingsView: View {
                             .foregroundStyle(.secondary)
                     }
 
-                    Link("Terms of Service", destination: URL(string: "https://sawasige.github.io/runrun-ios/terms.html")!)
+                    Link("Terms of Service", destination: URL(string: String(localized: "TermsOfServiceURL"))!)
 
-                    Link("Privacy Policy", destination: URL(string: "https://sawasige.github.io/runrun-ios/privacy.html")!)
+                    Link("Privacy Policy", destination: URL(string: String(localized: "PrivacyPolicyURL"))!)
 
-                    Link("Support", destination: URL(string: "https://sawasige.github.io/runrun-ios/support.html")!)
+                    Link("Support", destination: URL(string: String(localized: "SupportURL"))!)
 
                     NavigationLink("Licenses") {
                         LicensesView()
