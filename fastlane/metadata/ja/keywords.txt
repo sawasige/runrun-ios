@@ -1,1 +1,1 @@
-ランニング,ジョギング,走行距離,月間記録,フレンド,ランキング,Apple Watch,ヘルスケア,運動,フィットネス
+ランニング,ジョギング,マラソン,Strava,Nike,Garmin,adidas,asics,Fitbit,走行距離,ペース,フレンド
