@@ -1,23 +1,23 @@
 import SwiftUI
 import Charts
 
-struct MonthlyRunningView: View {
-    @StateObject private var viewModel: MonthlyRunningViewModel
+struct YearlyRecordsView: View {
+    @StateObject private var viewModel: YearlyRecordsViewModel
 
     let userProfile: UserProfile?
 
     init(userId: String) {
         self.userProfile = nil
-        _viewModel = StateObject(wrappedValue: MonthlyRunningViewModel(userId: userId))
+        _viewModel = StateObject(wrappedValue: YearlyRecordsViewModel(userId: userId))
     }
 
     init(user: UserProfile) {
         self.userProfile = user
-        _viewModel = StateObject(wrappedValue: MonthlyRunningViewModel(userId: user.id ?? ""))
+        _viewModel = StateObject(wrappedValue: YearlyRecordsViewModel(userId: user.id ?? ""))
     }
 
     private var navigationTitle: String {
-        userProfile != nil ? String(localized: "Records") : String(localized: "Running Records")
+        String(format: String(localized: "%d Records", comment: "Year records title"), viewModel.selectedYear)
     }
 
     /// リストには今月までの月のみ表示（未来の月は除外）
@@ -37,47 +37,59 @@ struct MonthlyRunningView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if viewModel.isLoading {
-                    VStack(spacing: 0) {
-                        yearPickerSection
-                        loadingView
+        Group {
+            if userProfile == nil {
+                NavigationStack {
+                    mainContent
+                }
+            } else {
+                mainContent
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var mainContent: some View {
+        Group {
+            if viewModel.isLoading {
+                VStack(spacing: 0) {
+                    yearPickerSection
+                    loadingView
+                }
+            } else if let error = viewModel.error {
+                VStack(spacing: 0) {
+                    yearPickerSection
+                    errorView(error: error)
+                }
+            } else {
+                statsListView
+            }
+        }
+        .navigationTitle(navigationTitle)
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            if let user = userProfile {
+                ToolbarItem(placement: .primaryAction) {
+                    NavigationLink {
+                        ProfileView(user: user)
+                    } label: {
+                        Image(systemName: "person.circle")
                     }
-                } else if let error = viewModel.error {
-                    VStack(spacing: 0) {
-                        yearPickerSection
-                        errorView(error: error)
-                    }
-                } else {
-                    statsListView
                 }
             }
-            .navigationTitle(navigationTitle)
-            .toolbar {
-                if let user = userProfile {
-                    ToolbarItem(placement: .primaryAction) {
-                        NavigationLink {
-                            ProfileView(user: user)
-                        } label: {
-                            Image(systemName: "person.circle")
-                        }
-                    }
-                }
-            }
-            .task {
-                await viewModel.onAppear()
-            }
-            .onAppear {
-                AnalyticsService.logScreenView("MonthlyRunning")
-            }
-            .refreshable {
-                await viewModel.refresh()
-            }
-            .onChange(of: viewModel.selectedYear) {
-                Task {
-                    await viewModel.loadMonthlyStats()
-                }
+        }
+        .task {
+            await viewModel.onAppear()
+        }
+        .onAppear {
+            AnalyticsService.logScreenView("YearlyRecords")
+        }
+        .refreshable {
+            await viewModel.refresh()
+        }
+        .onChange(of: viewModel.selectedYear) {
+            Task {
+                await viewModel.loadMonthlyStats()
             }
         }
     }
@@ -171,15 +183,22 @@ struct MonthlyRunningView: View {
                     .frame(height: 200)
             }
 
-            Section("Yearly Summary") {
-                NavigationLink {
-                    YearlySummaryView(year: viewModel.selectedYear, monthlyStats: viewModel.monthlyStats, userProfile: userProfile)
-                } label: {
-                    HStack {
-                        Label("View Details", systemImage: "chart.bar.doc.horizontal")
-                        Spacer()
-                        Text(viewModel.formattedTotalYearlyDistance)
-                            .foregroundStyle(.secondary)
+            Section("Overall") {
+                LabeledContent("Total Distance", value: viewModel.formattedTotalYearlyDistance)
+                LabeledContent("Total Time", value: viewModel.formattedTotalDuration)
+                LabeledContent("Run Count", value: String(format: String(localized: "%d runs", comment: "Run count"), viewModel.totalRunCount))
+            }
+
+            Section("Efficiency") {
+                LabeledContent("Average Pace", value: viewModel.formattedAveragePace)
+                LabeledContent("Avg Distance/Run", value: viewModel.formattedAverageDistance)
+            }
+
+            if let best = viewModel.bestMonth, best.totalDistanceInKilometers > 0 {
+                Section("Highlights") {
+                    LabeledContent("Best Month", value: "\(best.shortMonthName) (\(best.formattedTotalDistance))")
+                    if let mostActive = viewModel.mostActiveMonth {
+                        LabeledContent("Most Runs Month", value: "\(mostActive.shortMonthName) (\(String(format: String(localized: "%d runs", comment: "Run count"), mostActive.runCount)))")
                     }
                 }
             }
@@ -217,23 +236,14 @@ struct MonthlyRunningView: View {
                 y: .value(String(localized: "Distance"), stats.totalDistanceInKilometers)
             )
             .foregroundStyle(Color.accentColor.gradient)
+
+            if let best = viewModel.bestMonth, stats.month == best.month, best.totalDistanceInKilometers > 0 {
+                RuleMark(y: .value(String(localized: "Best"), best.totalDistanceInKilometers))
+                    .foregroundStyle(.orange)
+                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 5]))
+            }
         }
         .chartYAxisLabel("km")
-    }
-}
-
-struct StatRow: View {
-    let icon: String
-    let label: String
-    let value: String
-
-    var body: some View {
-        HStack {
-            Label(label, systemImage: icon)
-            Spacer()
-            Text(value)
-                .foregroundStyle(.secondary)
-        }
     }
 }
 
@@ -262,5 +272,5 @@ struct MonthlyStatsRow: View {
 }
 
 #Preview {
-    MonthlyRunningView(userId: "preview")
+    YearlyRecordsView(userId: "preview")
 }

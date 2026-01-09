@@ -89,11 +89,10 @@ Firebase Analyticsでユーザー行動を計測しています。
 |-------------|------|---------|
 | `Login` | ログイン画面 | LoginView.swift |
 | `Timeline` | ホーム（タイムライン） | TimelineView.swift |
-| `MonthlyRunning` | 月別記録一覧 | MonthlyRunningView.swift |
+| `YearlyRecords` | 年間記録 | YearlyRecordsView.swift |
 | `MonthDetail` | 月の詳細 | MonthDetailView.swift |
 | `RunDetail` | ラン詳細 | RunDetailView.swift |
 | `WeeklyStats` | 週間推移 | WeeklyStatsView.swift |
-| `YearlySummary` | 年間サマリー | YearlySummaryView.swift |
 | `Leaderboard` | ランキング | LeaderboardView.swift |
 | `Friends` | フレンド一覧 | FriendsView.swift |
 | `UserSearch` | ユーザー検索 | UserSearchView.swift |
