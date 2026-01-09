@@ -171,6 +171,9 @@ struct YearlyRecordsView: View {
                 LabeledContent("Total Distance", value: viewModel.formattedTotalYearlyDistance)
                 LabeledContent("Total Time", value: viewModel.formattedTotalDuration)
                 LabeledContent("Run Count", value: String(format: String(localized: "%d runs", comment: "Run count"), viewModel.totalRunCount))
+                if userProfile == nil, let calories = viewModel.formattedTotalCalories {
+                    LabeledContent("Energy", value: calories)
+                }
             }
 
             Section("Efficiency") {

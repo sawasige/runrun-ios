@@ -84,7 +84,8 @@ struct MockDataProvider {
                 month: month,
                 totalDistanceInMeters: baseDistance,
                 totalDurationInSeconds: baseDistance / 1000 * 330,
-                runCount: runCount
+                runCount: runCount,
+                totalCalories: baseDistance / 1000 * 60
             )
         }
     }

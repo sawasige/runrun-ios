@@ -340,6 +340,7 @@ final class HealthKitService: Sendable {
 
             let totalDistance = records.reduce(0) { $0 + $1.distanceInMeters }
             let totalDuration = records.reduce(0) { $0 + $1.durationInSeconds }
+            let totalCalories = records.compactMap { $0.caloriesBurned }.reduce(0, +)
 
             stats.append(MonthlyRunningStats(
                 id: UUID(),
@@ -347,7 +348,8 @@ final class HealthKitService: Sendable {
                 month: month,
                 totalDistanceInMeters: totalDistance,
                 totalDurationInSeconds: totalDuration,
-                runCount: records.count
+                runCount: records.count,
+                totalCalories: totalCalories
             ))
         }
 
