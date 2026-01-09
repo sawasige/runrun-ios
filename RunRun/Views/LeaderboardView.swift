@@ -52,43 +52,41 @@ struct LeaderboardView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                VStack(spacing: 8) {
-                    Picker("Filter", selection: $selectedFilter) {
-                        ForEach(LeaderboardFilter.allCases, id: \.self) { filter in
-                            Text(filter.localizedName).tag(filter)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-
-                    Picker("Month", selection: $selectedDate) {
-                        ForEach(availableMonths, id: \.self) { date in
-                            Text(monthLabel(for: date)).tag(date)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                }
-                .padding()
-
-                Group {
-                    if isLoading {
+            Group {
+                if isLoading {
+                    VStack {
+                        filterSection
                         Spacer()
                         ProgressView()
                         Spacer()
-                    } else if let error = errorMessage {
+                    }
+                } else if let error = errorMessage {
+                    VStack {
+                        filterSection
                         ContentUnavailableView(
                             "Loading Error",
                             systemImage: "exclamationmark.triangle",
                             description: Text(error)
                         )
-                    } else if users.isEmpty {
+                    }
+                } else if users.isEmpty {
+                    VStack {
+                        filterSection
                         ContentUnavailableView(
                             "No Rankings",
                             systemImage: "trophy",
                             description: Text("No data for this month")
                         )
-                    } else {
-                        List {
+                    }
+                } else {
+                    List {
+                        Section {
+                            filterSection
+                                .listRowInsets(EdgeInsets())
+                                .listRowBackground(Color.clear)
+                        }
+
+                        Section {
                             ForEach(Array(users.enumerated()), id: \.element.id) { index, user in
                                 NavigationLink {
                                     ProfileView(user: user)
@@ -121,6 +119,25 @@ struct LeaderboardView: View {
                 Task { await loadLeaderboard() }
             }
         }
+    }
+
+    private var filterSection: some View {
+        VStack(spacing: 8) {
+            Picker("Filter", selection: $selectedFilter) {
+                ForEach(LeaderboardFilter.allCases, id: \.self) { filter in
+                    Text(filter.localizedName).tag(filter)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            Picker("Month", selection: $selectedDate) {
+                ForEach(availableMonths, id: \.self) { date in
+                    Text(monthLabel(for: date)).tag(date)
+                }
+            }
+            .pickerStyle(.segmented)
+        }
+        .padding()
     }
 
     private func loadLeaderboard() async {
