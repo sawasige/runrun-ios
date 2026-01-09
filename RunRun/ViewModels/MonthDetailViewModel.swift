@@ -35,6 +35,15 @@ final class MonthDetailViewModel: ObservableObject {
         String(format: "%.2f km", totalDistance)
     }
 
+    var totalCalories: Double {
+        records.compactMap { $0.caloriesBurned }.reduce(0, +)
+    }
+
+    var formattedTotalCalories: String? {
+        guard totalCalories > 0 else { return nil }
+        return String(format: "%.0f kcal", totalCalories)
+    }
+
     init(userId: String, year: Int, month: Int) {
         self.userId = userId
         self.year = year

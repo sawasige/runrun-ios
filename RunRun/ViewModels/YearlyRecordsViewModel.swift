@@ -65,6 +65,15 @@ final class YearlyRecordsViewModel: ObservableObject {
         return String(format: "%d:%02d /km", minutes, seconds)
     }
 
+    var totalCalories: Double {
+        monthlyStats.reduce(0) { $0 + $1.totalCalories }
+    }
+
+    var formattedTotalCalories: String? {
+        guard totalCalories > 0 else { return nil }
+        return String(format: "%.0f kcal", totalCalories)
+    }
+
     var availableYears: [Int] {
         let currentYear = Calendar.current.component(.year, from: Date())
         return Array((currentYear - 5)...currentYear).reversed()
@@ -114,7 +123,7 @@ final class YearlyRecordsViewModel: ObservableObject {
     }
 
     private func aggregateToMonthlyStats(
-        runs: [(date: Date, distanceKm: Double, durationSeconds: TimeInterval)],
+        runs: [(date: Date, distanceKm: Double, durationSeconds: TimeInterval, caloriesBurned: Double?)],
         for year: Int
     ) -> [MonthlyRunningStats] {
         let calendar = Calendar.current
@@ -123,29 +132,31 @@ final class YearlyRecordsViewModel: ObservableObject {
         let yearRuns = runs.filter { calendar.component(.year, from: $0.date) == year }
 
         // Group by month
-        var monthlyData: [Int: (distance: Double, duration: TimeInterval, count: Int)] = [:]
+        var monthlyData: [Int: (distance: Double, duration: TimeInterval, count: Int, calories: Double)] = [:]
 
         for run in yearRuns {
             let month = calendar.component(.month, from: run.date)
-            let current = monthlyData[month] ?? (0, 0, 0)
+            let current = monthlyData[month] ?? (0, 0, 0, 0)
             monthlyData[month] = (
                 current.distance + run.distanceKm,
                 current.duration + run.durationSeconds,
-                current.count + 1
+                current.count + 1,
+                current.calories + (run.caloriesBurned ?? 0)
             )
         }
 
         // Create stats for all 12 months
         var stats: [MonthlyRunningStats] = []
         for month in 1...12 {
-            let data = monthlyData[month] ?? (0, 0, 0)
+            let data = monthlyData[month] ?? (0, 0, 0, 0)
             stats.append(MonthlyRunningStats(
                 id: UUID(),
                 year: year,
                 month: month,
                 totalDistanceInMeters: data.distance * 1000,
                 totalDurationInSeconds: data.duration,
-                runCount: data.count
+                runCount: data.count,
+                totalCalories: data.calories
             ))
         }
 

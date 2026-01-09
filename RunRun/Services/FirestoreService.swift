@@ -114,20 +114,21 @@ final class FirestoreService {
         return records.count
     }
 
-    func getUserRuns(userId: String) async throws -> [(date: Date, distanceKm: Double, durationSeconds: TimeInterval)] {
+    func getUserRuns(userId: String) async throws -> [(date: Date, distanceKm: Double, durationSeconds: TimeInterval, caloriesBurned: Double?)] {
         let snapshot = try await runsCollection
             .whereField("userId", isEqualTo: userId)
             .order(by: "date", descending: true)
             .getDocuments()
 
-        return snapshot.documents.compactMap { doc -> (Date, Double, TimeInterval)? in
+        return snapshot.documents.compactMap { doc -> (Date, Double, TimeInterval, Double?)? in
             let data = doc.data()
             guard let timestamp = data["date"] as? Timestamp,
                   let distance = data["distanceKm"] as? Double,
                   let duration = data["durationSeconds"] as? TimeInterval else {
                 return nil
             }
-            return (timestamp.dateValue(), distance, duration)
+            let calories = data["caloriesBurned"] as? Double
+            return (timestamp.dateValue(), distance, duration, calories)
         }
     }
 

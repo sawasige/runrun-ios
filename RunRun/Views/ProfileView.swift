@@ -19,6 +19,7 @@ struct ProfileView: View {
     @State private var totalDistance: Double = 0
     @State private var totalDuration: TimeInterval = 0
     @State private var totalRuns: Int = 0
+    @State private var totalCalories: Double = 0
 
     private let firestoreService = FirestoreService.shared
 
@@ -61,6 +62,11 @@ struct ProfileView: View {
         return String(format: String(localized: "%dm", comment: "Minutes only"), minutes)
     }
 
+    private var formattedTotalCalories: String? {
+        guard totalCalories > 0 else { return nil }
+        return String(format: "%.0f kcal", totalCalories)
+    }
+
     // ハイライト
     private var bestYear: YearlyStats? {
         yearlyStats.filter { $0.runCount > 0 }.max { $0.totalDistanceInKilometers < $1.totalDistanceInKilometers }
@@ -98,6 +104,9 @@ struct ProfileView: View {
                 LabeledContent("Total Distance", value: String(format: "%.1f km", totalDistance))
                 LabeledContent("Total Time", value: formattedTotalDuration)
                 LabeledContent("Run Count", value: String(format: String(localized: "%d runs", comment: "Run count"), totalRuns))
+                if isCurrentUser, let calories = formattedTotalCalories {
+                    LabeledContent("Energy", value: calories)
+                }
             }
 
             // 効率
@@ -292,6 +301,7 @@ struct ProfileView: View {
             totalDistance = runs.reduce(0) { $0 + $1.distanceKm }
             totalDuration = runs.reduce(0) { $0 + $1.durationSeconds }
             totalRuns = runs.count
+            totalCalories = runs.compactMap { $0.caloriesBurned }.reduce(0, +)
 
             // 年別統計を集計
             yearlyStats = aggregateToYearlyStats(runs: runs)
@@ -311,7 +321,7 @@ struct ProfileView: View {
         }
     }
 
-    private func aggregateToYearlyStats(runs: [(date: Date, distanceKm: Double, durationSeconds: TimeInterval)]) -> [YearlyStats] {
+    private func aggregateToYearlyStats(runs: [(date: Date, distanceKm: Double, durationSeconds: TimeInterval, caloriesBurned: Double?)]) -> [YearlyStats] {
         let calendar = Calendar.current
 
         // Group by year

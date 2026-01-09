@@ -7,6 +7,7 @@ struct MonthlyRunningStats: Identifiable, Equatable {
     let totalDistanceInMeters: Double
     let totalDurationInSeconds: TimeInterval
     let runCount: Int
+    let totalCalories: Double
 
     var totalDistanceInKilometers: Double {
         totalDistanceInMeters / 1000.0

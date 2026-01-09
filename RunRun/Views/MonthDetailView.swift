@@ -161,6 +161,13 @@ struct MonthDetailView: View {
                     Spacer()
                     Text(String(format: String(localized: "%d runs", comment: "Run count"), viewModel.records.count))
                 }
+                if userProfile == nil, let calories = viewModel.formattedTotalCalories {
+                    HStack {
+                        Text("Energy")
+                        Spacer()
+                        Text(calories)
+                    }
+                }
             }
 
             Section("Running Records") {
