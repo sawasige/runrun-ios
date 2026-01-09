@@ -24,6 +24,19 @@
     {
       "filter": "iPad Pro 13-inch",
       "force_device_type": "iPad Pro (12.9-inch) (4th generation)"
+    },
+    {
+      "filter": "en-US",
+      "keyword": {
+        "font": "./fonts/SFProRounded.ttf",
+        "font_size": 96,
+        "color": "#E03131"
+      },
+      "title": {
+        "font": "./fonts/SFPro.ttf",
+        "font_size": 48,
+        "color": "#555555"
+      }
     }
   ]
 }

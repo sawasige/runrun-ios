@@ -5,7 +5,7 @@ devices([
   "iPad Pro 13-inch (M5)"      # 13インチ (App Store用)
 ])
 
-languages(["ja"])
+languages(["ja", "en-US"])
 
 scheme("RunRun")
 output_directory("./fastlane/screenshots")
