@@ -150,7 +150,10 @@ struct LeaderboardView: View {
 
         guard let userId = authService.user?.uid else { return }
 
-        isLoading = true
+        // データがない場合のみローディング表示（チラつき防止）
+        if users.isEmpty {
+            isLoading = true
+        }
         errorMessage = nil
 
         do {

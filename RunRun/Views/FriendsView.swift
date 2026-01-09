@@ -75,7 +75,11 @@ struct FriendsView: View {
 
     private func loadData() async {
         guard let userId = authService.user?.uid else { return }
-        isLoading = true
+
+        // データがない場合のみローディング表示（チラつき防止）
+        if friends.isEmpty {
+            isLoading = true
+        }
 
         do {
             async let friendsTask = firestoreService.getFriendProfiles(userId: userId)

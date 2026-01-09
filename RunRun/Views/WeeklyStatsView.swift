@@ -129,7 +129,10 @@ struct WeeklyStatsView: View {
         // 指定されたuserIdを使用、なければ現在のユーザー
         guard let targetUserId = userId ?? Auth.auth().currentUser?.uid else { return }
 
-        isLoading = true
+        // データがない場合のみローディング表示（チラつき防止）
+        if weeklyStats.isEmpty {
+            isLoading = true
+        }
         error = nil
 
         do {

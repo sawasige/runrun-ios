@@ -59,7 +59,10 @@ final class MonthDetailViewModel: ObservableObject {
             return
         }
 
-        isLoading = true
+        // データがない場合のみローディング表示（チラつき防止）
+        if records.isEmpty {
+            isLoading = true
+        }
         error = nil
 
         do {

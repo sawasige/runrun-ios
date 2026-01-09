@@ -73,7 +73,10 @@ final class MonthlyRunningViewModel: ObservableObject {
             return
         }
 
-        isLoading = true
+        // データがない場合のみローディング表示（チラつき防止）
+        if monthlyStats.isEmpty {
+            isLoading = true
+        }
         error = nil
 
         do {
