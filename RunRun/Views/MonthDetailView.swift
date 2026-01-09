@@ -110,7 +110,7 @@ struct MonthDetailView: View {
                     NavigationLink {
                         ProfileView(user: user)
                     } label: {
-                        Image(systemName: "person.circle")
+                        ProfileAvatarView(user: user, size: 28)
                     }
                 }
             }
@@ -133,23 +133,6 @@ struct MonthDetailView: View {
 
     private var recordsList: some View {
         List {
-            if let user = userProfile {
-                Section {
-                    NavigationLink {
-                        ProfileView(user: user)
-                    } label: {
-                        HStack(spacing: 16) {
-                            ProfileAvatarView(user: user, size: 50)
-
-                            Text(user.displayName)
-                                .font(.headline)
-
-                            Spacer()
-                        }
-                    }
-                }
-            }
-
             // カレンダー
             Section {
                 RunCalendarView(
