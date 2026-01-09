@@ -47,10 +47,6 @@ export const onFriendRequestCreated = functions
     // 通知を送信
     const message: admin.messaging.Message = {
       token: fcmToken,
-      notification: {
-        title: "フレンドリクエスト",
-        body: `${fromDisplayName}さんからフレンドリクエストが届きました`,
-      },
       data: {
         type: "friend_request",
         requestId: snap.id,
@@ -58,6 +54,13 @@ export const onFriendRequestCreated = functions
       apns: {
         payload: {
           aps: {
+            alert: {
+              title: "Friend Request",
+              body: `${fromDisplayName} sent you a friend request`,
+              titleLocKey: "FRIEND_REQUEST_TITLE",
+              locKey: "FRIEND_REQUEST_BODY",
+              locArgs: [fromDisplayName],
+            },
             sound: "default",
             badge: 1,
           },
@@ -129,10 +132,6 @@ async function sendAcceptedNotification(request: FriendRequest, requestId: strin
 
   const message: admin.messaging.Message = {
     token: fcmToken,
-    notification: {
-      title: "フレンド承認",
-      body: `${accepterName}さんがフレンドリクエストを承認しました`,
-    },
     data: {
       type: "friend_accepted",
       userId: toUserId,
@@ -140,6 +139,13 @@ async function sendAcceptedNotification(request: FriendRequest, requestId: strin
     apns: {
       payload: {
         aps: {
+          alert: {
+            title: "Friend Accepted",
+            body: `${accepterName} accepted your friend request`,
+            titleLocKey: "FRIEND_ACCEPTED_TITLE",
+            locKey: "FRIEND_ACCEPTED_BODY",
+            locArgs: [accepterName],
+          },
           sound: "default",
           badge: 1,
         },
@@ -179,10 +185,6 @@ async function sendResendNotification(request: FriendRequest, requestId: string)
 
   const message: admin.messaging.Message = {
     token: fcmToken,
-    notification: {
-      title: "フレンドリクエスト",
-      body: `${fromDisplayName}さんからフレンドリクエストが届きました`,
-    },
     data: {
       type: "friend_request",
       requestId: requestId,
@@ -190,6 +192,13 @@ async function sendResendNotification(request: FriendRequest, requestId: string)
     apns: {
       payload: {
         aps: {
+          alert: {
+            title: "Friend Request",
+            body: `${fromDisplayName} sent you a friend request`,
+            titleLocKey: "FRIEND_REQUEST_TITLE",
+            locKey: "FRIEND_REQUEST_BODY",
+            locArgs: [fromDisplayName],
+          },
           sound: "default",
           badge: 1,
         },
@@ -326,16 +335,18 @@ export const sendTestNotification = functions
     // テスト通知を送信
     const message: admin.messaging.Message = {
       token: fcmToken,
-      notification: {
-        title: "テスト通知",
-        body: "プッシュ通知が正常に動作しています！",
-      },
       data: {
         type: "test",
       },
       apns: {
         payload: {
           aps: {
+            alert: {
+              title: "Test Notification",
+              body: "Push notifications are working!",
+              titleLocKey: "TEST_NOTIFICATION_TITLE",
+              locKey: "TEST_NOTIFICATION_BODY",
+            },
             sound: "default",
           },
         },

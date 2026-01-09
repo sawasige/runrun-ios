@@ -645,6 +645,78 @@
         }
       }
     },
+    "FRIEND_ACCEPTED_BODY" : {
+      "comment" : "Push notification body when friend request is accepted",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ accepted your friend request"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@さんがフレンドリクエストを承認しました"
+          }
+        }
+      }
+    },
+    "FRIEND_ACCEPTED_TITLE" : {
+      "comment" : "Push notification title when friend request is accepted",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Friend Accepted"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フレンド承認"
+          }
+        }
+      }
+    },
+    "FRIEND_REQUEST_BODY" : {
+      "comment" : "Push notification body for friend request",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ sent you a friend request"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@さんからフレンドリクエストが届きました"
+          }
+        }
+      }
+    },
+    "FRIEND_REQUEST_TITLE" : {
+      "comment" : "Push notification title for friend request",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Friend Request"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フレンドリクエスト"
+          }
+        }
+      }
+    },
     "Friends" : {
       "localizations" : {
         "ja" : {
@@ -1607,6 +1679,42 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "https://sawasige.github.io/runrun-ios/terms.html"
+          }
+        }
+      }
+    },
+    "TEST_NOTIFICATION_BODY" : {
+      "comment" : "Push notification body for test notification",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Push notifications are working!"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プッシュ通知が正常に動作しています！"
+          }
+        }
+      }
+    },
+    "TEST_NOTIFICATION_TITLE" : {
+      "comment" : "Push notification title for test notification",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test Notification"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "テスト通知"
           }
         }
       }
