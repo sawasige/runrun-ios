@@ -2,7 +2,7 @@ import Foundation
 import Combine
 
 @MainActor
-final class MonthlyRunningViewModel: ObservableObject {
+final class YearlyRecordsViewModel: ObservableObject {
     @Published private(set) var monthlyStats: [MonthlyRunningStats] = []
     @Published private(set) var isLoading = false
     @Published private(set) var error: Error?
@@ -47,6 +47,22 @@ final class MonthlyRunningViewModel: ObservableObject {
 
     var bestMonth: MonthlyRunningStats? {
         monthlyStats.max(by: { $0.totalDistanceInKilometers < $1.totalDistanceInKilometers })
+    }
+
+    var mostActiveMonth: MonthlyRunningStats? {
+        monthlyStats.filter { $0.runCount > 0 }.max(by: { $0.runCount < $1.runCount })
+    }
+
+    var averagePace: TimeInterval? {
+        guard totalYearlyDistance > 0 else { return nil }
+        return totalDuration / totalYearlyDistance
+    }
+
+    var formattedAveragePace: String {
+        guard let pace = averagePace else { return "--:--" }
+        let minutes = Int(pace) / 60
+        let seconds = Int(pace) % 60
+        return String(format: "%d:%02d /km", minutes, seconds)
     }
 
     var availableYears: [Int] {

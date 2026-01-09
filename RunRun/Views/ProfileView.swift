@@ -50,7 +50,7 @@ struct ProfileView: View {
 
             Section {
                 NavigationLink {
-                    MonthlyRunningView(user: user)
+                    YearlyRecordsView(user: user)
                 } label: {
                     Label("View Records", systemImage: "chart.bar")
                 }

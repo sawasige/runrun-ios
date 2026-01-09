@@ -36,14 +36,14 @@ RunRun/
 ├── RunRunApp.swift          # @main エントリポイント
 ├── ContentView.swift        # タブビュー (記録/ランキング/設定)
 ├── Views/
-│   ├── MonthlyRunningView.swift   # 月別ランニング記録
+│   ├── YearlyRecordsView.swift    # 年間記録
 │   ├── MonthDetailView.swift      # 月の詳細 (個別記録一覧)
 │   ├── LeaderboardView.swift      # 月別ランキング
 │   ├── SettingsView.swift         # 設定画面
 │   ├── ProfileEditView.swift      # プロフィール編集
 │   └── LoginView.swift            # ログイン画面
 ├── ViewModels/
-│   ├── MonthlyRunningViewModel.swift
+│   ├── YearlyRecordsViewModel.swift
 │   └── MonthDetailViewModel.swift
 ├── Models/
 │   ├── RunningRecord.swift        # HealthKitから取得したラン記録
