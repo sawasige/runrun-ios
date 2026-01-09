@@ -147,22 +147,6 @@ struct RunDetailView: View {
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             List {
-                // ユーザー情報セクション（他人の記録の場合）
-                if let user = userProfile {
-                    Section {
-                        NavigationLink {
-                            ProfileView(user: user)
-                        } label: {
-                            HStack(spacing: 12) {
-                                ProfileAvatarView(user: user, size: 40)
-                                Text(user.displayName)
-                                    .font(.headline)
-                                Spacer()
-                            }
-                        }
-                    }
-                }
-
                 // 記録サマリセクション
                 Section {
                     VStack(spacing: 16) {
@@ -320,7 +304,7 @@ struct RunDetailView: View {
                     NavigationLink {
                         ProfileView(user: user)
                     } label: {
-                        Image(systemName: "person.circle")
+                        ProfileAvatarView(user: user, size: 28)
                     }
                 }
             } else if isOwnRecord {
