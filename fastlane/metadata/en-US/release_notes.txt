@@ -1,10 +1,8 @@
+Thank you for using RunRun!
+
 【New Features】
-・Added English language support
-・Pace-based gradient display on expanded map
-・Added buttons to navigate between runs in run detail view
+・Added yearly statistics to profile
 
 【Improvements】
-・Redesigned home screen header
-・Improved HDR support and text display for image export
-・Better performance with profile image caching
-・Improved login screen design
+・Push notifications now support multiple languages
+・UI improvements and performance enhancements
