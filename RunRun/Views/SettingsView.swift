@@ -19,24 +19,41 @@ struct SettingsView: View {
         NavigationStack {
             List {
                 Section("Profile") {
-                    HStack(spacing: 16) {
-                        ProfileAvatarView(
-                            iconName: userProfile?.iconName ?? "figure.run",
-                            avatarURL: userProfile?.avatarURL,
-                            size: 50
-                        )
+                    if let profile = userProfile {
+                        NavigationLink {
+                            ProfileView(user: profile)
+                        } label: {
+                            HStack(spacing: 16) {
+                                ProfileAvatarView(user: profile, size: 50)
 
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(userProfile?.displayName ?? String(localized: "Loading..."))
-                                .font(.headline)
-                            if let email = authService.user?.email {
-                                Text(email)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(profile.displayName)
+                                        .font(.headline)
+                                    if let email = authService.user?.email {
+                                        Text(email)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                            }
+                            .padding(.vertical, 4)
+                        }
+                    } else {
+                        HStack(spacing: 16) {
+                            ProfileAvatarView(iconName: "figure.run", avatarURL: nil, size: 50)
+
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(String(localized: "Loading..."))
+                                    .font(.headline)
+                                if let email = authService.user?.email {
+                                    Text(email)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
                             }
                         }
+                        .padding(.vertical, 4)
                     }
-                    .padding(.vertical, 4)
 
                     Button("Edit Profile") {
                         showingProfileEdit = true

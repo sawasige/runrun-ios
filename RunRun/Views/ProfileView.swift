@@ -11,6 +11,8 @@ struct ProfileView: View {
     @State private var isProcessing = false
     @State private var canSendRequest = true
     @State private var lastRequestDate: Date?
+    @State private var showingProfileEdit = false
+    @State private var currentProfile: UserProfile?
 
     // 統計データ
     @State private var yearlyStats: [YearlyStats] = []
@@ -22,6 +24,10 @@ struct ProfileView: View {
 
     private var isCurrentUser: Bool {
         user.id == authService.user?.uid
+    }
+
+    private var displayedProfile: UserProfile {
+        currentProfile ?? user
     }
 
     // 効率
@@ -69,9 +75,9 @@ struct ProfileView: View {
             // プロフィールヘッダー
             Section {
                 VStack(spacing: 16) {
-                    ProfileAvatarView(user: user, size: 100)
+                    ProfileAvatarView(user: displayedProfile, size: 100)
 
-                    Text(user.displayName)
+                    Text(displayedProfile.displayName)
                         .font(.title2)
                         .fontWeight(.bold)
                 }
@@ -144,6 +150,29 @@ struct ProfileView: View {
         .navigationTitle("Profile")
         .navigationBarTitleDisplayMode(.large)
         .analyticsScreen("Profile")
+        .toolbar {
+            if isCurrentUser {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showingProfileEdit = true
+                    } label: {
+                        Text("Edit", comment: "Edit profile button")
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showingProfileEdit, onDismiss: {
+            Task { await reloadProfile() }
+        }) {
+            if let userId = user.id {
+                ProfileEditView(
+                    userId: userId,
+                    currentDisplayName: displayedProfile.displayName,
+                    currentIcon: displayedProfile.iconName ?? "figure.run",
+                    currentAvatarURL: displayedProfile.avatarURL
+                )
+            }
+        }
         .task {
             await loadData()
         }
@@ -271,6 +300,15 @@ struct ProfileView: View {
         }
 
         isLoading = false
+    }
+
+    private func reloadProfile() async {
+        guard let userId = user.id else { return }
+        do {
+            currentProfile = try await firestoreService.getUserProfile(userId: userId)
+        } catch {
+            print("Reload profile error: \(error)")
+        }
     }
 
     private func aggregateToYearlyStats(runs: [(date: Date, distanceKm: Double, durationSeconds: TimeInterval)]) -> [YearlyStats] {
