@@ -1,6 +1,6 @@
 "01_Timeline" = "仲間と走ろう";
-"02_Records" = "月間の記録";
-"03_Leaderboard" = "ランキング";
-"04_MonthDetail" = "走行履歴";
-"05_RunDetail" = "詳細分析";
-"06_FullMap" = "ルート表示";
+"02_Records" = "記録を振り返る";
+"03_Leaderboard" = "競い合おう";
+"04_MonthDetail" = "今月の走り";
+"05_RunDetail" = "もっと詳しく";
+"06_FullMap" = "走ったコース";
