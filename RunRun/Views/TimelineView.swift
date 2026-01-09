@@ -48,7 +48,8 @@ struct TimelineView: View {
                             .fontWeight(.bold)
                     }
                     .opacity(showNavBarLogo ? 1 : 0)
-                    .offset(y: showNavBarLogo ? 0 : 8)
+                    .blur(radius: showNavBarLogo ? 0 : 8)
+                    .offset(y: showNavBarLogo ? 0 : 16)
                 }
             }
             .refreshable {
@@ -161,7 +162,7 @@ struct TimelineView: View {
                 Color.clear
                     .onChange(of: geo.frame(in: .global).maxY) { oldValue, newValue in
                         let threshold: CGFloat = 100
-                        withAnimation(.easeInOut(duration: 0.2)) {
+                        withAnimation(.easeInOut(duration: 0.4)) {
                             showNavBarLogo = newValue < threshold
                         }
                     }
