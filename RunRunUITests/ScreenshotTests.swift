@@ -50,15 +50,14 @@ final class ScreenshotTests: XCTestCase {
             snapshot("03_Leaderboard")
         }
 
-        // 4. 月詳細画面
-        if let recordsTab = findTabOrSidebarItem("記録", "Records") {
-            recordsTab.tap()
+        // 4. 月詳細画面（タイムラインのヘッダーから遷移）
+        if let homeTab = findTabOrSidebarItem("ホーム", "Home") {
+            homeTab.tap()
         }
         sleep(1)
 
-        // NavigationLinkはListではcellsとして認識される
-        if let firstMonthRow = findElement(identifier: "first_month_row") {
-            firstMonthRow.tap()
+        if let monthSummary = findElement(identifier: "timeline_month_summary") {
+            monthSummary.tap()
             sleep(2)
             snapshot("04_MonthDetail")
 
@@ -112,34 +111,18 @@ final class ScreenshotTests: XCTestCase {
 
     /// 様々な要素タイプから指定されたidentifierを持つ要素を探す
     private func findElement(identifier: String, timeout: TimeInterval = 5) -> XCUIElement? {
-        // buttonsから探す
-        let button = app.buttons[identifier]
-        if button.waitForExistence(timeout: timeout) {
-            return button
+        // 全ての要素タイプから探す
+        let element = app.descendants(matching: .any)[identifier]
+        if element.waitForExistence(timeout: timeout) {
+            return element
         }
 
-        // cellsから探す（List内のNavigationLink用）
-        let cell = app.cells[identifier]
-        if cell.waitForExistence(timeout: 1) {
-            return cell
-        }
-
-        // otherElementsから探す
-        let other = app.otherElements[identifier]
-        if other.waitForExistence(timeout: 1) {
-            return other
-        }
-
-        // スクロールして探す
-        let scrollViews = app.scrollViews
-        if scrollViews.count > 0 {
-            scrollViews.firstMatch.swipeUp()
+        // 見つからなければスクロールして再試行
+        let tables = app.tables
+        if tables.count > 0 {
+            tables.firstMatch.swipeUp()
             sleep(1)
-
-            // 再度探す
-            if button.exists { return button }
-            if cell.exists { return cell }
-            if other.exists { return other }
+            if element.exists { return element }
         }
 
         return nil
