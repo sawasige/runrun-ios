@@ -222,29 +222,13 @@ struct TimelineView: View {
     }
 
     private var loadingView: some View {
-        VStack(spacing: 16) {
-            Spacer()
-
-            Image("Logo")
-                .resizable()
-                .scaledToFit()
-                .frame(height: 80)
-                .phaseAnimator([false, true]) { content, phase in
-                    content
-                        .scaleEffect(phase ? 1.1 : 1.0)
-                } animation: { _ in
-                    .easeInOut(duration: 0.8)
-                }
-
-            Text("RunRun")
-                .font(.title)
-                .fontWeight(.bold)
+        VStack(spacing: 20) {
+            ShineLogoView(size: 80)
+                .frame(width: 80, height: 80)
 
             ProgressView()
-                .padding(.top, 8)
-
-            Spacer()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var emptyView: some View {
@@ -370,6 +354,65 @@ private struct TimelineRunRow: View {
         .background(Color(.systemBackground))
         .contentShape(Rectangle())
     }
+}
+
+// MARK: - Shine Logo (Core Animation)
+
+private struct ShineLogoView: UIViewRepresentable {
+    let size: CGFloat
+
+    func makeUIView(context: Context) -> UIView {
+        let container = UIView()
+
+        guard let logoImage = UIImage(named: "Logo") else { return container }
+
+        // ロゴ画像
+        let imageView = UIImageView(image: logoImage)
+        imageView.contentMode = .scaleAspectFit
+        imageView.frame = CGRect(x: 0, y: 0, width: size, height: size)
+        container.addSubview(imageView)
+
+        // シャインオーバーレイ（ロゴの形でマスク）
+        let shineContainer = UIView()
+        shineContainer.frame = CGRect(x: 0, y: 0, width: size, height: size)
+        shineContainer.clipsToBounds = true
+
+        // マスク用のロゴ画像
+        let maskImageView = UIImageView(image: logoImage)
+        maskImageView.contentMode = .scaleAspectFit
+        maskImageView.frame = shineContainer.bounds
+        shineContainer.mask = maskImageView
+
+        container.addSubview(shineContainer)
+
+        // シャインレイヤー
+        let shineLayer = CAGradientLayer()
+        shineLayer.colors = [
+            UIColor.white.withAlphaComponent(0).cgColor,
+            UIColor.white.withAlphaComponent(0.6).cgColor,
+            UIColor.white.withAlphaComponent(0).cgColor
+        ]
+        shineLayer.locations = [0, 0.5, 1]
+        shineLayer.startPoint = CGPoint(x: 0, y: 0.5)
+        shineLayer.endPoint = CGPoint(x: 1, y: 0.5)
+        shineLayer.frame = CGRect(x: -size, y: 0, width: size * 0.5, height: size)
+
+        shineContainer.layer.addSublayer(shineLayer)
+
+        // シャインアニメーション
+        let animation = CABasicAnimation(keyPath: "position.x")
+        animation.fromValue = -size * 0.25
+        animation.toValue = size * 1.25
+        animation.duration = 1.2
+        animation.repeatCount = .infinity
+        animation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+
+        shineLayer.add(animation, forKey: "shine")
+
+        return container
+    }
+
+    func updateUIView(_ uiView: UIView, context: Context) {}
 }
 
 #Preview {

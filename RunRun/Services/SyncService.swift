@@ -83,8 +83,11 @@ final class SyncService: ObservableObject {
             try await healthKitService.requestAuthorization()
 
             phase = .fetching
-            // 生のHKWorkoutを取得
-            let workouts = try await healthKitService.fetchAllRawRunningWorkouts()
+
+            // HealthKitのデータ取得をバックグラウンドで実行（UIブロック防止）
+            let workouts = try await Task.detached(priority: .userInitiated) {
+                try await self.healthKitService.fetchAllRawRunningWorkouts()
+            }.value
 
             // 基本情報だけでRunningRecordを作成（差分チェック用）
             let basicRecords = workouts.map { workout in
@@ -112,10 +115,13 @@ final class SyncService: ObservableObject {
 
                 phase = .syncing(current: 0, total: newWorkouts.count)
 
-                // 詳細データを取得してRunningRecordを作成
+                // 詳細データを取得してRunningRecordを作成（バックグラウンド）
+                let healthKit = self.healthKitService
                 var detailedRecords: [RunningRecord] = []
                 for (index, workout) in newWorkouts.enumerated() {
-                    let record = await healthKitService.createRunningRecord(from: workout, withDetails: true)
+                    let record = await Task.detached(priority: .userInitiated) {
+                        await healthKit.createRunningRecord(from: workout, withDetails: true)
+                    }.value
                     detailedRecords.append(record)
                     phase = .syncing(current: index + 1, total: newWorkouts.count)
                 }
