@@ -2,20 +2,32 @@ import Foundation
 import Combine
 import HealthKit
 
-enum SyncPhase {
+enum SyncPhase: Equatable {
     case idle
     case connecting
     case fetching
     case syncing(current: Int, total: Int)
     case completed(count: Int)
-    case failed(Error)
+    case failed
+
+    static func == (lhs: SyncPhase, rhs: SyncPhase) -> Bool {
+        switch (lhs, rhs) {
+        case (.idle, .idle): return true
+        case (.connecting, .connecting): return true
+        case (.fetching, .fetching): return true
+        case let (.syncing(lc, lt), .syncing(rc, rt)): return lc == rc && lt == rt
+        case let (.completed(lc), .completed(rc)): return lc == rc
+        case (.failed, .failed): return true
+        default: return false
+        }
+    }
 
     var message: String {
         switch self {
         case .idle:
             return ""
         case .connecting:
-            return String(localized: "Connecting to HealthKit...")
+            return String(localized: "Connecting to Health...")
         case .fetching:
             return String(localized: "Fetching data...")
         case .syncing(let current, let total):
@@ -42,6 +54,11 @@ enum SyncPhase {
         case .failed: return 0
         }
     }
+
+    var isFailed: Bool {
+        if case .failed = self { return true }
+        return false
+    }
 }
 
 @MainActor
@@ -50,6 +67,8 @@ final class SyncService: ObservableObject {
     @Published private(set) var phase: SyncPhase = .idle
     @Published private(set) var syncedCount = 0
     @Published private(set) var error: Error?
+    /// 同期完了時に更新される（新規レコードがある場合のみ）
+    @Published private(set) var lastSyncedAt: Date?
 
     private let healthKitService = HealthKitService()
     private let firestoreService = FirestoreService.shared
@@ -108,13 +127,16 @@ final class SyncService: ObservableObject {
                 )
                 syncedCount = count
                 phase = .completed(count: count)
+                if count > 0 {
+                    lastSyncedAt = Date()
+                }
                 AnalyticsService.logEvent("sync_completed", parameters: [
                     "record_count": count
                 ])
             }
         } catch {
             self.error = error
-            phase = .failed(error)
+            phase = .failed
         }
 
         isSyncing = false
