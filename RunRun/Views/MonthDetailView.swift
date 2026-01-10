@@ -158,7 +158,7 @@ struct MonthDetailView: View {
             }
 
             // 日別グラフ
-            Section {
+            Section("Daily Distance") {
                 dailyChart
                     .frame(height: 150)
             }
@@ -263,10 +263,16 @@ struct MonthDetailView: View {
 
         return Chart(viewModel.records) { record in
             BarMark(
-                x: .value("Day", record.date, unit: .day),
-                y: .value("Distance", record.distanceInKilometers)
+                x: .value(String(localized: "Day"), record.date, unit: .day),
+                y: .value(String(localized: "Distance"), record.distanceInKilometers)
             )
             .foregroundStyle(Color.accentColor.gradient)
+
+            if let best = viewModel.bestDayByDistance, calendar.isDate(record.date, inSameDayAs: best.date), best.distanceInKilometers > 0 {
+                RuleMark(y: .value(String(localized: "Best"), best.distanceInKilometers))
+                    .foregroundStyle(.orange)
+                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 5]))
+            }
         }
         .chartXScale(domain: startOfMonth...endOfMonth)
         .chartXAxis {

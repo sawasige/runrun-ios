@@ -178,7 +178,7 @@ struct YearDetailView: View {
                     .listRowBackground(Color.clear)
             }
 
-            Section {
+            Section("Monthly Distance") {
                 monthlyChart
                     .frame(height: 200)
             }
