@@ -160,7 +160,7 @@ struct ProfileView: View {
 
             // 年別グラフ
             if !yearlyStats.isEmpty {
-                Section {
+                Section("Yearly Distance") {
                     yearlyChart
                         .frame(height: 200)
                 }

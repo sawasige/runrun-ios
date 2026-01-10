@@ -564,6 +564,36 @@
         }
       }
     },
+    "Daily Distance" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日別距離"
+          }
+        }
+      }
+    },
+    "Monthly Distance" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "月別距離"
+          }
+        }
+      }
+    },
+    "Yearly Distance" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "年別距離"
+          }
+        }
+      }
+    },
     "Duration" : {
       "localizations" : {
         "ja" : {
