@@ -44,6 +44,17 @@ final class MonthDetailViewModel: ObservableObject {
         return String(format: "%.0f kcal", totalCalories)
     }
 
+    /// ベスト日（距離）
+    var bestDayByDistance: RunningRecord? {
+        records.max { $0.distanceInKilometers < $1.distanceInKilometers }
+    }
+
+    /// ベスト日（ペース）- ペースは小さいほど速い
+    var bestDayByPace: RunningRecord? {
+        records.filter { $0.averagePacePerKilometer != nil && $0.distanceInKilometers >= 1.0 }
+            .min { ($0.averagePacePerKilometer ?? .infinity) < ($1.averagePacePerKilometer ?? .infinity) }
+    }
+
     init(userId: String, year: Int, month: Int) {
         self.userId = userId
         self.year = year

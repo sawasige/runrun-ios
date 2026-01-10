@@ -102,6 +102,13 @@ struct RunningRecord: Identifiable, Equatable, Hashable {
         return String(format: "%d:%02d /km", minutes, seconds)
     }
 
+    var formattedShortDate: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale.current
+        formatter.setLocalizedDateFormatFromTemplate("yMMMd")
+        return formatter.string(from: date)
+    }
+
     var formattedCalories: String? {
         guard let cal = caloriesBurned else { return nil }
         return String(format: "%.0f kcal", cal)

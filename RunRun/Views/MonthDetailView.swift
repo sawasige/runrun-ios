@@ -170,6 +170,53 @@ struct MonthDetailView: View {
                 }
             }
 
+            if viewModel.bestDayByDistance != nil || viewModel.bestDayByPace != nil {
+                Section("Highlights") {
+                    if let best = viewModel.bestDayByDistance {
+                        NavigationLink {
+                            RunDetailView(
+                                record: best,
+                                isOwnRecord: userProfile == nil,
+                                userProfile: userProfile,
+                                userId: viewModel.userId
+                            )
+                        } label: {
+                            LabeledContent {
+                                Text("\(best.formattedShortDate) (\(best.formattedDistance))")
+                            } label: {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Best Day")
+                                    Text("Distance")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
+                    if let best = viewModel.bestDayByPace {
+                        NavigationLink {
+                            RunDetailView(
+                                record: best,
+                                isOwnRecord: userProfile == nil,
+                                userProfile: userProfile,
+                                userId: viewModel.userId
+                            )
+                        } label: {
+                            LabeledContent {
+                                Text("\(best.formattedShortDate) (\(best.formattedPace))")
+                            } label: {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Best Day")
+                                    Text("Pace")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             Section("Running Records") {
                 ForEach(Array(viewModel.records.enumerated()), id: \.element.id) { index, record in
                     NavigationLink {

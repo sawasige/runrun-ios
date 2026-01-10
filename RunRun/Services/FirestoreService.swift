@@ -132,6 +132,34 @@ final class FirestoreService {
         }
     }
 
+    func getAllUserRunRecords(userId: String) async throws -> [RunningRecord] {
+        let snapshot = try await runsCollection
+            .whereField("userId", isEqualTo: userId)
+            .order(by: "date", descending: true)
+            .getDocuments()
+
+        return snapshot.documents.compactMap { doc -> RunningRecord? in
+            let data = doc.data()
+            guard let timestamp = data["date"] as? Timestamp,
+                  let distance = data["distanceKm"] as? Double,
+                  let duration = data["durationSeconds"] as? TimeInterval else {
+                return nil
+            }
+            return RunningRecord(
+                date: timestamp.dateValue(),
+                distanceKm: distance,
+                durationSeconds: duration,
+                caloriesBurned: data["caloriesBurned"] as? Double,
+                averageHeartRate: data["averageHeartRate"] as? Double,
+                maxHeartRate: data["maxHeartRate"] as? Double,
+                minHeartRate: data["minHeartRate"] as? Double,
+                cadence: data["cadence"] as? Double,
+                strideLength: data["strideLength"] as? Double,
+                stepCount: data["stepCount"] as? Int
+            )
+        }
+    }
+
     private func getExistingSyncedDates(userId: String) async throws -> [Date] {
         let runs = try await getUserRuns(userId: userId)
         return runs.map { $0.date }
@@ -517,6 +545,42 @@ final class FirestoreService {
             .whereField("userId", isEqualTo: userId)
             .whereField("date", isGreaterThanOrEqualTo: startOfMonth)
             .whereField("date", isLessThan: startOfNextMonth)
+            .order(by: "date", descending: true)
+            .getDocuments()
+
+        return snapshot.documents.compactMap { doc -> RunningRecord? in
+            let data = doc.data()
+            guard let timestamp = data["date"] as? Timestamp,
+                  let distance = data["distanceKm"] as? Double,
+                  let duration = data["durationSeconds"] as? TimeInterval else {
+                return nil
+            }
+            return RunningRecord(
+                date: timestamp.dateValue(),
+                distanceKm: distance,
+                durationSeconds: duration,
+                caloriesBurned: data["caloriesBurned"] as? Double,
+                averageHeartRate: data["averageHeartRate"] as? Double,
+                maxHeartRate: data["maxHeartRate"] as? Double,
+                minHeartRate: data["minHeartRate"] as? Double,
+                cadence: data["cadence"] as? Double,
+                strideLength: data["strideLength"] as? Double,
+                stepCount: data["stepCount"] as? Int
+            )
+        }
+    }
+
+    func getUserYearlyRuns(userId: String, year: Int) async throws -> [RunningRecord] {
+        let calendar = Calendar.current
+        guard let startOfYear = calendar.date(from: DateComponents(year: year, month: 1, day: 1)),
+              let startOfNextYear = calendar.date(from: DateComponents(year: year + 1, month: 1, day: 1)) else {
+            return []
+        }
+
+        let snapshot = try await runsCollection
+            .whereField("userId", isEqualTo: userId)
+            .whereField("date", isGreaterThanOrEqualTo: startOfYear)
+            .whereField("date", isLessThan: startOfNextYear)
             .order(by: "date", descending: true)
             .getDocuments()
 

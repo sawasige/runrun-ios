@@ -1,19 +1,19 @@
 import SwiftUI
 import Charts
 
-struct YearlyRecordsView: View {
-    @StateObject private var viewModel: YearlyRecordsViewModel
+struct YearDetailView: View {
+    @StateObject private var viewModel: YearDetailViewModel
 
     let userProfile: UserProfile?
 
     init(userId: String, initialYear: Int? = nil) {
         self.userProfile = nil
-        _viewModel = StateObject(wrappedValue: YearlyRecordsViewModel(userId: userId, initialYear: initialYear))
+        _viewModel = StateObject(wrappedValue: YearDetailViewModel(userId: userId, initialYear: initialYear))
     }
 
     init(user: UserProfile, initialYear: Int? = nil) {
         self.userProfile = user
-        _viewModel = StateObject(wrappedValue: YearlyRecordsViewModel(userId: user.id ?? "", initialYear: initialYear))
+        _viewModel = StateObject(wrappedValue: YearDetailViewModel(userId: user.id ?? "", initialYear: initialYear))
     }
 
     private var navigationTitle: String {
@@ -82,7 +82,7 @@ struct YearlyRecordsView: View {
             await viewModel.onAppear()
         }
         .onAppear {
-            AnalyticsService.logScreenView("YearlyRecords")
+            AnalyticsService.logScreenView("YearDetail")
         }
         .refreshable {
             await viewModel.refresh()
@@ -181,11 +181,71 @@ struct YearlyRecordsView: View {
                 LabeledContent("Avg Distance/Run", value: viewModel.formattedAverageDistance)
             }
 
-            if let best = viewModel.bestMonth, best.totalDistanceInKilometers > 0 {
+            if viewModel.bestMonth?.totalDistanceInKilometers ?? 0 > 0 || viewModel.bestDayByDistance != nil {
                 Section("Highlights") {
-                    LabeledContent("Best Month", value: "\(best.shortMonthName) (\(best.formattedTotalDistance))")
-                    if let mostActive = viewModel.mostActiveMonth {
-                        LabeledContent("Most Runs Month", value: "\(mostActive.shortMonthName) (\(String(format: String(localized: "%d runs", comment: "Run count"), mostActive.runCount)))")
+                    if let best = viewModel.bestMonth, best.totalDistanceInKilometers > 0 {
+                        NavigationLink {
+                            if let user = userProfile {
+                                MonthDetailView(user: user, year: best.year, month: best.month)
+                            } else {
+                                MonthDetailView(userId: viewModel.userId, year: best.year, month: best.month)
+                            }
+                        } label: {
+                            LabeledContent("Best Month", value: "\(best.shortMonthName) (\(best.formattedTotalDistance))")
+                        }
+                    }
+                    if let mostActive = viewModel.mostActiveMonth, mostActive.runCount > 0 {
+                        NavigationLink {
+                            if let user = userProfile {
+                                MonthDetailView(user: user, year: mostActive.year, month: mostActive.month)
+                            } else {
+                                MonthDetailView(userId: viewModel.userId, year: mostActive.year, month: mostActive.month)
+                            }
+                        } label: {
+                            LabeledContent("Most Runs Month", value: "\(mostActive.shortMonthName) (\(String(format: String(localized: "%d runs", comment: "Run count"), mostActive.runCount)))")
+                        }
+                    }
+                    if let best = viewModel.bestDayByDistance {
+                        NavigationLink {
+                            RunDetailView(
+                                record: best,
+                                isOwnRecord: userProfile == nil,
+                                userProfile: userProfile,
+                                userId: viewModel.userId
+                            )
+                        } label: {
+                            LabeledContent {
+                                Text("\(best.formattedShortDate) (\(best.formattedDistance))")
+                            } label: {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Best Day")
+                                    Text("Distance")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
+                    if let best = viewModel.bestDayByPace {
+                        NavigationLink {
+                            RunDetailView(
+                                record: best,
+                                isOwnRecord: userProfile == nil,
+                                userProfile: userProfile,
+                                userId: viewModel.userId
+                            )
+                        } label: {
+                            LabeledContent {
+                                Text("\(best.formattedShortDate) (\(best.formattedPace))")
+                            } label: {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Best Day")
+                                    Text("Pace")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -251,5 +311,5 @@ struct MonthlyStatsRow: View {
 }
 
 #Preview {
-    YearlyRecordsView(userId: "preview")
+    YearDetailView(userId: "preview")
 }
