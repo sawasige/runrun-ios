@@ -167,18 +167,23 @@ struct YearDetailView: View {
                     .frame(height: 200)
             }
 
-            Section("Overall") {
-                LabeledContent("Total Distance", value: viewModel.formattedTotalYearlyDistance)
-                LabeledContent("Total Time", value: viewModel.formattedTotalDuration)
-                LabeledContent("Run Count", value: String(format: String(localized: "%d runs", comment: "Run count"), viewModel.totalRunCount))
+            Section("Totals") {
+                LabeledContent("Distance") {
+                    Text(viewModel.formattedTotalYearlyDistance)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.primary)
+                }
+                LabeledContent("Time", value: viewModel.formattedTotalDuration)
+                LabeledContent("Count", value: String(format: String(localized: "%d runs", comment: "Run count"), viewModel.totalRunCount))
                 if userProfile == nil, let calories = viewModel.formattedTotalCalories {
                     LabeledContent("Energy", value: calories)
                 }
             }
 
-            Section("Efficiency") {
-                LabeledContent("Average Pace", value: viewModel.formattedAveragePace)
-                LabeledContent("Avg Distance/Run", value: viewModel.formattedAverageDistance)
+            Section("Averages") {
+                LabeledContent("Pace", value: viewModel.formattedAveragePace)
+                LabeledContent("Distance/Run", value: viewModel.formattedAverageDistance)
+                LabeledContent("Time/Run", value: viewModel.formattedAverageDuration)
             }
 
             if viewModel.bestMonth?.totalDistanceInKilometers ?? 0 > 0 || viewModel.bestDayByDistance != nil {

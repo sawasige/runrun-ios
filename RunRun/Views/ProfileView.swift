@@ -55,6 +55,21 @@ struct ProfileView: View {
         String(format: "%.2f km", averageDistancePerRun)
     }
 
+    private var averageDurationPerRun: TimeInterval {
+        guard totalRuns > 0 else { return 0 }
+        return totalDuration / Double(totalRuns)
+    }
+
+    private var formattedAverageDuration: String {
+        let duration = averageDurationPerRun
+        let hours = Int(duration) / 3600
+        let minutes = (Int(duration) % 3600) / 60
+        if hours > 0 {
+            return String(format: String(localized: "%dh %dm", comment: "Duration format"), hours, minutes)
+        }
+        return String(format: String(localized: "%dm", comment: "Minutes only"), minutes)
+    }
+
     private var formattedTotalDuration: String {
         let hours = Int(totalDuration) / 3600
         let minutes = (Int(totalDuration) % 3600) / 60
@@ -118,20 +133,25 @@ struct ProfileView: View {
                 }
             }
 
-            // 総合
-            Section("Overall") {
-                LabeledContent("Total Distance", value: String(format: "%.1f km", totalDistance))
-                LabeledContent("Total Time", value: formattedTotalDuration)
-                LabeledContent("Run Count", value: String(format: String(localized: "%d runs", comment: "Run count"), totalRuns))
+            // 合計
+            Section("Totals") {
+                LabeledContent("Distance") {
+                    Text(String(format: "%.1f km", totalDistance))
+                        .fontWeight(.bold)
+                        .foregroundStyle(.primary)
+                }
+                LabeledContent("Time", value: formattedTotalDuration)
+                LabeledContent("Count", value: String(format: String(localized: "%d runs", comment: "Run count"), totalRuns))
                 if isCurrentUser, let calories = formattedTotalCalories {
                     LabeledContent("Energy", value: calories)
                 }
             }
 
-            // 効率
-            Section("Efficiency") {
-                LabeledContent("Average Pace", value: formattedAveragePace)
-                LabeledContent("Avg Distance/Run", value: formattedAverageDistance)
+            // 平均
+            Section("Averages") {
+                LabeledContent("Pace", value: formattedAveragePace)
+                LabeledContent("Distance/Run", value: formattedAverageDistance)
+                LabeledContent("Time/Run", value: formattedAverageDuration)
             }
 
             // ハイライト

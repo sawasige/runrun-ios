@@ -149,25 +149,23 @@ struct MonthDetailView: View {
                     .frame(height: 150)
             }
 
-            Section {
-                HStack {
-                    Text("Total")
-                    Spacer()
+            Section("Totals") {
+                LabeledContent("Distance") {
                     Text(viewModel.formattedTotalDistance)
                         .fontWeight(.bold)
+                        .foregroundStyle(.primary)
                 }
-                HStack {
-                    Text("Runs")
-                    Spacer()
-                    Text(String(format: String(localized: "%d runs", comment: "Run count"), viewModel.records.count))
-                }
+                LabeledContent("Time", value: viewModel.formattedTotalDuration)
+                LabeledContent("Count", value: String(format: String(localized: "%d runs", comment: "Run count"), viewModel.runCount))
                 if userProfile == nil, let calories = viewModel.formattedTotalCalories {
-                    HStack {
-                        Text("Energy")
-                        Spacer()
-                        Text(calories)
-                    }
+                    LabeledContent("Energy", value: calories)
                 }
+            }
+
+            Section("Averages") {
+                LabeledContent("Pace", value: viewModel.formattedAveragePace)
+                LabeledContent("Distance/Run", value: viewModel.formattedAverageDistance)
+                LabeledContent("Time/Run", value: viewModel.formattedAverageDuration)
             }
 
             if viewModel.bestDayByDistance != nil || viewModel.bestDayByPace != nil {

@@ -46,6 +46,21 @@ final class YearDetailViewModel: ObservableObject {
         String(format: "%.2f km", averageDistancePerRun)
     }
 
+    var averageDurationPerRun: TimeInterval {
+        guard totalRunCount > 0 else { return 0 }
+        return totalDuration / Double(totalRunCount)
+    }
+
+    var formattedAverageDuration: String {
+        let duration = averageDurationPerRun
+        let hours = Int(duration) / 3600
+        let minutes = (Int(duration) % 3600) / 60
+        if hours > 0 {
+            return String(format: String(localized: "%dh %dm", comment: "Duration format"), hours, minutes)
+        }
+        return String(format: String(localized: "%dm", comment: "Minutes only"), minutes)
+    }
+
     var bestMonth: MonthlyRunningStats? {
         monthlyStats.max(by: { $0.totalDistanceInKilometers < $1.totalDistanceInKilometers })
     }
