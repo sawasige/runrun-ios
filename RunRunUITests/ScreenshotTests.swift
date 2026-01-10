@@ -37,44 +37,56 @@ final class ScreenshotTests: XCTestCase {
         snapshot("01_Timeline")
 
         // 2. 記録タブ
-        if let recordsTab = findTabOrSidebarItem("記録", "Records") {
-            recordsTab.tap()
-            sleep(2)
-            snapshot("02_Records")
-        }
+        let recordsTab = try XCTUnwrap(
+            findTabOrSidebarItem("記録", "Records"),
+            "記録タブが見つかりません"
+        )
+        recordsTab.tap()
+        sleep(2)
+        snapshot("02_Records")
 
         // 3. ランキング
-        if let leaderboardTab = findTabOrSidebarItem("ランキング", "Leaderboard") {
-            leaderboardTab.tap()
-            sleep(1)
-            snapshot("03_Leaderboard")
-        }
+        let leaderboardTab = try XCTUnwrap(
+            findTabOrSidebarItem("ランキング", "Leaderboard"),
+            "ランキングタブが見つかりません"
+        )
+        leaderboardTab.tap()
+        sleep(1)
+        snapshot("03_Leaderboard")
 
         // 4. 月詳細画面（タイムラインのヘッダーから遷移）
-        if let homeTab = findTabOrSidebarItem("ホーム", "Home") {
-            homeTab.tap()
-        }
+        let homeTab = try XCTUnwrap(
+            findTabOrSidebarItem("ホーム", "Home"),
+            "ホームタブが見つかりません"
+        )
+        homeTab.tap()
         sleep(1)
 
-        if let monthSummary = findElement(identifier: "timeline_month_summary") {
-            monthSummary.tap()
-            sleep(2)
-            snapshot("04_MonthDetail")
+        let monthSummary = try XCTUnwrap(
+            findElement(identifier: "timeline_month_summary"),
+            "timeline_month_summary が見つかりません"
+        )
+        monthSummary.tap()
+        sleep(2)
+        snapshot("04_MonthDetail")
 
-            // 5. ラン詳細画面
-            if let firstRunRow = findElement(identifier: "first_run_row") {
-                firstRunRow.tap()
-                sleep(3) // 地図読み込み待機
-                snapshot("05_RunDetail")
+        // 5. ラン詳細画面
+        let firstRunRow = try XCTUnwrap(
+            findElement(identifier: "first_run_row"),
+            "first_run_row が見つかりません"
+        )
+        firstRunRow.tap()
+        sleep(3) // 地図読み込み待機
+        snapshot("05_RunDetail")
 
-                // 6. 地図拡大画面
-                if let expandMapButton = findElement(identifier: "expand_map_button") {
-                    expandMapButton.tap()
-                    sleep(2)
-                    snapshot("06_FullMap")
-                }
-            }
-        }
+        // 6. 地図拡大画面
+        let expandMapButton = try XCTUnwrap(
+            findElement(identifier: "expand_map_button"),
+            "expand_map_button が見つかりません"
+        )
+        expandMapButton.tap()
+        sleep(2)
+        snapshot("06_FullMap")
     }
 
     /// タブバーまたはサイドバーから指定されたラベルを持つ要素を探す（iPad対応・多言語対応）
@@ -117,12 +129,29 @@ final class ScreenshotTests: XCTestCase {
             return element
         }
 
-        // 見つからなければスクロールして再試行
-        let tables = app.tables
-        if tables.count > 0 {
-            tables.firstMatch.swipeUp()
-            sleep(1)
-            if element.exists { return element }
+        // 見つからなければスクロールして再試行（複数回）
+        // SwiftUIのListはtablesではなくcollectionViewsやscrollViewsとして認識される
+        for _ in 0..<3 {
+            // tablesを試す
+            if app.tables.count > 0 {
+                app.tables.firstMatch.swipeUp()
+                sleep(1)
+                if element.exists { return element }
+            }
+
+            // collectionViewsを試す（SwiftUI List）
+            if app.collectionViews.count > 0 {
+                app.collectionViews.firstMatch.swipeUp()
+                sleep(1)
+                if element.exists { return element }
+            }
+
+            // scrollViewsを試す
+            if app.scrollViews.count > 0 {
+                app.scrollViews.firstMatch.swipeUp()
+                sleep(1)
+                if element.exists { return element }
+            }
         }
 
         return nil
