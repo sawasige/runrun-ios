@@ -21,7 +21,8 @@ enum AnalyticsService {
         print("[Analytics] screen_view: \(screenName)")
         #endif
         Analytics.logEvent(AnalyticsEventScreenView, parameters: [
-            AnalyticsParameterScreenName: screenName
+            AnalyticsParameterScreenName: screenName,
+            AnalyticsParameterScreenClass: screenName
         ])
     }
 }
