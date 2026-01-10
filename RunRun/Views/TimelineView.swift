@@ -222,13 +222,9 @@ struct TimelineView: View {
     }
 
     private var loadingView: some View {
-        VStack(spacing: 20) {
-            ShineLogoView(size: 80)
-                .frame(width: 80, height: 80)
-
-            ProgressView()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        ShineLogoView(size: 80)
+            .frame(width: 80, height: 80)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var emptyView: some View {
@@ -399,15 +395,19 @@ private struct ShineLogoView: UIViewRepresentable {
 
         shineContainer.layer.addSublayer(shineLayer)
 
-        // シャインアニメーション
+        // シャインアニメーション（速く通過、長い間隔）
         let animation = CABasicAnimation(keyPath: "position.x")
         animation.fromValue = -size * 0.25
         animation.toValue = size * 1.25
-        animation.duration = 1.2
-        animation.repeatCount = .infinity
+        animation.duration = 0.5
         animation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
 
-        shineLayer.add(animation, forKey: "shine")
+        let group = CAAnimationGroup()
+        group.animations = [animation]
+        group.duration = 2.5  // 0.5秒アニメ + 2秒待機
+        group.repeatCount = .infinity
+
+        shineLayer.add(group, forKey: "shine")
 
         return container
     }
