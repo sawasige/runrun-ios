@@ -854,4 +854,21 @@ final class FirestoreService {
             "fcmToken": FieldValue.delete()
         ])
     }
+
+    #if DEBUG
+    /// ユーザーの全ランニングデータを削除（デバッグ用）
+    func deleteAllUserRuns(userId: String) async throws -> Int {
+        let snapshot = try await runsCollection
+            .whereField("userId", isEqualTo: userId)
+            .getDocuments()
+
+        let batch = db.batch()
+        for document in snapshot.documents {
+            batch.deleteDocument(document.reference)
+        }
+        try await batch.commit()
+
+        return snapshot.documents.count
+    }
+    #endif
 }
