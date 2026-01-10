@@ -23,9 +23,16 @@ struct TimelineView: View {
         _viewModel = StateObject(wrappedValue: TimelineViewModel(userId: userId))
     }
 
+    private var contentState: Int {
+        if viewModel.isLoading && viewModel.runs.isEmpty { return 0 }
+        if viewModel.error != nil && viewModel.runs.isEmpty { return 1 }
+        if viewModel.runs.isEmpty { return 2 }
+        return 3
+    }
+
     var body: some View {
         NavigationStack {
-            Group {
+            ZStack {
                 if viewModel.isLoading && viewModel.runs.isEmpty {
                     loadingView
                 } else if let error = viewModel.error, viewModel.runs.isEmpty {
@@ -36,6 +43,7 @@ struct TimelineView: View {
                     timelineList
                 }
             }
+            .animation(.easeInOut(duration: 0.4), value: contentState)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
@@ -214,13 +222,27 @@ struct TimelineView: View {
     }
 
     private var loadingView: some View {
-        VStack {
+        VStack(spacing: 16) {
             Spacer()
+
+            Image("Logo")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 80)
+                .phaseAnimator([false, true]) { content, phase in
+                    content
+                        .scaleEffect(phase ? 1.1 : 1.0)
+                } animation: { _ in
+                    .easeInOut(duration: 0.8)
+                }
+
+            Text("RunRun")
+                .font(.title)
+                .fontWeight(.bold)
+
             ProgressView()
-                .scaleEffect(1.5)
-            Text("Loading...")
-                .foregroundStyle(.secondary)
-                .padding(.top)
+                .padding(.top, 8)
+
             Spacer()
         }
     }
