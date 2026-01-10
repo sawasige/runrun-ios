@@ -2,8 +2,9 @@ import Foundation
 import Combine
 
 @MainActor
-final class YearlyRecordsViewModel: ObservableObject {
+final class YearDetailViewModel: ObservableObject {
     @Published private(set) var monthlyStats: [MonthlyRunningStats] = []
+    @Published private(set) var yearlyRuns: [RunningRecord] = []
     @Published private(set) var isLoading = false
     @Published private(set) var error: Error?
     @Published var selectedYear: Int
@@ -45,6 +46,21 @@ final class YearlyRecordsViewModel: ObservableObject {
         String(format: "%.2f km", averageDistancePerRun)
     }
 
+    var averageDurationPerRun: TimeInterval {
+        guard totalRunCount > 0 else { return 0 }
+        return totalDuration / Double(totalRunCount)
+    }
+
+    var formattedAverageDuration: String {
+        let duration = averageDurationPerRun
+        let hours = Int(duration) / 3600
+        let minutes = (Int(duration) % 3600) / 60
+        if hours > 0 {
+            return String(format: String(localized: "%dh %dm", comment: "Duration format"), hours, minutes)
+        }
+        return String(format: String(localized: "%dm", comment: "Minutes only"), minutes)
+    }
+
     var bestMonth: MonthlyRunningStats? {
         monthlyStats.max(by: { $0.totalDistanceInKilometers < $1.totalDistanceInKilometers })
     }
@@ -74,6 +90,17 @@ final class YearlyRecordsViewModel: ObservableObject {
         return String(format: "%.0f kcal", totalCalories)
     }
 
+    /// ベスト日（距離）
+    var bestDayByDistance: RunningRecord? {
+        yearlyRuns.max { $0.distanceInKilometers < $1.distanceInKilometers }
+    }
+
+    /// ベスト日（ペース）- ペースは小さいほど速い
+    var bestDayByPace: RunningRecord? {
+        yearlyRuns.filter { $0.averagePacePerKilometer != nil && $0.distanceInKilometers >= 1.0 }
+            .min { ($0.averagePacePerKilometer ?? .infinity) < ($1.averagePacePerKilometer ?? .infinity) }
+    }
+
     var availableYears: [Int] {
         let currentYear = Calendar.current.component(.year, from: Date())
         return Array((currentYear - 5)...currentYear).reversed()
@@ -98,6 +125,7 @@ final class YearlyRecordsViewModel: ObservableObject {
         // スクリーンショットモードではモックデータを使用
         if ScreenshotMode.isEnabled {
             monthlyStats = MockDataProvider.monthlyStats.filter { $0.year == selectedYear }
+            yearlyRuns = MockDataProvider.monthDetailRecords
             isLoading = false
             return
         }
@@ -109,8 +137,12 @@ final class YearlyRecordsViewModel: ObservableObject {
         error = nil
 
         do {
-            let runs = try await firestoreService.getUserRuns(userId: userId)
+            async let runsTask = firestoreService.getUserRuns(userId: userId)
+            async let yearlyRunsTask = firestoreService.getUserYearlyRuns(userId: userId, year: selectedYear)
+
+            let runs = try await runsTask
             monthlyStats = aggregateToMonthlyStats(runs: runs, for: selectedYear)
+            yearlyRuns = try await yearlyRunsTask
         } catch {
             self.error = error
         }

@@ -39,7 +39,7 @@ struct ContentView: View {
                 }
                 .tag(AppTab.home)
 
-            YearlyRecordsView(userId: MockDataProvider.currentUserId)
+            YearDetailView(userId: MockDataProvider.currentUserId)
                 .tabItem {
                     Label("Records", systemImage: "figure.run")
                 }
@@ -76,7 +76,7 @@ struct ContentView: View {
                 }
                 .tag(AppTab.home)
 
-            YearlyRecordsView(userId: userId)
+            YearDetailView(userId: userId)
                 .tabItem {
                     Label("Records", systemImage: "figure.run")
                 }

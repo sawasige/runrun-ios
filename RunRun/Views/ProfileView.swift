@@ -16,6 +16,8 @@ struct ProfileView: View {
 
     // 統計データ
     @State private var yearlyStats: [YearlyStats] = []
+    @State private var monthlyStats: [MonthlyRunningStats] = []
+    @State private var allRuns: [RunningRecord] = []
     @State private var totalDistance: Double = 0
     @State private var totalDuration: TimeInterval = 0
     @State private var totalRuns: Int = 0
@@ -53,6 +55,21 @@ struct ProfileView: View {
         String(format: "%.2f km", averageDistancePerRun)
     }
 
+    private var averageDurationPerRun: TimeInterval {
+        guard totalRuns > 0 else { return 0 }
+        return totalDuration / Double(totalRuns)
+    }
+
+    private var formattedAverageDuration: String {
+        let duration = averageDurationPerRun
+        let hours = Int(duration) / 3600
+        let minutes = (Int(duration) % 3600) / 60
+        if hours > 0 {
+            return String(format: String(localized: "%dh %dm", comment: "Duration format"), hours, minutes)
+        }
+        return String(format: String(localized: "%dm", comment: "Minutes only"), minutes)
+    }
+
     private var formattedTotalDuration: String {
         let hours = Int(totalDuration) / 3600
         let minutes = (Int(totalDuration) % 3600) / 60
@@ -74,6 +91,23 @@ struct ProfileView: View {
 
     private var mostActiveYear: YearlyStats? {
         yearlyStats.filter { $0.runCount > 0 }.max { $0.runCount < $1.runCount }
+    }
+
+    private var bestMonth: MonthlyRunningStats? {
+        monthlyStats.filter { $0.runCount > 0 }.max { $0.totalDistanceInKilometers < $1.totalDistanceInKilometers }
+    }
+
+    private var mostActiveMonth: MonthlyRunningStats? {
+        monthlyStats.filter { $0.runCount > 0 }.max { $0.runCount < $1.runCount }
+    }
+
+    private var bestDayByDistance: RunningRecord? {
+        allRuns.max { $0.distanceInKilometers < $1.distanceInKilometers }
+    }
+
+    private var bestDayByPace: RunningRecord? {
+        allRuns.filter { $0.averagePacePerKilometer != nil && $0.distanceInKilometers >= 1.0 }
+            .min { ($0.averagePacePerKilometer ?? .infinity) < ($1.averagePacePerKilometer ?? .infinity) }
     }
 
     var body: some View {
@@ -99,28 +133,115 @@ struct ProfileView: View {
                 }
             }
 
-            // 総合
-            Section("Overall") {
-                LabeledContent("Total Distance", value: String(format: "%.1f km", totalDistance))
-                LabeledContent("Total Time", value: formattedTotalDuration)
-                LabeledContent("Run Count", value: String(format: String(localized: "%d runs", comment: "Run count"), totalRuns))
+            // 合計
+            Section("Totals") {
+                LabeledContent("Distance") {
+                    Text(String(format: "%.1f km", totalDistance))
+                        .fontWeight(.bold)
+                        .foregroundStyle(.primary)
+                }
+                LabeledContent("Time", value: formattedTotalDuration)
+                LabeledContent("Count", value: String(format: String(localized: "%d runs", comment: "Run count"), totalRuns))
                 if isCurrentUser, let calories = formattedTotalCalories {
                     LabeledContent("Energy", value: calories)
                 }
             }
 
-            // 効率
-            Section("Efficiency") {
-                LabeledContent("Average Pace", value: formattedAveragePace)
-                LabeledContent("Avg Distance/Run", value: formattedAverageDistance)
+            // 平均
+            Section("Averages") {
+                LabeledContent("Pace", value: formattedAveragePace)
+                LabeledContent("Distance/Run", value: formattedAverageDistance)
+                LabeledContent("Time/Run", value: formattedAverageDuration)
             }
 
             // ハイライト
-            if let best = bestYear, best.totalDistanceInKilometers > 0 {
+            if bestYear != nil || bestMonth != nil || bestDayByDistance != nil {
                 Section("Highlights") {
-                    LabeledContent("Best Year", value: "\(best.formattedYear) (\(best.formattedTotalDistance))")
+                    if let best = bestYear {
+                        NavigationLink {
+                            if isCurrentUser {
+                                YearDetailView(userId: user.id ?? "", initialYear: best.year)
+                            } else {
+                                YearDetailView(user: user, initialYear: best.year)
+                            }
+                        } label: {
+                            LabeledContent("Best Year", value: "\(best.formattedYear) (\(best.formattedTotalDistance))")
+                        }
+                    }
                     if let mostActive = mostActiveYear {
-                        LabeledContent("Most Runs Year", value: "\(mostActive.formattedYear) (\(String(format: String(localized: "%d runs", comment: "Run count"), mostActive.runCount)))")
+                        NavigationLink {
+                            if isCurrentUser {
+                                YearDetailView(userId: user.id ?? "", initialYear: mostActive.year)
+                            } else {
+                                YearDetailView(user: user, initialYear: mostActive.year)
+                            }
+                        } label: {
+                            LabeledContent("Most Runs Year", value: "\(mostActive.formattedYear) (\(String(format: String(localized: "%d runs", comment: "Run count"), mostActive.runCount)))")
+                        }
+                    }
+                    if let best = bestMonth {
+                        NavigationLink {
+                            if isCurrentUser {
+                                MonthDetailView(userId: user.id ?? "", year: best.year, month: best.month)
+                            } else {
+                                MonthDetailView(user: user, year: best.year, month: best.month)
+                            }
+                        } label: {
+                            LabeledContent("Best Month", value: "\(best.formattedMonth) (\(best.formattedTotalDistance))")
+                        }
+                    }
+                    if let mostActive = mostActiveMonth {
+                        NavigationLink {
+                            if isCurrentUser {
+                                MonthDetailView(userId: user.id ?? "", year: mostActive.year, month: mostActive.month)
+                            } else {
+                                MonthDetailView(user: user, year: mostActive.year, month: mostActive.month)
+                            }
+                        } label: {
+                            LabeledContent("Most Runs Month", value: "\(mostActive.formattedMonth) (\(String(format: String(localized: "%d runs", comment: "Run count"), mostActive.runCount)))")
+                        }
+                    }
+                    if let best = bestDayByDistance {
+                        NavigationLink {
+                            RunDetailView(
+                                record: best,
+                                isOwnRecord: isCurrentUser,
+                                userProfile: isCurrentUser ? nil : user,
+                                userId: user.id
+                            )
+                        } label: {
+                            LabeledContent {
+                                Text("\(best.formattedShortDate) (\(best.formattedDistance))")
+                            } label: {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Best Day")
+                                    Text("Distance")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
+                    if let best = bestDayByPace {
+                        NavigationLink {
+                            RunDetailView(
+                                record: best,
+                                isOwnRecord: isCurrentUser,
+                                userProfile: isCurrentUser ? nil : user,
+                                userId: user.id
+                            )
+                        } label: {
+                            LabeledContent {
+                                Text("\(best.formattedShortDate) (\(best.formattedPace))")
+                            } label: {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Best Day")
+                                    Text("Pace")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -140,9 +261,9 @@ struct ProfileView: View {
                     ForEach(yearlyStats.filter { $0.runCount > 0 }.sorted { $0.year > $1.year }) { stats in
                         NavigationLink {
                             if isCurrentUser, let userId = user.id {
-                                YearlyRecordsView(userId: userId, initialYear: stats.year)
+                                YearDetailView(userId: userId, initialYear: stats.year)
                             } else {
-                                YearlyRecordsView(user: user, initialYear: stats.year)
+                                YearDetailView(user: user, initialYear: stats.year)
                             }
                         } label: {
                             YearlyStatsRow(stats: stats)
@@ -295,13 +416,20 @@ struct ProfileView: View {
             }
 
             // 統計を取得
-            let runs = try await firestoreService.getUserRuns(userId: userId)
+            async let runsTask = firestoreService.getUserRuns(userId: userId)
+            async let allRunsTask = firestoreService.getAllUserRunRecords(userId: userId)
+
+            let runs = try await runsTask
+            allRuns = try await allRunsTask
 
             // 全体の統計
             totalDistance = runs.reduce(0) { $0 + $1.distanceKm }
             totalDuration = runs.reduce(0) { $0 + $1.durationSeconds }
             totalRuns = runs.count
             totalCalories = runs.compactMap { $0.caloriesBurned }.reduce(0, +)
+
+            // 月別統計を集計
+            monthlyStats = aggregateToMonthlyStats(runs: runs)
 
             // 年別統計を集計
             yearlyStats = aggregateToYearlyStats(runs: runs)
@@ -345,6 +473,40 @@ struct ProfileView: View {
                 totalDistanceInMeters: data.distance * 1000,
                 totalDurationInSeconds: data.duration,
                 runCount: data.count
+            )
+        }
+    }
+
+    private func aggregateToMonthlyStats(runs: [(date: Date, distanceKm: Double, durationSeconds: TimeInterval, caloriesBurned: Double?)]) -> [MonthlyRunningStats] {
+        let calendar = Calendar.current
+
+        // Group by year-month
+        var monthlyData: [String: (year: Int, month: Int, distance: Double, duration: TimeInterval, count: Int, calories: Double)] = [:]
+
+        for run in runs {
+            let year = calendar.component(.year, from: run.date)
+            let month = calendar.component(.month, from: run.date)
+            let key = "\(year)-\(month)"
+            let current = monthlyData[key] ?? (year, month, 0, 0, 0, 0)
+            monthlyData[key] = (
+                year,
+                month,
+                current.distance + run.distanceKm,
+                current.duration + run.durationSeconds,
+                current.count + 1,
+                current.calories + (run.caloriesBurned ?? 0)
+            )
+        }
+
+        return monthlyData.values.map { data in
+            MonthlyRunningStats(
+                id: UUID(),
+                year: data.year,
+                month: data.month,
+                totalDistanceInMeters: data.distance * 1000,
+                totalDurationInSeconds: data.duration,
+                runCount: data.count,
+                totalCalories: data.calories
             )
         }
     }
