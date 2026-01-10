@@ -44,6 +44,49 @@ struct YearDetailView: View {
         }
     }
 
+    private var isCurrentYear: Bool {
+        let currentYear = Calendar.current.component(.year, from: Date())
+        return viewModel.selectedYear == currentYear
+    }
+
+    private func goToPreviousYear() {
+        viewModel.selectedYear -= 1
+    }
+
+    private func goToNextYear() {
+        viewModel.selectedYear += 1
+    }
+
+    private var yearNavigationButtons: some View {
+        HStack(spacing: 0) {
+            Button {
+                goToPreviousYear()
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .frame(width: 50, height: 50)
+            }
+
+            Divider()
+                .frame(height: 30)
+
+            Button {
+                goToNextYear()
+            } label: {
+                Image(systemName: "chevron.right")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .frame(width: 50, height: 50)
+            }
+            .disabled(isCurrentYear)
+            .opacity(isCurrentYear ? 0.3 : 1)
+        }
+        .background(.regularMaterial)
+        .clipShape(Capsule())
+        .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
+    }
+
     var body: some View {
         Group {
             if userProfile == nil {
@@ -58,20 +101,21 @@ struct YearDetailView: View {
 
     @ViewBuilder
     private var mainContent: some View {
-        Group {
-            if viewModel.isLoading {
-                VStack(spacing: 0) {
-                    yearPickerSection
+        ZStack(alignment: .bottomTrailing) {
+            Group {
+                if viewModel.isLoading {
                     loadingView
-                }
-            } else if let error = viewModel.error {
-                VStack(spacing: 0) {
-                    yearPickerSection
+                } else if let error = viewModel.error {
                     errorView(error: error)
+                } else {
+                    statsListView
                 }
-            } else {
-                statsListView
             }
+
+            // フローティング年切り替えボタン
+            yearNavigationButtons
+                .padding()
+                .padding(.bottom, 8)
         }
         .navigationTitle(navigationTitle)
         .navigationBarTitleDisplayMode(.large)
@@ -110,33 +154,6 @@ struct YearDetailView: View {
         }
     }
 
-    private var yearPickerSection: some View {
-        VStack(spacing: 12) {
-            Picker(String(localized: "Year"), selection: $viewModel.selectedYear) {
-                ForEach(viewModel.availableYears, id: \.self) { year in
-                    Text(MonthlyRunningStats.formattedYear(year)).tag(year)
-                }
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal)
-
-            HStack {
-                Text("Yearly Total")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Text(viewModel.formattedTotalYearlyDistance)
-                    .font(.title2)
-                    .fontWeight(.bold)
-            }
-            .padding(.horizontal)
-            .padding(.bottom, 8)
-
-            Divider()
-        }
-        .padding(.top)
-    }
-
     private var loadingView: some View {
         VStack {
             Spacer()
@@ -147,6 +164,7 @@ struct YearDetailView: View {
                 .padding(.top)
             Spacer()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private func errorView(error: Error) -> some View {
@@ -167,17 +185,11 @@ struct YearDetailView: View {
             Spacer()
         }
         .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var statsListView: some View {
         List {
-            // 年ピッカーセクション（スクロール領域内）
-            Section {
-                yearPickerSection
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
-            }
-
             Section("Monthly Distance") {
                 monthlyChart
                     .frame(height: 200)
@@ -291,6 +303,13 @@ struct YearDetailView: View {
                             .accessibilityIdentifier(index == 0 ? "first_month_row" : "month_row_\(index)")
                     }
                 }
+            }
+
+            // フローティングボタン分の余白
+            Section {
+                Color.clear
+                    .frame(height: 60)
+                    .listRowBackground(Color.clear)
             }
         }
         .listStyle(.insetGrouped)
