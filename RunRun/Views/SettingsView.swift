@@ -143,6 +143,10 @@ struct SettingsView: View {
                         Task { await createDummyData() }
                     }
 
+                    Button("Delete My Run Data", role: .destructive) {
+                        Task { await deleteMyRunData() }
+                    }
+
                     Button("Crashlytics Test", role: .destructive) {
                         fatalError("Crashlytics test crash")
                     }
@@ -294,6 +298,19 @@ struct SettingsView: View {
             }
 
             debugMessage = "Created 5 dummy users and 2 requests"
+        } catch {
+            debugMessage = "Error: \(error.localizedDescription)"
+        }
+    }
+
+    private func deleteMyRunData() async {
+        guard let userId = authService.user?.uid else { return }
+
+        debugMessage = "Deleting..."
+
+        do {
+            let count = try await firestoreService.deleteAllUserRuns(userId: userId)
+            debugMessage = "Deleted \(count) runs"
         } catch {
             debugMessage = "Error: \(error.localizedDescription)"
         }
