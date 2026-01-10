@@ -33,6 +33,11 @@ struct MonthDetailView: View {
                currentMonth == calendar.component(.month, from: now)
     }
 
+    private func dayString(from date: Date) -> String {
+        let day = Calendar.current.component(.day, from: date)
+        return String(format: String(localized: "%d day_suffix", comment: "Day format e.g. 15日"), day)
+    }
+
     private func goToPreviousMonth() {
         if currentMonth == 1 {
             currentMonth = 12
@@ -168,7 +173,7 @@ struct MonthDetailView: View {
                 LabeledContent("Time/Run", value: viewModel.formattedAverageDuration)
             }
 
-            if viewModel.bestDayByDistance != nil || viewModel.bestDayByPace != nil {
+            if viewModel.bestDayByDistance != nil || viewModel.bestDayByDuration != nil || viewModel.fastestDay != nil {
                 Section("Highlights") {
                     if let best = viewModel.bestDayByDistance {
                         NavigationLink {
@@ -179,19 +184,10 @@ struct MonthDetailView: View {
                                 userId: viewModel.userId
                             )
                         } label: {
-                            LabeledContent {
-                                Text("\(best.formattedShortDate) (\(best.formattedDistance))")
-                            } label: {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Best Day")
-                                    Text("Distance")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
+                            LabeledContent("Best Distance Day", value: "\(dayString(from: best.date)) (\(best.formattedDistance))")
                         }
                     }
-                    if let best = viewModel.bestDayByPace {
+                    if let best = viewModel.bestDayByDuration {
                         NavigationLink {
                             RunDetailView(
                                 record: best,
@@ -200,16 +196,19 @@ struct MonthDetailView: View {
                                 userId: viewModel.userId
                             )
                         } label: {
-                            LabeledContent {
-                                Text("\(best.formattedShortDate) (\(best.formattedPace))")
-                            } label: {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Best Day")
-                                    Text("Pace")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
+                            LabeledContent("Best Duration Day", value: "\(dayString(from: best.date)) (\(best.formattedDuration))")
+                        }
+                    }
+                    if let fastest = viewModel.fastestDay {
+                        NavigationLink {
+                            RunDetailView(
+                                record: fastest,
+                                isOwnRecord: userProfile == nil,
+                                userProfile: userProfile,
+                                userId: viewModel.userId
+                            )
+                        } label: {
+                            LabeledContent("Fastest Day", value: "\(dayString(from: fastest.date)) (\(fastest.formattedPace))")
                         }
                     }
                 }
