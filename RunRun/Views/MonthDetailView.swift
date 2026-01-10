@@ -3,6 +3,7 @@ import Charts
 
 struct MonthDetailView: View {
     @StateObject private var viewModel: MonthDetailViewModel
+    @EnvironmentObject private var syncService: SyncService
     let userProfile: UserProfile?
     let userId: String
     @State private var selectedCalendarRecord: RunningRecord?
@@ -132,6 +133,14 @@ struct MonthDetailView: View {
         .onChange(of: currentMonth) { _, _ in
             Task {
                 await viewModel.updateMonth(year: currentYear, month: currentMonth)
+            }
+        }
+        .onChange(of: syncService.lastSyncedAt) { _, _ in
+            // 自分のデータの場合のみリロード
+            if userProfile == nil {
+                Task {
+                    await viewModel.updateMonth(year: currentYear, month: currentMonth)
+                }
             }
         }
     }

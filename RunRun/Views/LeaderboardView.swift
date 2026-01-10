@@ -15,6 +15,7 @@ enum LeaderboardFilter: CaseIterable {
 
 struct LeaderboardView: View {
     @EnvironmentObject private var authService: AuthenticationService
+    @EnvironmentObject private var syncService: SyncService
     @State private var users: [UserProfile] = []
     @State private var isLoading = true
     @State private var errorMessage: String?
@@ -116,6 +117,9 @@ struct LeaderboardView: View {
                 Task { await loadLeaderboard() }
             }
             .onChange(of: selectedFilter) {
+                Task { await loadLeaderboard() }
+            }
+            .onChange(of: syncService.lastSyncedAt) { _, _ in
                 Task { await loadLeaderboard() }
             }
         }

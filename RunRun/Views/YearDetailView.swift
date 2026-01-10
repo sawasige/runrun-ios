@@ -3,6 +3,7 @@ import Charts
 
 struct YearDetailView: View {
     @StateObject private var viewModel: YearDetailViewModel
+    @EnvironmentObject private var syncService: SyncService
 
     let userProfile: UserProfile?
 
@@ -97,6 +98,14 @@ struct YearDetailView: View {
         .onChange(of: viewModel.selectedYear) {
             Task {
                 await viewModel.loadMonthlyStats()
+            }
+        }
+        .onChange(of: syncService.lastSyncedAt) { _, _ in
+            // 自分のデータの場合のみリロード
+            if userProfile == nil {
+                Task {
+                    await viewModel.refresh()
+                }
             }
         }
     }

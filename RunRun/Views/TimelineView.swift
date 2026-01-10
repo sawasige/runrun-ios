@@ -2,6 +2,7 @@ import SwiftUI
 
 struct TimelineView: View {
     @StateObject private var viewModel: TimelineViewModel
+    @EnvironmentObject private var syncService: SyncService
     @State private var showNavBarLogo = false
     @State private var monthlyDistance: Double = 0
     @State private var monthlyRunCount: Int = 0
@@ -62,6 +63,12 @@ struct TimelineView: View {
             }
             .onAppear {
                 AnalyticsService.logScreenView("Timeline")
+            }
+            .onChange(of: syncService.lastSyncedAt) { _, _ in
+                Task {
+                    await viewModel.refresh()
+                    await loadMonthlySummary()
+                }
             }
         }
     }
