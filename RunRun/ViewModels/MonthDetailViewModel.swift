@@ -97,13 +97,20 @@ final class MonthDetailViewModel: ObservableObject {
         return String(format: String(localized: "%dm", comment: "Minutes only"), minutes)
     }
 
-    /// ベスト日（距離）
+    // MARK: - ハイライト
+
+    /// 最長距離日
     var bestDayByDistance: RunningRecord? {
         records.max { $0.distanceInKilometers < $1.distanceInKilometers }
     }
 
-    /// ベスト日（ペース）- ペースは小さいほど速い
-    var bestDayByPace: RunningRecord? {
+    /// 最長時間日
+    var bestDayByDuration: RunningRecord? {
+        records.max { $0.durationInSeconds < $1.durationInSeconds }
+    }
+
+    /// 最速日 - ペースは小さいほど速い
+    var fastestDay: RunningRecord? {
         records.filter { $0.averagePacePerKilometer != nil && $0.distanceInKilometers >= 1.0 }
             .min { ($0.averagePacePerKilometer ?? .infinity) < ($1.averagePacePerKilometer ?? .infinity) }
     }

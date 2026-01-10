@@ -61,11 +61,20 @@ final class YearDetailViewModel: ObservableObject {
         return String(format: String(localized: "%dm", comment: "Minutes only"), minutes)
     }
 
-    var bestMonth: MonthlyRunningStats? {
-        monthlyStats.max(by: { $0.totalDistanceInKilometers < $1.totalDistanceInKilometers })
+    // MARK: - ハイライト（月）
+
+    /// 最長距離月
+    var bestMonthByDistance: MonthlyRunningStats? {
+        monthlyStats.filter { $0.totalDistanceInKilometers > 0 }.max(by: { $0.totalDistanceInKilometers < $1.totalDistanceInKilometers })
     }
 
-    var mostActiveMonth: MonthlyRunningStats? {
+    /// 最長時間月
+    var bestMonthByDuration: MonthlyRunningStats? {
+        monthlyStats.filter { $0.totalDurationInSeconds > 0 }.max(by: { $0.totalDurationInSeconds < $1.totalDurationInSeconds })
+    }
+
+    /// 最多回数月
+    var mostRunsMonth: MonthlyRunningStats? {
         monthlyStats.filter { $0.runCount > 0 }.max(by: { $0.runCount < $1.runCount })
     }
 
@@ -90,13 +99,20 @@ final class YearDetailViewModel: ObservableObject {
         return String(format: "%.0f kcal", totalCalories)
     }
 
-    /// ベスト日（距離）
+    // MARK: - ハイライト（日）
+
+    /// 最長距離日
     var bestDayByDistance: RunningRecord? {
         yearlyRuns.max { $0.distanceInKilometers < $1.distanceInKilometers }
     }
 
-    /// ベスト日（ペース）- ペースは小さいほど速い
-    var bestDayByPace: RunningRecord? {
+    /// 最長時間日
+    var bestDayByDuration: RunningRecord? {
+        yearlyRuns.max { $0.durationInSeconds < $1.durationInSeconds }
+    }
+
+    /// 最速日 - ペースは小さいほど速い
+    var fastestDay: RunningRecord? {
         yearlyRuns.filter { $0.averagePacePerKilometer != nil && $0.distanceInKilometers >= 1.0 }
             .min { ($0.averagePacePerKilometer ?? .infinity) < ($1.averagePacePerKilometer ?? .infinity) }
     }
