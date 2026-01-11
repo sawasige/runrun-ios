@@ -9,20 +9,24 @@ import FirebaseAuth
 
 struct RunDetailView: View {
     @State private var record: RunningRecord
-    let isOwnRecord: Bool
-    let userProfile: UserProfile?
-    let userId: String?
+    let userProfile: UserProfile
     @State private var previousRecord: RunningRecord?
     @State private var nextRecord: RunningRecord?
     @State private var isLoadingAdjacent = false
 
     private let firestoreService = FirestoreService.shared
 
-    init(record: RunningRecord, isOwnRecord: Bool = true, userProfile: UserProfile? = nil, userId: String? = nil) {
+    private var isOwnRecord: Bool {
+        userProfile.id == Auth.auth().currentUser?.uid
+    }
+
+    private var userId: String {
+        userProfile.id ?? ""
+    }
+
+    init(record: RunningRecord, user: UserProfile) {
         _record = State(initialValue: record)
-        self.isOwnRecord = isOwnRecord
-        self.userProfile = userProfile
-        self.userId = userId ?? (isOwnRecord ? nil : userProfile?.id)
+        self.userProfile = user
     }
 
     @State private var routeLocations: [CLLocation] = []
@@ -101,11 +105,10 @@ struct RunDetailView: View {
     }
 
     private func loadAdjacentRecords() async {
-        guard let uid = userId ?? Auth.auth().currentUser?.uid else { return }
         isLoadingAdjacent = true
 
-        async let prevTask = firestoreService.getAdjacentRun(userId: uid, currentDate: record.date, direction: .previous)
-        async let nextTask = firestoreService.getAdjacentRun(userId: uid, currentDate: record.date, direction: .next)
+        async let prevTask = firestoreService.getAdjacentRun(userId: userId, currentDate: record.date, direction: .previous)
+        async let nextTask = firestoreService.getAdjacentRun(userId: userId, currentDate: record.date, direction: .next)
 
         previousRecord = try? await prevTask
         nextRecord = try? await nextTask
@@ -299,21 +302,20 @@ struct RunDetailView: View {
         .navigationBarTitleDisplayMode(.large)
         .analyticsScreen("RunDetail")
         .toolbar {
-            if let user = userProfile {
-                ToolbarItem(placement: .primaryAction) {
-                    NavigationLink {
-                        ProfileView(user: user)
-                    } label: {
-                        ProfileAvatarView(user: user, size: 28)
-                    }
-                }
-            } else if isOwnRecord {
-                ToolbarItem(placement: .primaryAction) {
+            if isOwnRecord {
+                ToolbarItem(placement: .topBarLeading) {
                     Button {
                         showPhotoPicker = true
                     } label: {
                         Image(systemName: "square.and.arrow.up")
                     }
+                }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    ProfileView(user: userProfile)
+                } label: {
+                    ProfileAvatarView(user: userProfile, size: 28)
                 }
             }
         }
@@ -1061,18 +1063,21 @@ private struct StatItem: View {
 
 #Preview {
     NavigationStack {
-        RunDetailView(record: RunningRecord(
-            id: UUID(),
-            date: Date(),
-            distanceInMeters: 5230,
-            durationInSeconds: 1800,
-            caloriesBurned: 320,
-            averageHeartRate: 155,
-            maxHeartRate: 178,
-            minHeartRate: 120,
-            cadence: 172,
-            strideLength: 1.12,
-            stepCount: 5160
-        ))
+        RunDetailView(
+            record: RunningRecord(
+                id: UUID(),
+                date: Date(),
+                distanceInMeters: 5230,
+                durationInSeconds: 1800,
+                caloriesBurned: 320,
+                averageHeartRate: 155,
+                maxHeartRate: 178,
+                minHeartRate: 120,
+                cadence: 172,
+                strideLength: 1.12,
+                stepCount: 5160
+            ),
+            user: UserProfile(id: "preview", displayName: "Preview User", email: nil, iconName: "figure.run")
+        )
     }
 }

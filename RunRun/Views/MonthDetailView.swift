@@ -1,27 +1,22 @@
 import SwiftUI
 import Charts
+import FirebaseAuth
 
 struct MonthDetailView: View {
     @StateObject private var viewModel: MonthDetailViewModel
     @EnvironmentObject private var syncService: SyncService
-    let userProfile: UserProfile?
-    let userId: String
+    let userProfile: UserProfile
     @State private var selectedCalendarRecord: RunningRecord?
     @State private var currentYear: Int
     @State private var currentMonth: Int
     @State private var hasLoadedOnce = false
 
-    init(userId: String, year: Int, month: Int) {
-        self.userProfile = nil
-        self.userId = userId
-        _currentYear = State(initialValue: year)
-        _currentMonth = State(initialValue: month)
-        _viewModel = StateObject(wrappedValue: MonthDetailViewModel(userId: userId, year: year, month: month))
+    private var isOwnRecord: Bool {
+        userProfile.id == Auth.auth().currentUser?.uid
     }
 
     init(user: UserProfile, year: Int, month: Int) {
         self.userProfile = user
-        self.userId = user.id ?? ""
         _currentYear = State(initialValue: year)
         _currentMonth = State(initialValue: month)
         _viewModel = StateObject(wrappedValue: MonthDetailViewModel(userId: user.id ?? "", year: year, month: month))
@@ -112,12 +107,10 @@ struct MonthDetailView: View {
         .analyticsScreen("MonthDetail")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                if let user = userProfile {
-                    NavigationLink {
-                        ProfileView(user: user)
-                    } label: {
-                        ProfileAvatarView(user: user, size: 28)
-                    }
+                NavigationLink {
+                    ProfileView(user: userProfile)
+                } label: {
+                    ProfileAvatarView(user: userProfile, size: 28)
                 }
             }
         }
@@ -137,7 +130,7 @@ struct MonthDetailView: View {
         }
         .onChange(of: syncService.lastSyncedAt) { _, _ in
             // 自分のデータの場合のみリロード
-            if userProfile == nil {
+            if isOwnRecord {
                 Task {
                     await viewModel.updateMonth(year: currentYear, month: currentMonth)
                 }
@@ -171,7 +164,7 @@ struct MonthDetailView: View {
                 }
                 LabeledContent("Time", value: viewModel.formattedTotalDuration)
                 LabeledContent("Count", value: String(format: String(localized: "%d runs", comment: "Run count"), viewModel.runCount))
-                if userProfile == nil, let calories = viewModel.formattedTotalCalories {
+                if isOwnRecord, let calories = viewModel.formattedTotalCalories {
                     LabeledContent("Energy", value: calories)
                 }
             }
@@ -186,36 +179,21 @@ struct MonthDetailView: View {
                 Section("Highlights") {
                     if let best = viewModel.bestDayByDistance {
                         NavigationLink {
-                            RunDetailView(
-                                record: best,
-                                isOwnRecord: userProfile == nil,
-                                userProfile: userProfile,
-                                userId: viewModel.userId
-                            )
+                            RunDetailView(record: best, user: userProfile)
                         } label: {
                             LabeledContent("Best Distance Day", value: "\(dayString(from: best.date)) (\(best.formattedDistance))")
                         }
                     }
                     if let best = viewModel.bestDayByDuration {
                         NavigationLink {
-                            RunDetailView(
-                                record: best,
-                                isOwnRecord: userProfile == nil,
-                                userProfile: userProfile,
-                                userId: viewModel.userId
-                            )
+                            RunDetailView(record: best, user: userProfile)
                         } label: {
                             LabeledContent("Best Duration Day", value: "\(dayString(from: best.date)) (\(best.formattedDuration))")
                         }
                     }
                     if let fastest = viewModel.fastestDay {
                         NavigationLink {
-                            RunDetailView(
-                                record: fastest,
-                                isOwnRecord: userProfile == nil,
-                                userProfile: userProfile,
-                                userId: viewModel.userId
-                            )
+                            RunDetailView(record: fastest, user: userProfile)
                         } label: {
                             LabeledContent("Fastest Day", value: "\(dayString(from: fastest.date)) (\(fastest.formattedPace))")
                         }
@@ -226,12 +204,7 @@ struct MonthDetailView: View {
             Section("Running Records") {
                 ForEach(Array(viewModel.records.enumerated()), id: \.element.id) { index, record in
                     NavigationLink {
-                        RunDetailView(
-                            record: record,
-                            isOwnRecord: userProfile == nil,
-                            userProfile: userProfile,
-                            userId: viewModel.userId
-                        )
+                        RunDetailView(record: record, user: userProfile)
                     } label: {
                         RunningRecordRow(record: record)
                     }
@@ -247,12 +220,7 @@ struct MonthDetailView: View {
             }
         }
         .navigationDestination(item: $selectedCalendarRecord) { record in
-            RunDetailView(
-                record: record,
-                isOwnRecord: userProfile == nil,
-                userProfile: userProfile,
-                userId: viewModel.userId
-            )
+            RunDetailView(record: record, user: userProfile)
         }
     }
 
@@ -341,6 +309,6 @@ struct RunningRecordRow: View {
 
 #Preview {
     NavigationStack {
-        MonthDetailView(userId: "preview", year: 2025, month: 1)
+        MonthDetailView(user: UserProfile(id: "preview", displayName: "Preview User", email: nil, iconName: "figure.run"), year: 2025, month: 1)
     }
 }
