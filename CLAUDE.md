@@ -33,27 +33,56 @@ xcodebuild -project RunRun.xcodeproj -scheme RunRun -destination 'platform=iOS S
 
 ```
 RunRun/
-├── RunRunApp.swift          # @main エントリポイント
-├── ContentView.swift        # タブビュー (記録/ランキング/設定)
+├── RunRunApp.swift              # @main エントリポイント
+├── ContentView.swift            # タブビュー (Home/Records/Leaderboard/Friends/Settings)
 ├── Views/
-│   ├── YearlyRecordsView.swift    # 年間記録
-│   ├── MonthDetailView.swift      # 月の詳細 (個別記録一覧)
-│   ├── LeaderboardView.swift      # 月別ランキング
-│   ├── SettingsView.swift         # 設定画面
-│   ├── ProfileEditView.swift      # プロフィール編集
-│   └── LoginView.swift            # ログイン画面
+│   ├── Components/
+│   │   └── ShineLogoView.swift      # ローディング用シャインアニメーション
+│   ├── TimelineView.swift           # ホーム（タイムライン）
+│   ├── YearDetailView.swift         # 年間記録詳細
+│   ├── MonthDetailView.swift        # 月の詳細（個別記録一覧）
+│   ├── RunDetailView.swift          # ラン詳細
+│   ├── WeeklyStatsView.swift        # 週間推移
+│   ├── LeaderboardView.swift        # 月別ランキング
+│   ├── FriendsView.swift            # フレンド一覧
+│   ├── ProfileView.swift            # プロフィール表示
+│   ├── ProfileEditView.swift        # プロフィール編集
+│   ├── ProfileAvatarView.swift      # アバター表示コンポーネント
+│   ├── SettingsView.swift           # 設定画面
+│   ├── LoginView.swift              # ログイン画面
+│   ├── UserSearchView.swift         # ユーザー検索
+│   ├── SyncBannerView.swift         # 同期状態バナー
+│   ├── GradientRouteMapView.swift   # ルートマップ表示
+│   ├── HeartRateChartView.swift     # 心拍チャート
+│   └── RunCalendarView.swift        # カレンダー表示
 ├── ViewModels/
-│   ├── YearlyRecordsViewModel.swift
+│   ├── TimelineViewModel.swift
+│   ├── YearDetailViewModel.swift
 │   └── MonthDetailViewModel.swift
 ├── Models/
-│   ├── RunningRecord.swift        # HealthKitから取得したラン記録
-│   ├── MonthlyRunningStats.swift  # 月別統計
-│   ├── UserProfile.swift          # ユーザープロフィール
-│   └── SyncedRunRecord.swift      # Firestoreに同期した記録
+│   ├── RunningRecord.swift          # HealthKitから取得したラン記録
+│   ├── MonthlyRunningStats.swift    # 月別統計
+│   ├── WeeklyRunningStats.swift     # 週別統計
+│   ├── YearlyStats.swift            # 年別統計
+│   ├── TimelineRun.swift            # タイムライン用ラン記録
+│   ├── UserProfile.swift            # ユーザープロフィール
+│   ├── FriendRequest.swift          # フレンドリクエスト
+│   ├── SyncedRunRecord.swift        # Firestoreに同期した記録
+│   ├── HeartRateSample.swift        # 心拍データ
+│   ├── RouteSegment.swift           # ルートセグメント
+│   └── Split.swift                  # スプリットデータ
 └── Services/
-    ├── HealthKitService.swift     # HealthKit連携
-    ├── AuthenticationService.swift # Apple Sign In + Firebase Auth
-    └── FirestoreService.swift     # Firestore CRUD操作
+    ├── HealthKitService.swift       # HealthKit連携
+    ├── AuthenticationService.swift  # Apple Sign In + Firebase Auth
+    ├── FirestoreService.swift       # Firestore CRUD操作
+    ├── StorageService.swift         # Firebase Storage
+    ├── SyncService.swift            # HealthKit→Firestore同期
+    ├── AnalyticsService.swift       # Firebase Analytics
+    ├── NotificationService.swift    # プッシュ通知
+    ├── BadgeService.swift           # バッジ管理
+    ├── ImageCacheService.swift      # 画像キャッシュ
+    ├── MockDataProvider.swift       # スクリーンショット用モックデータ
+    └── ScreenshotMode.swift         # スクリーンショットモード
 ```
 
 ## Architecture Conventions
