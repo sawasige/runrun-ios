@@ -34,8 +34,10 @@ struct ProfileShareSettingsView: View {
     @State private var photoData: Data?
     @State private var previewImageData: Data?
     @State private var isSaving = false
+    @State private var isSharing = false
     @State private var showSaveSuccess = false
     @State private var showSaveError = false
+    @State private var shareItem: URL?
 
     // データ選択（保存される）
     @AppStorage("profileShare.showDistance") private var showDistance = true
@@ -77,17 +79,33 @@ struct ProfileShareSettingsView: View {
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button {
-                        Task { await saveToPhotos() }
-                    } label: {
-                        if isSaving {
-                            ProgressView()
-                        } else {
-                            Text("Save")
+                    HStack(spacing: 20) {
+                        Button {
+                            Task { await shareImage() }
+                        } label: {
+                            if isSharing {
+                                ProgressView()
+                            } else {
+                                Image(systemName: "square.and.arrow.up")
+                            }
                         }
+                        .disabled(photoData == nil || isSharing || isSaving)
+
+                        Button {
+                            Task { await saveToPhotos() }
+                        } label: {
+                            if isSaving {
+                                ProgressView()
+                            } else {
+                                Image(systemName: "photo.badge.plus")
+                            }
+                        }
+                        .disabled(photoData == nil || isSaving || isSharing)
                     }
-                    .disabled(photoData == nil || isSaving)
                 }
+            }
+            .sheet(item: $shareItem) { url in
+                ShareSheet(activityItems: [url])
             }
             .onChange(of: selectedPhotoItem) { _, newItem in
                 Task { await loadSelectedPhoto(from: newItem) }
@@ -227,6 +245,39 @@ struct ProfileShareSettingsView: View {
         } catch {
             print("Failed to save: \(error)")
             showSaveError = true
+        }
+    }
+
+    private func shareImage() async {
+        guard let data = previewImageData else { return }
+
+        isSharing = true
+
+        let tempURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension("heic")
+
+        do {
+            try data.write(to: tempURL)
+            await MainActor.run {
+                shareItem = tempURL
+                isSharing = false
+            }
+
+            AnalyticsService.logEvent("profile_share_image_shared", parameters: [
+                "show_distance": options.showDistance,
+                "show_duration": options.showDuration,
+                "show_run_count": options.showRunCount,
+                "show_calories": options.showCalories,
+                "show_pace": options.showPace,
+                "show_avg_distance": options.showAvgDistance,
+                "show_avg_duration": options.showAvgDuration
+            ])
+        } catch {
+            print("Failed to create temp file: \(error)")
+            await MainActor.run {
+                isSharing = false
+            }
         }
     }
 }
