@@ -6,8 +6,8 @@ struct TimelineView: View {
     @State private var showNavBarLogo = false
     @State private var monthlyDistance: Double = 0
     @State private var monthlyRunCount: Int = 0
-    @State private var userProfile: UserProfile?
-    private let initialUserProfile: UserProfile?
+
+    let userProfile: UserProfile
 
     private let firestoreService = FirestoreService.shared
 
@@ -19,9 +19,9 @@ struct TimelineView: View {
         return formatter.string(from: now)
     }
 
-    init(userId: String, userProfile: UserProfile? = nil) {
+    init(userId: String, userProfile: UserProfile) {
         _viewModel = StateObject(wrappedValue: TimelineViewModel(userId: userId))
-        self.initialUserProfile = userProfile
+        self.userProfile = userProfile
     }
 
     private var contentState: Int {
@@ -97,22 +97,17 @@ struct TimelineView: View {
             }
 
             // 今月のサマリ（タップで詳細へ）
-            if let profile = userProfile {
-                NavigationLink {
-                    MonthDetailView(
-                        user: profile,
-                        year: Calendar.current.component(.year, from: Date()),
-                        month: Calendar.current.component(.month, from: Date())
-                    )
-                } label: {
-                    monthSummaryContent
-                }
-                .buttonStyle(.plain)
-                .accessibilityIdentifier("timeline_month_summary")
-            } else {
+            NavigationLink {
+                MonthDetailView(
+                    user: userProfile,
+                    year: Calendar.current.component(.year, from: Date()),
+                    month: Calendar.current.component(.month, from: Date())
+                )
+            } label: {
                 monthSummaryContent
-                    .accessibilityIdentifier("timeline_month_summary")
             }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("timeline_month_summary")
         }
         .padding(.horizontal)
         .padding(.vertical, 16)
@@ -132,11 +127,7 @@ struct TimelineView: View {
     private var monthSummaryContent: some View {
         HStack(spacing: 0) {
             // 左: プロフィール
-            if let profile = userProfile {
-                ProfileAvatarView(user: profile, size: 56)
-            } else {
-                ProfileAvatarView(iconName: "figure.run", avatarURL: nil, size: 56)
-            }
+            ProfileAvatarView(user: userProfile, size: 56)
 
             Divider()
                 .frame(height: 56)
@@ -201,13 +192,7 @@ struct TimelineView: View {
         if ScreenshotMode.isEnabled {
             monthlyDistance = 68.5
             monthlyRunCount = 12
-            userProfile = MockDataProvider.currentUser
             return
-        }
-
-        // ContentViewから渡されたプロフィールがあれば使用
-        if let profile = initialUserProfile {
-            userProfile = profile
         }
 
         let calendar = Calendar.current
@@ -224,11 +209,6 @@ struct TimelineView: View {
 
             monthlyDistance = runs.reduce(0) { $0 + $1.distanceInKilometers }
             monthlyRunCount = runs.count
-
-            // プロフィールがまだない場合は取得
-            if userProfile == nil {
-                userProfile = try await firestoreService.getUserProfile(userId: viewModel.userId)
-            }
         } catch {
             print("Failed to load monthly summary: \(error)")
         }
@@ -279,16 +259,13 @@ struct TimelineView: View {
 
                     ForEach(group.runs) { run in
                         let isOwn = run.userId == viewModel.userId
-                        if let profile = isOwn ? userProfile : run.toUserProfile() {
-                            NavigationLink {
-                                RunDetailView(record: run.toRunningRecord(), user: profile)
-                            } label: {
-                                TimelineRunRow(run: run)
-                            }
-                            .buttonStyle(.plain)
-                        } else {
+                        let profile = isOwn ? userProfile : run.toUserProfile()
+                        NavigationLink {
+                            RunDetailView(record: run.toRunningRecord(), user: profile)
+                        } label: {
                             TimelineRunRow(run: run)
                         }
+                        .buttonStyle(.plain)
                     }
                 }
 
@@ -365,69 +342,6 @@ private struct TimelineRunRow: View {
     }
 }
 
-// MARK: - Shine Logo (Core Animation)
-
-private struct ShineLogoView: UIViewRepresentable {
-    let size: CGFloat
-
-    func makeUIView(context: Context) -> UIView {
-        let container = UIView()
-
-        guard let logoImage = UIImage(named: "Logo") else { return container }
-
-        // ロゴ画像
-        let imageView = UIImageView(image: logoImage)
-        imageView.contentMode = .scaleAspectFit
-        imageView.frame = CGRect(x: 0, y: 0, width: size, height: size)
-        container.addSubview(imageView)
-
-        // シャインオーバーレイ（ロゴの形でマスク）
-        let shineContainer = UIView()
-        shineContainer.frame = CGRect(x: 0, y: 0, width: size, height: size)
-        shineContainer.clipsToBounds = true
-
-        // マスク用のロゴ画像
-        let maskImageView = UIImageView(image: logoImage)
-        maskImageView.contentMode = .scaleAspectFit
-        maskImageView.frame = shineContainer.bounds
-        shineContainer.mask = maskImageView
-
-        container.addSubview(shineContainer)
-
-        // シャインレイヤー
-        let shineLayer = CAGradientLayer()
-        shineLayer.colors = [
-            UIColor.white.withAlphaComponent(0).cgColor,
-            UIColor.white.withAlphaComponent(0.6).cgColor,
-            UIColor.white.withAlphaComponent(0).cgColor
-        ]
-        shineLayer.locations = [0, 0.5, 1]
-        shineLayer.startPoint = CGPoint(x: 0, y: 0.5)
-        shineLayer.endPoint = CGPoint(x: 1, y: 0.5)
-        shineLayer.frame = CGRect(x: -size, y: 0, width: size * 0.5, height: size)
-
-        shineContainer.layer.addSublayer(shineLayer)
-
-        // シャインアニメーション（速く通過、長い間隔）
-        let animation = CABasicAnimation(keyPath: "position.x")
-        animation.fromValue = -size * 0.25
-        animation.toValue = size * 1.25
-        animation.duration = 0.5
-        animation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-
-        let group = CAAnimationGroup()
-        group.animations = [animation]
-        group.duration = 2.5  // 0.5秒アニメ + 2秒待機
-        group.repeatCount = .infinity
-
-        shineLayer.add(group, forKey: "shine")
-
-        return container
-    }
-
-    func updateUIView(_ uiView: UIView, context: Context) {}
-}
-
 #Preview {
-    TimelineView(userId: "preview")
+    TimelineView(userId: "preview", userProfile: UserProfile(id: "preview", displayName: "Preview User", email: nil, iconName: "figure.run"))
 }
