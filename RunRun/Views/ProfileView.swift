@@ -193,33 +193,21 @@ struct ProfileView: View {
                     // 年のハイライト
                     if let best = bestYearByDistance {
                         NavigationLink {
-                            if isCurrentUser {
-                                YearDetailView(userId: user.id ?? "", initialYear: best.year)
-                            } else {
-                                YearDetailView(user: user, initialYear: best.year)
-                            }
+                            YearDetailView(user: user, initialYear: best.year)
                         } label: {
                             LabeledContent("Best Distance Year", value: "\(best.formattedYear) (\(best.formattedTotalDistance))")
                         }
                     }
                     if let best = bestYearByDuration {
                         NavigationLink {
-                            if isCurrentUser {
-                                YearDetailView(userId: user.id ?? "", initialYear: best.year)
-                            } else {
-                                YearDetailView(user: user, initialYear: best.year)
-                            }
+                            YearDetailView(user: user, initialYear: best.year)
                         } label: {
                             LabeledContent("Best Duration Year", value: "\(best.formattedYear) (\(best.formattedTotalDuration))")
                         }
                     }
                     if let best = mostRunsYear {
                         NavigationLink {
-                            if isCurrentUser {
-                                YearDetailView(userId: user.id ?? "", initialYear: best.year)
-                            } else {
-                                YearDetailView(user: user, initialYear: best.year)
-                            }
+                            YearDetailView(user: user, initialYear: best.year)
                         } label: {
                             LabeledContent("Most Runs Year", value: "\(best.formattedYear) (\(String(format: String(localized: "%d runs", comment: "Run count"), best.runCount)))")
                         }
@@ -227,33 +215,21 @@ struct ProfileView: View {
                     // 月のハイライト
                     if let best = bestMonthByDistance {
                         NavigationLink {
-                            if isCurrentUser {
-                                MonthDetailView(userId: user.id ?? "", year: best.year, month: best.month)
-                            } else {
-                                MonthDetailView(user: user, year: best.year, month: best.month)
-                            }
+                            MonthDetailView(user: user, year: best.year, month: best.month)
                         } label: {
                             LabeledContent("Best Distance Month", value: "\(best.formattedMonth) (\(best.formattedTotalDistance))")
                         }
                     }
                     if let best = bestMonthByDuration {
                         NavigationLink {
-                            if isCurrentUser {
-                                MonthDetailView(userId: user.id ?? "", year: best.year, month: best.month)
-                            } else {
-                                MonthDetailView(user: user, year: best.year, month: best.month)
-                            }
+                            MonthDetailView(user: user, year: best.year, month: best.month)
                         } label: {
                             LabeledContent("Best Duration Month", value: "\(best.formattedMonth) (\(best.formattedTotalDuration))")
                         }
                     }
                     if let best = mostRunsMonth {
                         NavigationLink {
-                            if isCurrentUser {
-                                MonthDetailView(userId: user.id ?? "", year: best.year, month: best.month)
-                            } else {
-                                MonthDetailView(user: user, year: best.year, month: best.month)
-                            }
+                            MonthDetailView(user: user, year: best.year, month: best.month)
                         } label: {
                             LabeledContent("Most Runs Month", value: "\(best.formattedMonth) (\(String(format: String(localized: "%d runs", comment: "Run count"), best.runCount)))")
                         }
@@ -261,36 +237,21 @@ struct ProfileView: View {
                     // 日のハイライト
                     if let best = bestDayByDistance {
                         NavigationLink {
-                            RunDetailView(
-                                record: best,
-                                isOwnRecord: isCurrentUser,
-                                userProfile: isCurrentUser ? nil : user,
-                                userId: user.id
-                            )
+                            RunDetailView(record: best, user: user)
                         } label: {
                             LabeledContent("Best Distance Day", value: "\(yearMonthDayString(from: best.date)) (\(best.formattedDistance))")
                         }
                     }
                     if let best = bestDayByDuration {
                         NavigationLink {
-                            RunDetailView(
-                                record: best,
-                                isOwnRecord: isCurrentUser,
-                                userProfile: isCurrentUser ? nil : user,
-                                userId: user.id
-                            )
+                            RunDetailView(record: best, user: user)
                         } label: {
                             LabeledContent("Best Duration Day", value: "\(yearMonthDayString(from: best.date)) (\(best.formattedDuration))")
                         }
                     }
                     if let fastest = fastestDay {
                         NavigationLink {
-                            RunDetailView(
-                                record: fastest,
-                                isOwnRecord: isCurrentUser,
-                                userProfile: isCurrentUser ? nil : user,
-                                userId: user.id
-                            )
+                            RunDetailView(record: fastest, user: user)
                         } label: {
                             LabeledContent("Fastest Day", value: "\(yearMonthDayString(from: fastest.date)) (\(fastest.formattedPace))")
                         }
@@ -301,7 +262,7 @@ struct ProfileView: View {
             // 週間推移
             Section("Weekly Trends") {
                 NavigationLink {
-                    WeeklyStatsView(userId: user.id, userProfile: isCurrentUser ? nil : user)
+                    WeeklyStatsView(user: user)
                 } label: {
                     Label("Last 12 Weeks", systemImage: "chart.line.uptrend.xyaxis")
                 }
@@ -312,11 +273,7 @@ struct ProfileView: View {
                 Section("Yearly Records") {
                     ForEach(yearlyStats.filter { $0.runCount > 0 }.sorted { $0.year > $1.year }) { stats in
                         NavigationLink {
-                            if isCurrentUser, let userId = user.id {
-                                YearDetailView(userId: userId, initialYear: stats.year)
-                            } else {
-                                YearDetailView(user: user, initialYear: stats.year)
-                            }
+                            YearDetailView(user: user, initialYear: stats.year)
                         } label: {
                             YearlyStatsRow(stats: stats)
                         }

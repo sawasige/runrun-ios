@@ -6,8 +6,8 @@ struct TimelineView: View {
     @State private var showNavBarLogo = false
     @State private var monthlyDistance: Double = 0
     @State private var monthlyRunCount: Int = 0
-    @State private var displayName: String = ""
     @State private var userProfile: UserProfile?
+    private let initialUserProfile: UserProfile?
 
     private let firestoreService = FirestoreService.shared
 
@@ -19,8 +19,9 @@ struct TimelineView: View {
         return formatter.string(from: now)
     }
 
-    init(userId: String) {
+    init(userId: String, userProfile: UserProfile? = nil) {
         _viewModel = StateObject(wrappedValue: TimelineViewModel(userId: userId))
+        self.initialUserProfile = userProfile
     }
 
     private var contentState: Int {
@@ -96,80 +97,22 @@ struct TimelineView: View {
             }
 
             // 今月のサマリ（タップで詳細へ）
-            NavigationLink {
-                MonthDetailView(
-                    userId: viewModel.userId,
-                    year: Calendar.current.component(.year, from: Date()),
-                    month: Calendar.current.component(.month, from: Date())
-                )
-            } label: {
-                HStack(spacing: 0) {
-                    // 左: プロフィール
-                    if let profile = userProfile {
-                        ProfileAvatarView(user: profile, size: 56)
-                    } else {
-                        ProfileAvatarView(iconName: "figure.run", avatarURL: nil, size: 56)
-                    }
-
-                    Divider()
-                        .frame(height: 56)
-                        .padding(.horizontal, 12)
-
-                    // 右: 今月の記録
-                    VStack(spacing: 6) {
-                        Text(currentMonthLabel)
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .foregroundStyle(.primary)
-
-                        HStack(spacing: 0) {
-                            // 距離
-                            VStack(spacing: 2) {
-                                Text("Distance")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                                Text(String(format: "%.1f", monthlyDistance))
-                                    .font(.title3)
-                                    .fontWeight(.bold)
-                                    .foregroundStyle(.primary)
-                                Text("km")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                            }
-                            .frame(maxWidth: .infinity)
-
-                            Divider()
-                                .frame(height: 40)
-
-                            // 回数
-                            VStack(spacing: 2) {
-                                Text("Runs")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                                Text("\(monthlyRunCount)")
-                                    .font(.title3)
-                                    .fontWeight(.bold)
-                                    .foregroundStyle(.primary)
-                                Text("runs")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                            }
-                            .frame(maxWidth: .infinity)
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                        .padding(.leading, 4)
+            if let profile = userProfile {
+                NavigationLink {
+                    MonthDetailView(
+                        user: profile,
+                        year: Calendar.current.component(.year, from: Date()),
+                        month: Calendar.current.component(.month, from: Date())
+                    )
+                } label: {
+                    monthSummaryContent
                 }
-                .padding(12)
-                .background(Color(.secondarySystemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("timeline_month_summary")
+            } else {
+                monthSummaryContent
+                    .accessibilityIdentifier("timeline_month_summary")
             }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("timeline_month_summary")
         }
         .padding(.horizontal)
         .padding(.vertical, 16)
@@ -186,14 +129,85 @@ struct TimelineView: View {
         )
     }
 
+    private var monthSummaryContent: some View {
+        HStack(spacing: 0) {
+            // 左: プロフィール
+            if let profile = userProfile {
+                ProfileAvatarView(user: profile, size: 56)
+            } else {
+                ProfileAvatarView(iconName: "figure.run", avatarURL: nil, size: 56)
+            }
+
+            Divider()
+                .frame(height: 56)
+                .padding(.horizontal, 12)
+
+            // 右: 今月の記録
+            VStack(spacing: 6) {
+                Text(currentMonthLabel)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.primary)
+
+                HStack(spacing: 0) {
+                    // 距離
+                    VStack(spacing: 2) {
+                        Text("Distance")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        Text(String(format: "%.1f", monthlyDistance))
+                            .font(.title3)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.primary)
+                        Text("km")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    Divider()
+                        .frame(height: 40)
+
+                    // 回数
+                    VStack(spacing: 2) {
+                        Text("Runs")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        Text("\(monthlyRunCount)")
+                            .font(.title3)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.primary)
+                        Text("runs")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+            .frame(maxWidth: .infinity)
+
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .padding(.leading, 4)
+        }
+        .padding(12)
+        .background(Color(.secondarySystemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
     private func loadMonthlySummary() async {
         // スクリーンショットモードではモックデータを使用
         if ScreenshotMode.isEnabled {
             monthlyDistance = 68.5
             monthlyRunCount = 12
             userProfile = MockDataProvider.currentUser
-            displayName = MockDataProvider.currentUser.displayName
             return
+        }
+
+        // ContentViewから渡されたプロフィールがあれば使用
+        if let profile = initialUserProfile {
+            userProfile = profile
         }
 
         let calendar = Calendar.current
@@ -202,20 +216,19 @@ struct TimelineView: View {
         let month = calendar.component(.month, from: now)
 
         do {
-            async let runsTask = firestoreService.getUserMonthlyRuns(
+            let runs = try await firestoreService.getUserMonthlyRuns(
                 userId: viewModel.userId,
                 year: year,
                 month: month
             )
-            async let profileTask = firestoreService.getUserProfile(userId: viewModel.userId)
-
-            let runs = try await runsTask
-            let profile = try await profileTask
 
             monthlyDistance = runs.reduce(0) { $0 + $1.distanceInKilometers }
             monthlyRunCount = runs.count
-            displayName = profile?.displayName ?? ""
-            userProfile = profile
+
+            // プロフィールがまだない場合は取得
+            if userProfile == nil {
+                userProfile = try await firestoreService.getUserProfile(userId: viewModel.userId)
+            }
         } catch {
             print("Failed to load monthly summary: \(error)")
         }
@@ -265,17 +278,17 @@ struct TimelineView: View {
                     sectionHeader(title: group.formattedDate)
 
                     ForEach(group.runs) { run in
-                        NavigationLink {
-                            let isOwn = run.userId == viewModel.userId
-                            RunDetailView(
-                                record: run.toRunningRecord(),
-                                isOwnRecord: isOwn,
-                                userProfile: isOwn ? nil : run.toUserProfile()
-                            )
-                        } label: {
+                        let isOwn = run.userId == viewModel.userId
+                        if let profile = isOwn ? userProfile : run.toUserProfile() {
+                            NavigationLink {
+                                RunDetailView(record: run.toRunningRecord(), user: profile)
+                            } label: {
+                                TimelineRunRow(run: run)
+                            }
+                            .buttonStyle(.plain)
+                        } else {
                             TimelineRunRow(run: run)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
 

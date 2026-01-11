@@ -1,10 +1,8 @@
 import SwiftUI
 import Charts
-import FirebaseAuth
 
 struct WeeklyStatsView: View {
-    let userId: String?
-    let userProfile: UserProfile?
+    let userProfile: UserProfile
 
     @State private var weeklyStats: [WeeklyRunningStats] = []
     @State private var isLoading = false
@@ -12,9 +10,8 @@ struct WeeklyStatsView: View {
 
     private let firestoreService = FirestoreService.shared
 
-    init(userId: String? = nil, userProfile: UserProfile? = nil) {
-        self.userId = userId
-        self.userProfile = userProfile
+    init(user: UserProfile) {
+        self.userProfile = user
     }
 
     var body: some View {
@@ -33,13 +30,11 @@ struct WeeklyStatsView: View {
         .navigationBarTitleDisplayMode(.large)
         .analyticsScreen("WeeklyStats")
         .toolbar {
-            if let user = userProfile {
-                ToolbarItem(placement: .primaryAction) {
-                    NavigationLink {
-                        ProfileView(user: user)
-                    } label: {
-                        ProfileAvatarView(user: user, size: 28)
-                    }
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    ProfileView(user: userProfile)
+                } label: {
+                    ProfileAvatarView(user: userProfile, size: 28)
                 }
             }
         }
@@ -111,8 +106,7 @@ struct WeeklyStatsView: View {
     }
 
     private func loadStats() async {
-        // 指定されたuserIdを使用、なければ現在のユーザー
-        guard let targetUserId = userId ?? Auth.auth().currentUser?.uid else { return }
+        guard let userId = userProfile.id else { return }
 
         // データがない場合のみローディング表示（チラつき防止）
         if weeklyStats.isEmpty {
@@ -121,7 +115,7 @@ struct WeeklyStatsView: View {
         error = nil
 
         do {
-            weeklyStats = try await firestoreService.getUserWeeklyStats(userId: targetUserId, weeks: 12)
+            weeklyStats = try await firestoreService.getUserWeeklyStats(userId: userId, weeks: 12)
         } catch {
             self.error = error
         }
@@ -159,6 +153,6 @@ private struct WeeklyStatRow: View {
 
 #Preview {
     NavigationStack {
-        WeeklyStatsView()
+        WeeklyStatsView(user: UserProfile(id: "preview", displayName: "Preview User", email: nil, iconName: "figure.run"))
     }
 }

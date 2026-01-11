@@ -7,6 +7,9 @@ struct ContentView: View {
     @StateObject private var syncService = SyncService()
     @ObservedObject private var badgeService = BadgeService.shared
     @State private var selectedTab: AppTab = .home
+    @State private var userProfile: UserProfile?
+
+    private let firestoreService = FirestoreService.shared
 
     var body: some View {
         Group {
@@ -18,6 +21,7 @@ struct ContentView: View {
                     mainTabView(userId: userId)
                         .task {
                             await syncService.syncHealthKitData(userId: userId)
+                            userProfile = try? await firestoreService.getUserProfile(userId: userId)
                         }
                 }
             } else {
@@ -29,13 +33,13 @@ struct ContentView: View {
     /// スクリーンショット用のタブビュー（認証不要）
     private var screenshotTabView: some View {
         TabView(selection: $selectedTab) {
-            TimelineView(userId: MockDataProvider.currentUserId)
+            TimelineView(userId: MockDataProvider.currentUserId, userProfile: MockDataProvider.currentUser)
                 .tabItem {
                     Label("Home", systemImage: "house")
                 }
                 .tag(AppTab.home)
 
-            YearDetailView(userId: MockDataProvider.currentUserId)
+            YearDetailView(user: MockDataProvider.currentUser)
                 .tabItem {
                     Label("Records", systemImage: "figure.run")
                 }
@@ -67,17 +71,23 @@ struct ContentView: View {
     private func mainTabView(userId: String) -> some View {
         ZStack(alignment: .top) {
             TabView(selection: $selectedTab) {
-                TimelineView(userId: userId)
+                TimelineView(userId: userId, userProfile: userProfile)
                     .tabItem {
                         Label("Home", systemImage: "house")
                     }
                     .tag(AppTab.home)
 
-                YearDetailView(userId: userId)
-                    .tabItem {
-                        Label("Records", systemImage: "figure.run")
+                Group {
+                    if let profile = userProfile {
+                        YearDetailView(user: profile)
+                    } else {
+                        ProgressView()
                     }
-                    .tag(AppTab.record)
+                }
+                .tabItem {
+                    Label("Records", systemImage: "figure.run")
+                }
+                .tag(AppTab.record)
 
                 LeaderboardView()
                     .tabItem {

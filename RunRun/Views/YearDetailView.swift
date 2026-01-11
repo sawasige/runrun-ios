@@ -1,15 +1,15 @@
 import SwiftUI
 import Charts
+import FirebaseAuth
 
 struct YearDetailView: View {
     @StateObject private var viewModel: YearDetailViewModel
     @EnvironmentObject private var syncService: SyncService
 
-    let userProfile: UserProfile?
+    let userProfile: UserProfile
 
-    init(userId: String, initialYear: Int? = nil) {
-        self.userProfile = nil
-        _viewModel = StateObject(wrappedValue: YearDetailViewModel(userId: userId, initialYear: initialYear))
+    private var isOwnRecord: Bool {
+        userProfile.id == Auth.auth().currentUser?.uid
     }
 
     init(user: UserProfile, initialYear: Int? = nil) {
@@ -89,7 +89,7 @@ struct YearDetailView: View {
 
     var body: some View {
         Group {
-            if userProfile == nil {
+            if isOwnRecord {
                 NavigationStack {
                     mainContent
                 }
@@ -120,13 +120,11 @@ struct YearDetailView: View {
         .navigationTitle(navigationTitle)
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
-            if let user = userProfile {
-                ToolbarItem(placement: .primaryAction) {
-                    NavigationLink {
-                        ProfileView(user: user)
-                    } label: {
-                        ProfileAvatarView(user: user, size: 28)
-                    }
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    ProfileView(user: userProfile)
+                } label: {
+                    ProfileAvatarView(user: userProfile, size: 28)
                 }
             }
         }
@@ -146,7 +144,7 @@ struct YearDetailView: View {
         }
         .onChange(of: syncService.lastSyncedAt) { _, _ in
             // 自分のデータの場合のみリロード
-            if userProfile == nil {
+            if isOwnRecord {
                 Task {
                     await viewModel.refresh()
                 }
@@ -203,7 +201,7 @@ struct YearDetailView: View {
                 }
                 LabeledContent("Time", value: viewModel.formattedTotalDuration)
                 LabeledContent("Count", value: String(format: String(localized: "%d runs", comment: "Run count"), viewModel.totalRunCount))
-                if userProfile == nil, let calories = viewModel.formattedTotalCalories {
+                if isOwnRecord, let calories = viewModel.formattedTotalCalories {
                     LabeledContent("Energy", value: calories)
                 }
             }
@@ -219,33 +217,21 @@ struct YearDetailView: View {
                     // 月のハイライト
                     if let best = viewModel.bestMonthByDistance {
                         NavigationLink {
-                            if let user = userProfile {
-                                MonthDetailView(user: user, year: best.year, month: best.month)
-                            } else {
-                                MonthDetailView(userId: viewModel.userId, year: best.year, month: best.month)
-                            }
+                            MonthDetailView(user: userProfile, year: best.year, month: best.month)
                         } label: {
                             LabeledContent("Best Distance Month", value: "\(best.shortMonthName) (\(best.formattedTotalDistance))")
                         }
                     }
                     if let best = viewModel.bestMonthByDuration {
                         NavigationLink {
-                            if let user = userProfile {
-                                MonthDetailView(user: user, year: best.year, month: best.month)
-                            } else {
-                                MonthDetailView(userId: viewModel.userId, year: best.year, month: best.month)
-                            }
+                            MonthDetailView(user: userProfile, year: best.year, month: best.month)
                         } label: {
                             LabeledContent("Best Duration Month", value: "\(best.shortMonthName) (\(best.formattedTotalDuration))")
                         }
                     }
                     if let best = viewModel.mostRunsMonth {
                         NavigationLink {
-                            if let user = userProfile {
-                                MonthDetailView(user: user, year: best.year, month: best.month)
-                            } else {
-                                MonthDetailView(userId: viewModel.userId, year: best.year, month: best.month)
-                            }
+                            MonthDetailView(user: userProfile, year: best.year, month: best.month)
                         } label: {
                             LabeledContent("Most Runs Month", value: "\(best.shortMonthName) (\(String(format: String(localized: "%d runs", comment: "Run count"), best.runCount)))")
                         }
@@ -253,36 +239,21 @@ struct YearDetailView: View {
                     // 日のハイライト
                     if let best = viewModel.bestDayByDistance {
                         NavigationLink {
-                            RunDetailView(
-                                record: best,
-                                isOwnRecord: userProfile == nil,
-                                userProfile: userProfile,
-                                userId: viewModel.userId
-                            )
+                            RunDetailView(record: best, user: userProfile)
                         } label: {
                             LabeledContent("Best Distance Day", value: "\(monthDayString(from: best.date)) (\(best.formattedDistance))")
                         }
                     }
                     if let best = viewModel.bestDayByDuration {
                         NavigationLink {
-                            RunDetailView(
-                                record: best,
-                                isOwnRecord: userProfile == nil,
-                                userProfile: userProfile,
-                                userId: viewModel.userId
-                            )
+                            RunDetailView(record: best, user: userProfile)
                         } label: {
                             LabeledContent("Best Duration Day", value: "\(monthDayString(from: best.date)) (\(best.formattedDuration))")
                         }
                     }
                     if let fastest = viewModel.fastestDay {
                         NavigationLink {
-                            RunDetailView(
-                                record: fastest,
-                                isOwnRecord: userProfile == nil,
-                                userProfile: userProfile,
-                                userId: viewModel.userId
-                            )
+                            RunDetailView(record: fastest, user: userProfile)
                         } label: {
                             LabeledContent("Fastest Day", value: "\(monthDayString(from: fastest.date)) (\(fastest.formattedPace))")
                         }
@@ -293,11 +264,7 @@ struct YearDetailView: View {
             Section("Monthly Records") {
                 ForEach(Array(filteredMonthlyStats.reversed().enumerated()), id: \.element.id) { index, stats in
                     NavigationLink {
-                        if let user = userProfile {
-                            MonthDetailView(user: user, year: stats.year, month: stats.month)
-                        } else {
-                            MonthDetailView(userId: viewModel.userId, year: stats.year, month: stats.month)
-                        }
+                        MonthDetailView(user: userProfile, year: stats.year, month: stats.month)
                     } label: {
                         MonthlyStatsRow(stats: stats)
                             .accessibilityIdentifier(index == 0 ? "first_month_row" : "month_row_\(index)")
@@ -358,5 +325,5 @@ struct MonthlyStatsRow: View {
 }
 
 #Preview {
-    YearDetailView(userId: "preview")
+    YearDetailView(user: UserProfile(id: "preview", displayName: "Preview User", email: nil, iconName: "figure.run"))
 }
