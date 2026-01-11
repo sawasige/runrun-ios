@@ -2,7 +2,6 @@ import SwiftUI
 import MapKit
 import CoreLocation
 import HealthKit
-import PhotosUI
 import Charts
 import ImageIO
 import FirebaseAuth
@@ -36,10 +35,7 @@ struct RunDetailView: View {
     @State private var isLoadingRoute = false
     @State private var mapCameraPosition: MapCameraPosition = .automatic
     @State private var showFullScreenMap = false
-    @State private var showPhotoPicker = false
-    @State private var selectedPhotoItem: PhotosPickerItem?
-    @State private var showExportPreview = false
-    @State private var exportImageData: Data?
+    @State private var showShareSettings = false
 
     private let healthKitService = HealthKitService()
 
@@ -306,7 +302,7 @@ struct RunDetailView: View {
                 HStack(spacing: 16) {
                     if isOwnRecord {
                         Button {
-                            showPhotoPicker = true
+                            showShareSettings = true
                         } label: {
                             Image(systemName: "square.and.arrow.up")
                         }
@@ -329,16 +325,8 @@ struct RunDetailView: View {
                 kilometerPoints: calculateKilometerPoints()
             )
         }
-        .photosPicker(
-            isPresented: $showPhotoPicker,
-            selection: $selectedPhotoItem,
-            matching: .images,
-            photoLibrary: .shared()
-        )
-        .onChange(of: selectedPhotoItem) { oldValue, newValue in
-            Task {
-                await loadSelectedPhoto()
-            }
+        .sheet(isPresented: $showShareSettings) {
+            RunShareSettingsView(record: record, isPresented: $showShareSettings)
         }
         .task {
             AnalyticsService.logEvent("view_run_detail", parameters: [
@@ -347,32 +335,6 @@ struct RunDetailView: View {
             await loadRouteData()
             await loadAdjacentRecords()
         }
-        .fullScreenCover(isPresented: $showExportPreview) {
-            if let imageData = exportImageData {
-                RunExportPreviewView(
-                    imageData: imageData,
-                    record: record
-                )
-            }
-        }
-    }
-
-    private func loadSelectedPhoto() async {
-        guard let item = selectedPhotoItem else { return }
-
-        do {
-            if let transferable = try await item.loadTransferable(type: TransferableImage.self) {
-                await MainActor.run {
-                    exportImageData = transferable.data
-                    showExportPreview = true
-                }
-            }
-        } catch {
-            print("Failed to load image: \(error)")
-        }
-
-        // 選択をリセット（次回選択可能にする）
-        selectedPhotoItem = nil
     }
 
     /// ペースのパーセンタイル（10%〜90%）
@@ -574,127 +536,6 @@ struct RunDetailView: View {
     }
 }
 
-// MARK: - Run Export Preview View
-
-import Photos
-
-struct RunExportPreviewView: View {
-    let imageData: Data
-    let record: RunningRecord
-
-    @Environment(\.dismiss) private var dismiss
-    @State private var composedHEIFData: Data?
-    @State private var isProcessing = false
-    @State private var isSaving = false
-    @State private var showSaveSuccess = false
-    @State private var saveError: String?
-
-    var body: some View {
-        NavigationStack {
-            ZStack {
-                Color.black.ignoresSafeArea()
-
-                if let data = composedHEIFData {
-                    HDRImageView(imageData: data)
-                } else if isProcessing {
-                    ProgressView()
-                        .tint(.white)
-                }
-            }
-            .navigationTitle("Preview")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarBackground(Color.black, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        Task {
-                            await saveToPhotos()
-                        }
-                    } label: {
-                        if isSaving {
-                            ProgressView()
-                                .tint(.white)
-                        } else {
-                            Image(systemName: "square.and.arrow.down")
-                        }
-                    }
-                    .disabled(composedHEIFData == nil || isSaving)
-                }
-            }
-            .task {
-                await composeImage()
-            }
-            .alert("Saved", isPresented: $showSaveSuccess) {
-                Button("OK") {
-                    dismiss()
-                }
-            } message: {
-                Text("Saved to Photos")
-            }
-            .alert("Error", isPresented: .init(
-                get: { saveError != nil },
-                set: { if !$0 { saveError = nil } }
-            )) {
-                Button("OK") {}
-            } message: {
-                Text(saveError ?? "")
-            }
-        }
-    }
-
-    private func composeImage() async {
-        isProcessing = true
-
-        let data = imageData
-        let rec = record
-
-        let result = await Task.detached(priority: .userInitiated) {
-            await ImageComposer.composeAsHEIF(imageData: data, record: rec)
-        }.value
-
-        await MainActor.run {
-            composedHEIFData = result
-            isProcessing = false
-        }
-    }
-
-    private func saveToPhotos() async {
-        guard let heifData = composedHEIFData else { return }
-
-        isSaving = true
-        defer { isSaving = false }
-
-        do {
-            // 写真ライブラリへのアクセス許可を確認
-            let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
-            guard status == .authorized || status == .limited else {
-                saveError = String(localized: "Photo access not authorized")
-                return
-            }
-
-            // HEIFデータを直接写真ライブラリに保存
-            try await PHPhotoLibrary.shared().performChanges {
-                let options = PHAssetResourceCreationOptions()
-                options.originalFilename = "RunRun_\(Int(Date().timeIntervalSince1970)).heic"
-
-                let request = PHAssetCreationRequest.forAsset()
-                request.addResource(with: .photo, data: heifData, options: options)
-            }
-
-            showSaveSuccess = true
-        } catch {
-            saveError = error.localizedDescription
-        }
-    }
-}
-
 // MARK: - Image Composer (WWDC 2024 Strategy B - HDR対応)
 
 import CoreImage
@@ -704,7 +545,7 @@ enum ImageComposer {
     /// - SDRとHDRの両方に同じテキストを描画
     /// - 両者の対応関係を維持してGain Mapを再計算
     /// - PHPhotoLibraryに直接渡すためにDataを返す
-    static func composeAsHEIF(imageData: Data, record: RunningRecord) async -> Data? {
+    static func composeAsHEIF(imageData: Data, record: RunningRecord, options: ExportOptions = ExportOptions()) async -> Data? {
         // 1. SDR画像を読み込み（向き自動適用）
         guard let sdrImage = CIImage(data: imageData, options: [
             .applyOrientationProperty: true
@@ -713,7 +554,7 @@ enum ImageComposer {
         }
 
         // 2. テキストオーバーレイ画像を作成（一度だけ）
-        let textOverlay = createTextOverlay(size: sdrImage.extent.size, record: record)
+        let textOverlay = createTextOverlay(size: sdrImage.extent.size, record: record, options: options)
 
         // 3. SDRにテキストを合成
         let sdrWithText: CIImage
@@ -743,7 +584,7 @@ enum ImageComposer {
     }
 
     /// テキストオーバーレイ画像を作成
-    private static func createTextOverlay(size: CGSize, record: RunningRecord) -> CIImage? {
+    private static func createTextOverlay(size: CGSize, record: RunningRecord, options: ExportOptions) -> CIImage? {
         let format = UIGraphicsImageRendererFormat()
         format.preferredRange = .extended
         format.scale = 1.0
@@ -751,7 +592,7 @@ enum ImageComposer {
 
         let renderer = UIGraphicsImageRenderer(size: size, format: format)
         let textUIImage = renderer.image { _ in
-            drawTextOverlay(width: size.width, height: size.height, record: record)
+            drawTextOverlay(width: size.width, height: size.height, record: record, options: options)
         }
 
         return CIImage(image: textUIImage)
@@ -814,7 +655,7 @@ enum ImageComposer {
     }
 
     /// テキストオーバーレイを描画
-    private static func drawTextOverlay(width: CGFloat, height: CGFloat, record: RunningRecord) {
+    private static func drawTextOverlay(width: CGFloat, height: CGFloat, record: RunningRecord, options: ExportOptions) {
         let overlayHeight = height / 3.0
         let baseFontSize = overlayHeight / 10.0
         let lineHeight = baseFontSize * 1.4
@@ -827,24 +668,40 @@ enum ImageComposer {
 
         var lines: [(String, UIFont)] = []
 
-        if let cal = record.formattedCalories {
+        if options.showCalories, let cal = record.formattedCalories {
             lines.append((cal, valueFont))
         }
-        if let steps = record.formattedStepCount {
+        if options.showSteps, let steps = record.formattedStepCount {
             lines.append((steps, valueFont))
         }
-        if let hr = record.formattedAverageHeartRate {
+        if options.showHeartRate, let hr = record.formattedAverageHeartRate {
             lines.append((hr, valueFont))
         }
-        lines.append((record.formattedPace, valueFont))
-        lines.append((record.formattedDuration, valueFont))
-        lines.append((record.formattedDistance, valueFont))
+        if options.showPace {
+            lines.append((record.formattedPace, valueFont))
+        }
+        if options.showDuration {
+            lines.append((record.formattedDuration, valueFont))
+        }
+        if options.showDistance {
+            lines.append((record.formattedDistance, valueFont))
+        }
 
-        let dateFormatter = DateFormatter()
-        dateFormatter.locale = Locale.current
-        dateFormatter.dateStyle = .short
-        dateFormatter.timeStyle = .short
-        lines.append((dateFormatter.string(from: record.date), dateFont))
+        if options.showDate || options.showStartTime {
+            let dateFormatter = DateFormatter()
+            dateFormatter.locale = Locale.current
+            if options.showDate && options.showStartTime {
+                dateFormatter.dateStyle = .short
+                dateFormatter.timeStyle = .short
+            } else if options.showDate {
+                dateFormatter.dateStyle = .short
+                dateFormatter.timeStyle = .none
+            } else {
+                dateFormatter.dateStyle = .none
+                dateFormatter.timeStyle = .short
+            }
+            lines.append((dateFormatter.string(from: record.date), dateFont))
+        }
 
         for (text, font) in lines {
             yOffset -= lineHeight
@@ -943,24 +800,6 @@ extension UIFont {
             return UIFont(descriptor: descriptor, size: size)
         }
         return systemFont
-    }
-}
-
-// MARK: - Transferable Image (HDR対応)
-
-struct TransferableImage: Transferable {
-    let data: Data
-
-    static var transferRepresentation: some TransferRepresentation {
-        DataRepresentation(importedContentType: .image) { data in
-            // 生データを保持（HDR情報を失わないため）
-            // OrientationはCIImageが.applyOrientationPropertyで自動処理
-            TransferableImage(data: data)
-        }
-    }
-
-    enum TransferError: Error {
-        case importFailed
     }
 }
 
