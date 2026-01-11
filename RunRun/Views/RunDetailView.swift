@@ -302,20 +302,20 @@ struct RunDetailView: View {
         .navigationBarTitleDisplayMode(.large)
         .analyticsScreen("RunDetail")
         .toolbar {
-            if isOwnRecord {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        showPhotoPicker = true
-                    } label: {
-                        Image(systemName: "square.and.arrow.up")
-                    }
-                }
-            }
             ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink {
-                    ProfileView(user: userProfile)
-                } label: {
-                    ProfileAvatarView(user: userProfile, size: 28)
+                HStack(spacing: 16) {
+                    if isOwnRecord {
+                        Button {
+                            showPhotoPicker = true
+                        } label: {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+                    }
+                    NavigationLink {
+                        ProfileView(user: userProfile)
+                    } label: {
+                        ProfileAvatarView(user: userProfile, size: 28)
+                    }
                 }
             }
         }
