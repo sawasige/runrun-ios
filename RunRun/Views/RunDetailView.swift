@@ -16,7 +16,10 @@ struct RunDetailView: View {
     private let firestoreService = FirestoreService.shared
 
     private var isOwnRecord: Bool {
-        userProfile.id == Auth.auth().currentUser?.uid
+        if ScreenshotMode.isEnabled {
+            return userProfile.id == MockDataProvider.currentUserId
+        }
+        return userProfile.id == Auth.auth().currentUser?.uid
     }
 
     private var userId: String {
