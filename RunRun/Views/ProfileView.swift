@@ -13,6 +13,7 @@ struct ProfileView: View {
     @State private var lastRequestDate: Date?
     @State private var showingProfileEdit = false
     @State private var currentProfile: UserProfile?
+    @State private var showShareSettings = false
 
     // 統計データ
     @State private var yearlyStats: [YearlyStats] = []
@@ -292,10 +293,17 @@ struct ProfileView: View {
         .toolbar {
             if isCurrentUser {
                 ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        showingProfileEdit = true
-                    } label: {
-                        Text("Edit", comment: "Edit profile button")
+                    HStack(spacing: 16) {
+                        Button {
+                            showShareSettings = true
+                        } label: {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+                        Button {
+                            showingProfileEdit = true
+                        } label: {
+                            Text("Edit", comment: "Edit profile button")
+                        }
                     }
                 }
             }
@@ -311,6 +319,22 @@ struct ProfileView: View {
                     currentAvatarURL: displayedProfile.avatarURL
                 )
             }
+        }
+        .sheet(isPresented: $showShareSettings) {
+            ProfileShareSettingsView(
+                shareData: ProfileShareData(
+                    displayName: displayedProfile.displayName,
+                    totalDistance: String(format: "%.1f km", totalDistance),
+                    runCount: totalRuns,
+                    totalDuration: formattedTotalDuration,
+                    averagePace: formattedAveragePace,
+                    averageDistance: formattedAverageDistance,
+                    averageDuration: formattedAverageDuration,
+                    totalCalories: formattedTotalCalories
+                ),
+                isOwnData: isCurrentUser,
+                isPresented: $showShareSettings
+            )
         }
         .task {
             await loadData()

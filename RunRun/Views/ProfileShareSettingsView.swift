@@ -2,66 +2,68 @@ import SwiftUI
 import PhotosUI
 import Photos
 
-/// 共有画像に出力するデータの選択状態
-struct ExportOptions: Equatable {
-    var showDate = true
-    var showStartTime = true
+/// プロフィール統計の共有画像に出力するデータの選択状態
+struct ProfileExportOptions: Equatable {
     var showDistance = true
     var showDuration = true
-    var showPace = true
-    var showHeartRate = true
-    var showSteps = true
+    var showRunCount = true
     var showCalories = true
+    var showPace = true
+    var showAvgDistance = true
+    var showAvgDuration = true
 }
 
-struct RunShareSettingsView: View {
-    let record: RunningRecord
+/// プロフィール統計の共有データ
+struct ProfileShareData {
+    let displayName: String
+    let totalDistance: String
+    let runCount: Int
+    let totalDuration: String
+    let averagePace: String
+    let averageDistance: String
+    let averageDuration: String
+    let totalCalories: String?
+}
+
+struct ProfileShareSettingsView: View {
+    let shareData: ProfileShareData
+    let isOwnData: Bool
     @Binding var isPresented: Bool
 
-    // 写真選択
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var photoData: Data?
-
-    // データ選択（保存される）
-    @AppStorage("runShare.showDate") private var showDate = true
-    @AppStorage("runShare.showStartTime") private var showStartTime = true
-    @AppStorage("runShare.showDistance") private var showDistance = true
-    @AppStorage("runShare.showDuration") private var showDuration = true
-    @AppStorage("runShare.showPace") private var showPace = true
-    @AppStorage("runShare.showHeartRate") private var showHeartRate = true
-    @AppStorage("runShare.showSteps") private var showSteps = true
-    @AppStorage("runShare.showCalories") private var showCalories = true
-
-    private var options: ExportOptions {
-        ExportOptions(
-            showDate: showDate,
-            showStartTime: showStartTime,
-            showDistance: showDistance,
-            showDuration: showDuration,
-            showPace: showPace,
-            showHeartRate: showHeartRate,
-            showSteps: showSteps,
-            showCalories: showCalories
-        )
-    }
-
-    // プレビュー・保存
     @State private var previewImageData: Data?
     @State private var isSaving = false
     @State private var showSaveSuccess = false
     @State private var showSaveError = false
 
+    // データ選択（保存される）
+    @AppStorage("profileShare.showDistance") private var showDistance = true
+    @AppStorage("profileShare.showDuration") private var showDuration = true
+    @AppStorage("profileShare.showRunCount") private var showRunCount = true
+    @AppStorage("profileShare.showCalories") private var showCalories = true
+    @AppStorage("profileShare.showPace") private var showPace = true
+    @AppStorage("profileShare.showAvgDistance") private var showAvgDistance = true
+    @AppStorage("profileShare.showAvgDuration") private var showAvgDuration = true
+
+    private var options: ProfileExportOptions {
+        ProfileExportOptions(
+            showDistance: showDistance,
+            showDuration: showDuration,
+            showRunCount: showRunCount,
+            showCalories: showCalories,
+            showPace: showPace,
+            showAvgDistance: showAvgDistance,
+            showAvgDuration: showAvgDuration
+        )
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
-                    // プレビュー
                     previewSection
-
-                    // 写真選択ボタン
                     photoPickerButton
-
-                    // データ選択
                     dataOptionsSection
                 }
                 .padding()
@@ -76,9 +78,7 @@ struct RunShareSettingsView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button {
-                        Task {
-                            await saveToPhotos()
-                        }
+                        Task { await saveToPhotos() }
                     } label: {
                         if isSaving {
                             ProgressView()
@@ -90,9 +90,7 @@ struct RunShareSettingsView: View {
                 }
             }
             .onChange(of: selectedPhotoItem) { _, newItem in
-                Task {
-                    await loadSelectedPhoto(from: newItem)
-                }
+                Task { await loadSelectedPhoto(from: newItem) }
             }
             .onChange(of: options) { _, _ in
                 Task { await updatePreview() }
@@ -107,11 +105,9 @@ struct RunShareSettingsView: View {
             } message: {
                 Text("Please allow photo library access in Settings.")
             }
-            .analyticsScreen("ShareSettings")
+            .analyticsScreen("ProfileShareSettings")
         }
     }
-
-    // MARK: - Preview Section
 
     private var previewSection: some View {
         Group {
@@ -137,8 +133,6 @@ struct RunShareSettingsView: View {
         }
     }
 
-    // MARK: - Photo Picker Button
-
     private var photoPickerButton: some View {
         PhotosPicker(
             selection: $selectedPhotoItem,
@@ -151,36 +145,27 @@ struct RunShareSettingsView: View {
         .buttonStyle(.bordered)
     }
 
-    // MARK: - Data Options Section
-
     private var dataOptionsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Data to Export")
                 .font(.headline)
 
             VStack(spacing: 0) {
-                optionRow(title: String(localized: "Run Date"), isOn: $showDate)
+                optionRow(title: String(localized: "Total Distance"), isOn: $showDistance)
                 Divider()
-                optionRow(title: String(localized: "Start Time"), isOn: $showStartTime)
+                optionRow(title: String(localized: "Total Time"), isOn: $showDuration)
                 Divider()
-                optionRow(title: String(localized: "Distance"), isOn: $showDistance)
-                Divider()
-                optionRow(title: String(localized: "Time"), isOn: $showDuration)
-                Divider()
-                optionRow(title: String(localized: "Pace"), isOn: $showPace)
-
-                if record.averageHeartRate != nil {
+                optionRow(title: String(localized: "Total Runs"), isOn: $showRunCount)
+                if isOwnData && shareData.totalCalories != nil {
                     Divider()
-                    optionRow(title: String(localized: "Avg Heart Rate"), isOn: $showHeartRate)
+                    optionRow(title: String(localized: "Total Energy"), isOn: $showCalories)
                 }
-                if record.stepCount != nil {
-                    Divider()
-                    optionRow(title: String(localized: "Steps"), isOn: $showSteps)
-                }
-                if record.caloriesBurned != nil {
-                    Divider()
-                    optionRow(title: String(localized: "Calories"), isOn: $showCalories)
-                }
+                Divider()
+                optionRow(title: String(localized: "Avg Pace"), isOn: $showPace)
+                Divider()
+                optionRow(title: String(localized: "Avg Distance"), isOn: $showAvgDistance)
+                Divider()
+                optionRow(title: String(localized: "Avg Time"), isOn: $showAvgDuration)
             }
             .background(Color(.secondarySystemBackground))
             .clipShape(RoundedRectangle(cornerRadius: 10))
@@ -193,11 +178,8 @@ struct RunShareSettingsView: View {
             .padding(.vertical, 12)
     }
 
-    // MARK: - Actions
-
     private func loadSelectedPhoto(from item: PhotosPickerItem?) async {
         guard let item = item else { return }
-
         do {
             if let data = try await item.loadTransferable(type: Data.self) {
                 photoData = data
@@ -213,17 +195,15 @@ struct RunShareSettingsView: View {
             previewImageData = nil
             return
         }
-
-        previewImageData = await ImageComposer.composeAsHEIF(
+        previewImageData = await ImageComposer.composeProfileStats(
             imageData: data,
-            record: record,
+            shareData: shareData,
             options: options
         )
     }
 
     private func saveToPhotos() async {
         guard let data = previewImageData else { return }
-
         isSaving = true
         defer { isSaving = false }
 
@@ -233,15 +213,14 @@ struct RunShareSettingsView: View {
                 request.addResource(with: .photo, data: data, options: nil)
             }
 
-            AnalyticsService.logEvent("share_image_saved", parameters: [
-                "show_date": options.showDate,
-                "show_start_time": options.showStartTime,
+            AnalyticsService.logEvent("profile_share_image_saved", parameters: [
                 "show_distance": options.showDistance,
                 "show_duration": options.showDuration,
+                "show_run_count": options.showRunCount,
+                "show_calories": options.showCalories,
                 "show_pace": options.showPace,
-                "show_heart_rate": options.showHeartRate,
-                "show_steps": options.showSteps,
-                "show_calories": options.showCalories
+                "show_avg_distance": options.showAvgDistance,
+                "show_avg_duration": options.showAvgDuration
             ])
 
             showSaveSuccess = true
@@ -250,19 +229,4 @@ struct RunShareSettingsView: View {
             showSaveError = true
         }
     }
-}
-
-#Preview {
-    RunShareSettingsView(
-        record: RunningRecord(
-            id: UUID(),
-            date: Date(),
-            distanceInMeters: 5230,
-            durationInSeconds: 1845,
-            caloriesBurned: 320,
-            averageHeartRate: 155,
-            stepCount: 5160
-        ),
-        isPresented: .constant(true)
-    )
 }

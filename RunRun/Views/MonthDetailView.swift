@@ -10,6 +10,7 @@ struct MonthDetailView: View {
     @State private var currentYear: Int
     @State private var currentMonth: Int
     @State private var hasLoadedOnce = false
+    @State private var showShareSettings = false
 
     private var isOwnRecord: Bool {
         userProfile.id == Auth.auth().currentUser?.uid
@@ -107,12 +108,37 @@ struct MonthDetailView: View {
         .analyticsScreen("MonthDetail")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink {
-                    ProfileView(user: userProfile)
-                } label: {
-                    ProfileAvatarView(user: userProfile, size: 28)
+                HStack(spacing: 16) {
+                    if isOwnRecord {
+                        Button {
+                            showShareSettings = true
+                        } label: {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+                    }
+                    NavigationLink {
+                        ProfileView(user: userProfile)
+                    } label: {
+                        ProfileAvatarView(user: userProfile, size: 28)
+                    }
                 }
             }
+        }
+        .sheet(isPresented: $showShareSettings) {
+            MonthShareSettingsView(
+                shareData: MonthlyShareData(
+                    period: viewModel.title,
+                    totalDistance: viewModel.formattedTotalDistance,
+                    runCount: viewModel.runCount,
+                    totalDuration: viewModel.formattedTotalDuration,
+                    averagePace: viewModel.formattedAveragePace,
+                    averageDistance: viewModel.formattedAverageDistance,
+                    averageDuration: viewModel.formattedAverageDuration,
+                    totalCalories: viewModel.formattedTotalCalories
+                ),
+                isOwnData: isOwnRecord,
+                isPresented: $showShareSettings
+            )
         }
         .task {
             await viewModel.onAppear()
