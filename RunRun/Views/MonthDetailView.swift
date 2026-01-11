@@ -13,7 +13,10 @@ struct MonthDetailView: View {
     @State private var showShareSettings = false
 
     private var isOwnRecord: Bool {
-        userProfile.id == Auth.auth().currentUser?.uid
+        if ScreenshotMode.isEnabled {
+            return userProfile.id == MockDataProvider.currentUserId
+        }
+        return userProfile.id == Auth.auth().currentUser?.uid
     }
 
     init(user: UserProfile, year: Int, month: Int) {
