@@ -199,7 +199,7 @@ struct LeaderboardRow: View {
             Spacer()
 
             VStack(alignment: .trailing) {
-                Text(String(format: "%.1f km", user.totalDistanceKm))
+                Text(UnitFormatter.formatDistance(user.totalDistanceKm, decimals: 1))
                     .font(.title3)
                     .fontWeight(.semibold)
             }

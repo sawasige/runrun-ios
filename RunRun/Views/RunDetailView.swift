@@ -217,7 +217,7 @@ struct RunDetailView: View {
                                     Text(split.formattedPace)
                                         .fontWeight(.medium)
                                         .monospacedDigit()
-                                    Text("/km")
+                                    Text(UnitFormatter.paceUnit)
                                         .foregroundStyle(.secondary)
                                 }
 
@@ -393,7 +393,7 @@ struct RunDetailView: View {
 
                 // 1kmごとのマーカー
                 ForEach(calculateKilometerPoints()) { point in
-                    Annotation("\(point.kilometer)km", coordinate: point.coordinate) {
+                    Annotation("\(point.kilometer)\(UnitFormatter.distanceUnit)", coordinate: point.coordinate) {
                         ZStack {
                             Circle()
                                 .fill(.orange)

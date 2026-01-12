@@ -278,7 +278,7 @@ struct MonthDetailView: View {
                 AxisValueLabel(format: .dateTime.day())
             }
         }
-        .chartYAxisLabel("km")
+        .chartYAxisLabel(UnitFormatter.distanceUnit)
     }
 
     private var emptyView: some View {

@@ -38,19 +38,16 @@ struct Split: Identifiable {
 
     /// フォーマット済みペース（例: "5:30"）
     var formattedPace: String {
-        let pace = pacePerKm
-        let minutes = Int(pace) / 60
-        let seconds = Int(pace) % 60
-        return String(format: "%d:%02d", minutes, seconds)
+        UnitFormatter.formatPaceValue(secondsPerKm: pacePerKm)
     }
 
-    /// フォーマット済みキロ表示（例: "1 km" or "5 km (端数)"）
+    /// フォーマット済みキロ表示（例: "1 km" or "1 mi"）
     var formattedKilometer: String {
+        let km = distanceMeters / 1000
         if distanceMeters >= 950 && distanceMeters <= 1050 {
-            return "\(kilometer) km"
+            return "\(kilometer) \(UnitFormatter.distanceUnit)"
         } else {
-            let km = distanceMeters / 1000
-            return String(format: "%.2f km", km)
+            return UnitFormatter.formatDistance(km)
         }
     }
 

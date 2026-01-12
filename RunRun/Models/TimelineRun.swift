@@ -20,7 +20,7 @@ struct TimelineRun: Identifiable {
     var stepCount: Int?
 
     var formattedDistance: String {
-        String(format: "%.2f km", distanceKm)
+        UnitFormatter.formatDistance(distanceKm)
     }
 
     var formattedDuration: String {
@@ -37,10 +37,8 @@ struct TimelineRun: Identifiable {
 
     var formattedPace: String {
         guard distanceKm > 0 else { return "--:--" }
-        let pace = durationSeconds / distanceKm
-        let minutes = Int(pace) / 60
-        let seconds = Int(pace) % 60
-        return String(format: "%d:%02d /km", minutes, seconds)
+        let pacePerKm = durationSeconds / distanceKm
+        return UnitFormatter.formatPace(secondsPerKm: pacePerKm)
     }
 
     var formattedTime: String {

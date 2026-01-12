@@ -325,7 +325,7 @@ struct YearDetailView: View {
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 5]))
             }
         }
-        .chartYAxisLabel("km")
+        .chartYAxisLabel(UnitFormatter.distanceUnit)
     }
 }
 

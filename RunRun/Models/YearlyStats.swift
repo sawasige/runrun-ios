@@ -12,7 +12,7 @@ struct YearlyStats: Identifiable, Equatable {
     }
 
     var formattedTotalDistance: String {
-        String(format: "%.1f km", totalDistanceInKilometers)
+        UnitFormatter.formatDistance(totalDistanceInKilometers, decimals: 1)
     }
 
     var formattedTotalDuration: String {

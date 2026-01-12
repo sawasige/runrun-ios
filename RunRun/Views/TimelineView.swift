@@ -161,11 +161,11 @@ struct TimelineView: View {
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                     HStack(alignment: .firstTextBaseline, spacing: 2) {
-                        Text(String(format: "%.1f", monthlyDistance))
+                        Text(UnitFormatter.formatDistanceValue(monthlyDistance, decimals: 1))
                             .font(.title3)
                             .fontWeight(.bold)
                             .foregroundStyle(.primary)
-                        Text("km")
+                        Text(UnitFormatter.distanceUnit)
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
