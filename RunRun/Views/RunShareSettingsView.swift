@@ -51,6 +51,7 @@ struct RunShareSettingsView: View {
     @State private var isSharing = false
     @State private var showSaveSuccess = false
     @State private var showSaveError = false
+    @State private var showPermissionDenied = false
     @State private var shareItem: URL?
 
     var body: some View {
@@ -120,8 +121,14 @@ struct RunShareSettingsView: View {
             }
             .alert(String(localized: "Failed to Save"), isPresented: $showSaveError) {
                 Button("OK", role: .cancel) {}
+            }
+            .alert(String(localized: "Photo Access Required"), isPresented: $showPermissionDenied) {
+                Button(String(localized: "Open Settings")) {
+                    PhotoLibraryService.openSettings()
+                }
+                Button(String(localized: "Cancel"), role: .cancel) {}
             } message: {
-                Text("Please allow photo library access in Settings.")
+                Text("Please allow photo library access to save images.")
             }
             .analyticsScreen("ShareSettings")
         }
@@ -239,6 +246,13 @@ struct RunShareSettingsView: View {
 
     private func saveToPhotos() async {
         guard let data = previewImageData else { return }
+
+        // 許可を確認
+        let authorized = await PhotoLibraryService.ensureAuthorization()
+        guard authorized else {
+            showPermissionDenied = true
+            return
+        }
 
         isSaving = true
         defer { isSaving = false }
