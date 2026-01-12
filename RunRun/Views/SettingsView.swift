@@ -213,7 +213,7 @@ struct SettingsView: View {
             } else {
                 // プロフィールが存在しない場合は作成
                 let displayName = authService.user?.displayName ?? String(localized: "Runner")
-                try await firestoreService.createUserProfile(
+                try await firestoreService.createUserProfileIfNeeded(
                     userId: userId,
                     displayName: displayName,
                     email: authService.user?.email
@@ -274,7 +274,7 @@ struct SettingsView: View {
             ]
 
             for (id, name, distance) in dummyUsers {
-                try await firestoreService.createUserProfile(
+                try await firestoreService.createNewUserProfile(
                     userId: id,
                     displayName: name,
                     email: "\(id)@example.com"

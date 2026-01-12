@@ -96,18 +96,33 @@ struct TimelineView: View {
                     .fontWeight(.bold)
             }
 
-            // 今月のサマリ（タップで詳細へ）
-            NavigationLink {
-                MonthDetailView(
-                    user: userProfile,
-                    year: Calendar.current.component(.year, from: Date()),
-                    month: Calendar.current.component(.month, from: Date())
-                )
-            } label: {
-                monthSummaryContent
+            // 今月のサマリ
+            HStack(spacing: 0) {
+                // 左: プロフィール（タップでプロフィール画面へ）
+                NavigationLink {
+                    ProfileView(user: userProfile)
+                } label: {
+                    ProfileAvatarView(user: userProfile, size: 56)
+                }
+                .buttonStyle(.plain)
+
+                Divider()
+                    .frame(height: 56)
+                    .padding(.horizontal, 12)
+
+                // 右: 今月の記録（タップで月詳細へ）
+                NavigationLink {
+                    MonthDetailView(
+                        user: userProfile,
+                        year: Calendar.current.component(.year, from: Date()),
+                        month: Calendar.current.component(.month, from: Date())
+                    )
+                } label: {
+                    monthSummaryStats
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("timeline_month_summary")
             }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("timeline_month_summary")
         }
         .padding(.horizontal)
         .padding(.vertical, 16)
@@ -124,16 +139,8 @@ struct TimelineView: View {
         )
     }
 
-    private var monthSummaryContent: some View {
-        HStack(spacing: 0) {
-            // 左: プロフィール
-            ProfileAvatarView(user: userProfile, size: 56)
-
-            Divider()
-                .frame(height: 56)
-                .padding(.horizontal, 12)
-
-            // 右: 今月の記録
+    private var monthSummaryStats: some View {
+        HStack {
             VStack(spacing: 6) {
                 Text(currentMonthLabel)
                     .font(.subheadline)
