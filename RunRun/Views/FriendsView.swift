@@ -120,6 +120,7 @@ struct FriendsView: View {
 
         do {
             try await firestoreService.rejectFriendRequest(requestId: requestId)
+            AnalyticsService.logEvent("reject_friend_request")
             await loadData()
         } catch {
             print("Reject error: \(error)")
@@ -135,6 +136,7 @@ struct FriendsView: View {
 
             Task {
                 try? await firestoreService.removeFriend(currentUserId: userId, friendUserId: friendId)
+                AnalyticsService.logEvent("remove_friend")
                 await loadData()
             }
         }

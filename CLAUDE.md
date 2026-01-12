@@ -128,6 +128,57 @@ firebase deploy --only firestore:rules
 firebase deploy --only firestore:indexes
 ```
 
+### Analytics
+
+`AnalyticsService`がFirebase Analyticsへのイベント送信を担当。
+
+#### スクリーン計測
+
+`.analyticsScreen("ScreenName")` ViewModifierで自動計測:
+
+| 画面 | スクリーン名 |
+|-----|-------------|
+| タイムライン | Timeline |
+| ランキング | Leaderboard |
+| フレンド | Friends |
+| 設定 | Settings |
+| プロフィール | Profile |
+| プロフィール編集 | ProfileEdit |
+| 年詳細 | YearDetail |
+| 月詳細 | MonthDetail |
+| ラン詳細 | RunDetail |
+| 週間推移 | WeeklyStats |
+| ユーザー検索 | UserSearch |
+| ログイン | Login |
+| ライセンス | Licenses |
+| 共有設定 | ShareSettings, MonthShareSettings, YearShareSettings, ProfileShareSettings |
+
+#### イベント計測
+
+| イベント名 | 説明 | パラメータ |
+|-----------|------|-----------|
+| `sign_up` | 新規登録 | method: "apple" |
+| `login` | ログイン | method: "apple" |
+| `logout` | ログアウト | - |
+| `delete_account` | 退会 | - |
+| `sync_completed` | 同期完了 | record_count |
+| `sync_error` | 同期エラー | error |
+| `update_profile` | プロフィール更新 | has_photo, icon |
+| `view_run_detail` | ラン詳細表示 | distance_km, duration_minutes |
+| `send_friend_request` | フレンド申請 | - |
+| `accept_friend_request` | フレンド承認 | - |
+| `reject_friend_request` | フレンド拒否 | - |
+| `remove_friend` | フレンド解除 | - |
+| `change_distance_unit` | 単位変更 | unit: "km" or "mi" |
+| `share_image_saved` | 画像保存（ラン） | show_* オプション |
+| `share_image_shared` | 画像共有（ラン） | show_* オプション |
+| `month_share_image_saved` | 画像保存（月） | show_* オプション |
+| `month_share_image_shared` | 画像共有（月） | show_* オプション |
+| `year_share_image_saved` | 画像保存（年） | show_* オプション |
+| `year_share_image_shared` | 画像共有（年） | show_* オプション |
+| `profile_share_image_saved` | 画像保存（プロフィール） | show_* オプション |
+| `profile_share_image_shared` | 画像共有（プロフィール） | show_* オプション |
+
 ## Xcode Project Setup
 
 新規Xcodeプロジェクト作成時:

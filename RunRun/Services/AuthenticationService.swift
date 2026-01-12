@@ -149,9 +149,15 @@ final class AuthenticationService: ObservableObject {
 
         // Analytics
         AnalyticsService.setUserId(userId)
-        AnalyticsService.logEvent(AnalyticsEventLogin, parameters: [
-            AnalyticsParameterMethod: "apple"
-        ])
+        if isNewUser {
+            AnalyticsService.logEvent(AnalyticsEventSignUp, parameters: [
+                AnalyticsParameterMethod: "apple"
+            ])
+        } else {
+            AnalyticsService.logEvent(AnalyticsEventLogin, parameters: [
+                AnalyticsParameterMethod: "apple"
+            ])
+        }
     }
 
     private func randomNonceString(length: Int = 32) -> String {

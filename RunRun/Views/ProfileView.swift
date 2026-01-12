@@ -594,6 +594,7 @@ struct ProfileView: View {
                 currentUserId: currentUserId,
                 friendUserId: friendUserId
             )
+            AnalyticsService.logEvent("remove_friend")
             isFriend = false
         } catch {
             print("Remove friend error: \(error)")
