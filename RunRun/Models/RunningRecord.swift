@@ -74,6 +74,16 @@ struct RunningRecord: Identifiable, Equatable, Hashable {
         distanceInMeters / 1000.0
     }
 
+    /// チャート用距離（ユーザー設定の単位で）
+    var chartDistance: Double {
+        switch DistanceUnit.current {
+        case .kilometers:
+            return distanceInKilometers
+        case .miles:
+            return distanceInKilometers * UnitFormatter.kmToMiles
+        }
+    }
+
     var formattedDistance: String {
         UnitFormatter.formatDistance(distanceInKilometers)
     }

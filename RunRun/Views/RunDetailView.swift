@@ -465,24 +465,26 @@ struct RunDetailView: View {
         }
     }
 
-    /// 1kmごとの座標を計算
+    /// 単位ごとの座標を計算（1km or 1mi）
     private func calculateKilometerPoints() -> [KilometerPoint] {
         guard routeLocations.count >= 2 else { return [] }
 
+        let interval: Double = DistanceUnit.current == .miles ? 1609.34 : 1000.0
+
         var points: [KilometerPoint] = []
-        var currentKm = 1
+        var currentSegment = 1
         var accumulatedDistance: Double = 0
 
         for i in 1..<routeLocations.count {
             let distance = routeLocations[i].distance(from: routeLocations[i - 1])
             accumulatedDistance += distance
 
-            if accumulatedDistance >= 1000 {
+            if accumulatedDistance >= interval {
                 points.append(KilometerPoint(
-                    kilometer: currentKm,
+                    kilometer: currentSegment,
                     coordinate: routeLocations[i].coordinate
                 ))
-                currentKm += 1
+                currentSegment += 1
                 accumulatedDistance = 0
             }
         }

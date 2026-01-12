@@ -41,13 +41,18 @@ struct Split: Identifiable {
         UnitFormatter.formatPaceValue(secondsPerKm: pacePerKm)
     }
 
-    /// フォーマット済みキロ表示（例: "1 km" or "1 mi"）
+    /// フォーマット済み区間表示（例: "1 km" or "1 mi"）
     var formattedKilometer: String {
-        let km = distanceMeters / 1000
-        if distanceMeters >= 950 && distanceMeters <= 1050 {
-            return "\(kilometer) \(UnitFormatter.distanceUnit)"
-        } else {
+        let unit = DistanceUnit.current
+        let expectedInterval: Double = unit == .miles ? 1609.34 : 1000.0
+        let tolerance: Double = unit == .miles ? 160.0 : 100.0
+
+        // 端数区間の場合は実距離を表示
+        if abs(distanceMeters - expectedInterval) > tolerance {
+            let km = distanceMeters / 1000
             return UnitFormatter.formatDistance(km)
+        } else {
+            return "\(kilometer) \(UnitFormatter.distanceUnit)"
         }
     }
 
