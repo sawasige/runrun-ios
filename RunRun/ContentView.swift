@@ -8,6 +8,7 @@ struct ContentView: View {
     @ObservedObject private var badgeService = BadgeService.shared
     @State private var selectedTab: AppTab = .home
     @State private var userProfile: UserProfile?
+    @State private var profileLoadError: Error?
 
     private let firestoreService = FirestoreService.shared
 
@@ -24,13 +25,12 @@ struct ContentView: View {
                                 .task {
                                     await syncService.syncHealthKitData(userId: userId)
                                 }
+                        } else if let error = profileLoadError {
+                            profileErrorView(error: error, userId: userId)
                         } else {
                             loadingView
                                 .task {
-                                    let profile = try? await firestoreService.getUserProfile(userId: userId)
-                                    withAnimation(.easeIn(duration: 0.3)) {
-                                        userProfile = profile
-                                    }
+                                    await loadProfile(userId: userId)
                                 }
                         }
                     }
@@ -82,6 +82,56 @@ struct ContentView: View {
     private var loadingView: some View {
         ProgressView()
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    /// プロファイル読み込みエラービュー
+    private func profileErrorView(error: Error, userId: String) -> some View {
+        VStack(spacing: 16) {
+            Spacer()
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 50))
+                .foregroundStyle(.orange)
+            Text("Failed to load profile")
+                .font(.headline)
+            Text(error.localizedDescription)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            Button("Retry") {
+                profileLoadError = nil
+                Task {
+                    await loadProfile(userId: userId)
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            Spacer()
+        }
+        .padding()
+    }
+
+    /// プロファイル読み込み
+    private func loadProfile(userId: String) async {
+        do {
+            let profile = try await firestoreService.getUserProfile(userId: userId)
+            if let profile = profile {
+                withAnimation(.easeIn(duration: 0.3)) {
+                    userProfile = profile
+                }
+            } else {
+                // プロファイルが存在しない場合は作成を試みる
+                try await firestoreService.createUserProfileIfNeeded(
+                    userId: userId,
+                    displayName: authService.user?.displayName ?? String(localized: "Runner"),
+                    email: authService.user?.email
+                )
+                let newProfile = try await firestoreService.getUserProfile(userId: userId)
+                withAnimation(.easeIn(duration: 0.3)) {
+                    userProfile = newProfile
+                }
+            }
+        } catch {
+            profileLoadError = error
+        }
     }
 
     /// 通常のタブビュー

@@ -778,6 +778,16 @@
         }
       }
     },
+    "Failed to load profile" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プロフィールの読み込みに失敗しました"
+          }
+        }
+      }
+    },
     "Fast" : {
       "localizations" : {
         "ja" : {

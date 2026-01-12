@@ -132,17 +132,20 @@ final class AuthenticationService: ObservableObject {
 
         let authResult = try await Auth.auth().signIn(with: credential)
 
-        // Create user profile if first time
+        // Create or update user profile
         let userId = authResult.user.uid
-        let existingProfile = try? await firestoreService.getUserProfile(userId: userId)
-        if existingProfile == nil {
+        let isNewUser = authResult.additionalUserInfo?.isNewUser ?? false
+
+        if isNewUser {
+            // 新規ユーザー: プロファイルを作成
             let displayName = appleIDCredential.fullName?.givenName ?? String(localized: "Runner")
-            try await firestoreService.createUserProfile(
+            try await firestoreService.createNewUserProfile(
                 userId: userId,
                 displayName: displayName,
                 email: authResult.user.email
             )
         }
+        // 既存ユーザー: 何もしない（既存データを保持）
 
         // Analytics
         AnalyticsService.setUserId(userId)
