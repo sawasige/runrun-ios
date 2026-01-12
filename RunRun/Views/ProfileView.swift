@@ -344,12 +344,12 @@ struct ProfileView: View {
         Chart(yearlyStats.suffix(12).sorted { $0.year < $1.year }) { stats in
             BarMark(
                 x: .value(String(localized: "Year"), stats.shortFormattedYear),
-                y: .value(String(localized: "Distance"), stats.totalDistanceInKilometers)
+                y: .value(String(localized: "Distance"), stats.chartDistance)
             )
             .foregroundStyle(Color.accentColor.gradient)
 
-            if let best = bestYearByDistance, stats.year == best.year, best.totalDistanceInKilometers > 0 {
-                RuleMark(y: .value(String(localized: "Best"), best.totalDistanceInKilometers))
+            if let best = bestYearByDistance, stats.year == best.year, best.chartDistance > 0 {
+                RuleMark(y: .value(String(localized: "Best"), best.chartDistance))
                     .foregroundStyle(.orange)
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 5]))
             }

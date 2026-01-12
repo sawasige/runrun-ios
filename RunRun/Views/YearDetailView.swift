@@ -315,12 +315,12 @@ struct YearDetailView: View {
         Chart(viewModel.monthlyStats) { stats in
             BarMark(
                 x: .value(String(localized: "Month"), stats.shortMonthName),
-                y: .value(String(localized: "Distance"), stats.totalDistanceInKilometers)
+                y: .value(String(localized: "Distance"), stats.chartDistance)
             )
             .foregroundStyle(Color.accentColor.gradient)
 
             if let best = viewModel.bestMonthByDistance, stats.month == best.month, best.totalDistanceInKilometers > 0 {
-                RuleMark(y: .value(String(localized: "Best"), best.totalDistanceInKilometers))
+                RuleMark(y: .value(String(localized: "Best"), best.chartDistance))
                     .foregroundStyle(.orange)
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 5]))
             }

@@ -261,12 +261,12 @@ struct MonthDetailView: View {
         return Chart(viewModel.records) { record in
             BarMark(
                 x: .value(String(localized: "Day"), record.date, unit: .day),
-                y: .value(String(localized: "Distance"), record.distanceInKilometers)
+                y: .value(String(localized: "Distance"), record.chartDistance)
             )
             .foregroundStyle(Color.accentColor.gradient)
 
             if let best = viewModel.bestDayByDistance, calendar.isDate(record.date, inSameDayAs: best.date), best.distanceInKilometers > 0 {
-                RuleMark(y: .value(String(localized: "Best"), best.distanceInKilometers))
+                RuleMark(y: .value(String(localized: "Best"), best.chartDistance))
                     .foregroundStyle(.orange)
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 5]))
             }

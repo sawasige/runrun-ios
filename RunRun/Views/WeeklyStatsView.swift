@@ -62,14 +62,14 @@ struct WeeklyStatsView: View {
         Chart(weeklyStats) { stat in
             LineMark(
                 x: .value("Week", stat.weekStartDate, unit: .weekOfYear),
-                y: .value("Distance", stat.totalDistanceInKilometers)
+                y: .value("Distance", stat.chartDistance)
             )
             .foregroundStyle(Color.accentColor)
             .symbol(.circle)
 
             AreaMark(
                 x: .value("Week", stat.weekStartDate, unit: .weekOfYear),
-                y: .value("Distance", stat.totalDistanceInKilometers)
+                y: .value("Distance", stat.chartDistance)
             )
             .foregroundStyle(Color.accentColor.opacity(0.1))
         }

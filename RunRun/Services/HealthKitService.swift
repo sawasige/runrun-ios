@@ -402,47 +402,53 @@ final class HealthKitService: Sendable {
         }
     }
 
-    /// GPSロケーションからスプリット（キロごとのペース）を計算
+    /// GPSロケーションからスプリット（単位ごとのペース）を計算
+    /// - キロメートル表示: 1km間隔
+    /// - マイル表示: 1マイル間隔
     func calculateSplits(from locations: [CLLocation]) -> [Split] {
         guard locations.count >= 2 else { return [] }
 
+        // 単位に応じてスプリット間隔を決定（1km or 1mi）
+        let splitInterval: Double = DistanceUnit.current == .miles ? 1609.34 : 1000.0
+        let minFraction: Double = DistanceUnit.current == .miles ? 160.0 : 100.0
+
         var splits: [Split] = []
-        var currentKm = 1
-        var kmStartIndex = 0
+        var currentSegment = 1
+        var segmentStartIndex = 0
         var accumulatedDistance: Double = 0
 
         for i in 1..<locations.count {
             let distance = locations[i].distance(from: locations[i - 1])
             accumulatedDistance += distance
 
-            // 1km到達
-            if accumulatedDistance >= 1000 {
-                let startTime = locations[kmStartIndex].timestamp
+            // スプリット間隔到達
+            if accumulatedDistance >= splitInterval {
+                let startTime = locations[segmentStartIndex].timestamp
                 let endTime = locations[i].timestamp
                 let duration = endTime.timeIntervalSince(startTime)
 
                 splits.append(Split(
-                    kilometer: currentKm,
+                    kilometer: currentSegment,
                     durationSeconds: duration,
                     distanceMeters: accumulatedDistance,
                     startTime: startTime,
                     endTime: endTime
                 ))
 
-                currentKm += 1
-                kmStartIndex = i
+                currentSegment += 1
+                segmentStartIndex = i
                 accumulatedDistance = 0
             }
         }
 
-        // 最後の端数キロを追加
-        if accumulatedDistance > 100 && kmStartIndex < locations.count - 1 {
-            let startTime = locations[kmStartIndex].timestamp
+        // 最後の端数を追加
+        if accumulatedDistance > minFraction && segmentStartIndex < locations.count - 1 {
+            let startTime = locations[segmentStartIndex].timestamp
             let endTime = locations[locations.count - 1].timestamp
             let duration = endTime.timeIntervalSince(startTime)
 
             splits.append(Split(
-                kilometer: currentKm,
+                kilometer: currentSegment,
                 durationSeconds: duration,
                 distanceMeters: accumulatedDistance,
                 startTime: startTime,

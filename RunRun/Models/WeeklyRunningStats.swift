@@ -25,6 +25,16 @@ struct WeeklyRunningStats: Identifiable {
         totalDistanceInMeters / 1000.0
     }
 
+    /// チャート用距離（ユーザー設定の単位で）
+    var chartDistance: Double {
+        switch DistanceUnit.current {
+        case .kilometers:
+            return totalDistanceInKilometers
+        case .miles:
+            return totalDistanceInKilometers * UnitFormatter.kmToMiles
+        }
+    }
+
     var formattedTotalDistance: String {
         UnitFormatter.formatDistance(totalDistanceInKilometers)
     }
