@@ -6,6 +6,7 @@ struct TimelineView: View {
     @State private var showNavBarLogo = false
     @State private var monthlyDistance: Double = 0
     @State private var monthlyRunCount: Int = 0
+    @State private var monthlyRecords: [RunningRecord] = []
 
     let userProfile: UserProfile
 
@@ -61,6 +62,14 @@ struct TimelineView: View {
                     .blur(radius: showNavBarLogo ? 0 : 8)
                     .offset(y: showNavBarLogo ? 0 : 16)
                 }
+
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        ProfileView(user: userProfile)
+                    } label: {
+                        ProfileAvatarView(user: userProfile, size: 28)
+                    }
+                }
             }
             .refreshable {
                 await viewModel.refresh()
@@ -96,33 +105,19 @@ struct TimelineView: View {
                     .fontWeight(.bold)
             }
 
-            // 今月のサマリ
-            HStack(spacing: 0) {
-                // 左: プロフィール（タップでプロフィール画面へ）
-                NavigationLink {
-                    ProfileView(user: userProfile)
-                } label: {
-                    ProfileAvatarView(user: userProfile, size: 56)
-                }
-                .buttonStyle(.plain)
-
-                Divider()
-                    .frame(height: 56)
-                    .padding(.horizontal, 12)
-
-                // 右: 今月の記録（タップで月詳細へ）
-                NavigationLink {
-                    MonthDetailView(
-                        user: userProfile,
-                        year: Calendar.current.component(.year, from: Date()),
-                        month: Calendar.current.component(.month, from: Date())
-                    )
-                } label: {
-                    monthSummaryStats
-                }
-                .buttonStyle(.plain)
-                .accessibilityIdentifier("timeline_month_summary")
+            // 今月のサマリ（タップで月詳細へ）
+            NavigationLink {
+                MonthDetailView(
+                    user: userProfile,
+                    year: Calendar.current.component(.year, from: Date()),
+                    month: Calendar.current.component(.month, from: Date())
+                )
+            } label: {
+                monthSummaryStats
             }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("timeline_month_summary")
+
         }
         .padding(.horizontal)
         .padding(.vertical, 16)
@@ -140,19 +135,32 @@ struct TimelineView: View {
     }
 
     private var monthSummaryStats: some View {
-        HStack {
-            VStack(spacing: 6) {
+        VStack(spacing: 8) {
+            // 上部: 月ラベルとシェブロン
+            HStack {
                 Text(currentMonthLabel)
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .foregroundStyle(.primary)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
 
-                HStack(spacing: 0) {
-                    // 距離
-                    VStack(spacing: 2) {
-                        Text("Distance")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+            // 中央: ミニカレンダー
+            MiniCalendarView(records: monthlyRecords)
+
+            Divider()
+
+            // 下部: 距離と回数
+            HStack(spacing: 0) {
+                // 距離
+                VStack(spacing: 2) {
+                    Text("Distance")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
                         Text(String(format: "%.1f", monthlyDistance))
                             .font(.title3)
                             .fontWeight(.bold)
@@ -161,16 +169,18 @@ struct TimelineView: View {
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
-                    .frame(maxWidth: .infinity)
+                }
+                .frame(maxWidth: .infinity)
 
-                    Divider()
-                        .frame(height: 40)
+                Divider()
+                    .frame(height: 30)
 
-                    // 回数
-                    VStack(spacing: 2) {
-                        Text("Runs")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+                // 回数
+                VStack(spacing: 2) {
+                    Text("Runs")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
                         Text("\(monthlyRunCount)")
                             .font(.title3)
                             .fontWeight(.bold)
@@ -179,15 +189,9 @@ struct TimelineView: View {
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
-                    .frame(maxWidth: .infinity)
                 }
+                .frame(maxWidth: .infinity)
             }
-            .frame(maxWidth: .infinity)
-
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
-                .padding(.leading, 4)
         }
         .padding(12)
         .background(Color(.secondarySystemBackground))
@@ -199,6 +203,7 @@ struct TimelineView: View {
         if ScreenshotMode.isEnabled {
             monthlyDistance = 68.5
             monthlyRunCount = 12
+            monthlyRecords = MockDataProvider.monthDetailRecords
             return
         }
 
@@ -216,6 +221,7 @@ struct TimelineView: View {
 
             monthlyDistance = runs.reduce(0) { $0 + $1.distanceInKilometers }
             monthlyRunCount = runs.count
+            monthlyRecords = runs
         } catch {
             print("Failed to load monthly summary: \(error)")
         }
@@ -346,6 +352,142 @@ private struct TimelineRunRow: View {
         .padding(.horizontal, 4)
         .background(Color(.systemBackground))
         .contentShape(Rectangle())
+    }
+}
+
+/// タイムライン用のミニカレンダー（今月のランを小さく表示）
+private struct MiniCalendarView: View {
+    let records: [RunningRecord]
+
+    @ScaledMetric(relativeTo: .caption) private var cellHeight: CGFloat = 20
+
+    private let calendar = Calendar.current
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 2), count: 7)
+
+    private var year: Int {
+        calendar.component(.year, from: Date())
+    }
+
+    private var month: Int {
+        calendar.component(.month, from: Date())
+    }
+
+    private var weekdaySymbols: [String] {
+        calendar.veryShortStandaloneWeekdaySymbols
+    }
+
+    private var firstDayOfMonth: Date {
+        calendar.date(from: DateComponents(year: year, month: month, day: 1))!
+    }
+
+    private var daysInMonth: Int {
+        calendar.range(of: .day, in: .month, for: firstDayOfMonth)!.count
+    }
+
+    private var firstWeekdayOffset: Int {
+        let weekday = calendar.component(.weekday, from: firstDayOfMonth)
+        // ロケールの週開始日を考慮してオフセットを計算
+        let offset = weekday - calendar.firstWeekday
+        return offset >= 0 ? offset : offset + 7
+    }
+
+    private var runDays: Set<Int> {
+        var days = Set<Int>()
+        for record in records {
+            let day = calendar.component(.day, from: record.date)
+            days.insert(day)
+        }
+        return days
+    }
+
+    private var today: Int? {
+        let now = Date()
+        let currentYear = calendar.component(.year, from: now)
+        let currentMonth = calendar.component(.month, from: now)
+        // 今月の場合のみ今日の日付を返す
+        guard year == currentYear && month == currentMonth else { return nil }
+        return calendar.component(.day, from: now)
+    }
+
+    var body: some View {
+        VStack(spacing: 4) {
+            // 曜日ヘッダー
+            LazyVGrid(columns: columns, spacing: 2) {
+                ForEach(0..<7, id: \.self) { index in
+                    Text(weekdaySymbols[index])
+                        .font(.caption2)
+                        .foregroundStyle(weekdayHeaderColor(index: index))
+                }
+            }
+
+            // 日付グリッド
+            LazyVGrid(columns: columns, spacing: 2) {
+                // 月初の空白
+                ForEach(0..<firstWeekdayOffset, id: \.self) { index in
+                    Color.clear
+                        .frame(height: cellHeight)
+                        .id("empty-\(index)")
+                }
+
+                // 日付
+                ForEach(Array(1...daysInMonth), id: \.self) { day in
+                    dayCell(day: day)
+                        .id("day-\(day)")
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func dayCell(day: Int) -> some View {
+        let hasRun = runDays.contains(day)
+        let isToday = day == today
+        let weekday = weekdayForDay(day)
+
+        Text("\(day)")
+            .font(.caption.weight(hasRun ? .bold : .regular))
+            .foregroundStyle(dayTextColor(weekday: weekday, hasRun: hasRun, isToday: isToday))
+            .frame(height: cellHeight)
+            .frame(maxWidth: .infinity)
+            .background {
+                if hasRun {
+                    Circle().fill(Color.accentColor)
+                } else if isToday {
+                    Circle().stroke(Color.accentColor, lineWidth: 1)
+                }
+            }
+    }
+
+    private func weekdayForDay(_ day: Int) -> Int {
+        let date = calendar.date(from: DateComponents(year: year, month: month, day: day))!
+        return calendar.component(.weekday, from: date) - 1 // 0=日, 6=土
+    }
+
+    private func weekdayHeaderColor(index: Int) -> Color {
+        // veryShortStandaloneWeekdaySymbolsはロケールの週開始日から始まる
+        // 日本では月曜始まり: [月,火,水,木,金,土,日]
+        // 米国では日曜始まり: [日,月,火,水,木,金,土]
+        let firstWeekdayIndex = calendar.firstWeekday - 1 // 0-indexed
+        let actualWeekday = (index + firstWeekdayIndex) % 7
+        switch actualWeekday {
+        case 0: return .red   // 日曜
+        case 6: return .blue  // 土曜
+        default: return .secondary
+        }
+    }
+
+    private func dayTextColor(weekday: Int, hasRun: Bool, isToday: Bool) -> Color {
+        if hasRun {
+            return .white
+        }
+        if isToday {
+            return .accentColor
+        }
+        switch weekday {
+        case 0: return .red   // 日曜
+        case 6: return .blue  // 土曜
+        default: return .primary
+        }
     }
 }
 
