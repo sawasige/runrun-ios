@@ -114,7 +114,7 @@ struct RunCalendarView: View {
                     .foregroundStyle(dayTextColor(weekday: weekday, hasRun: hasRun, isToday: isToday))
 
                 if hasRun {
-                    Text(String(format: "%.1f", totalDistance))
+                    Text(UnitFormatter.formatDistanceValue(totalDistance, decimals: 1))
                         .font(.caption2.weight(.medium))
                         .foregroundStyle(.white)
                         .lineLimit(1)

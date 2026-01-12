@@ -32,7 +32,7 @@ final class MonthDetailViewModel: ObservableObject {
     }
 
     var formattedTotalDistance: String {
-        String(format: "%.2f km", totalDistance)
+        UnitFormatter.formatDistance(totalDistance)
     }
 
     var totalCalories: Double {
@@ -67,10 +67,7 @@ final class MonthDetailViewModel: ObservableObject {
     }
 
     var formattedAveragePace: String {
-        guard let pace = averagePace else { return "--:--" }
-        let minutes = Int(pace) / 60
-        let seconds = Int(pace) % 60
-        return String(format: "%d:%02d /km", minutes, seconds)
+        UnitFormatter.formatPace(secondsPerKm: averagePace)
     }
 
     var averageDistancePerRun: Double {
@@ -79,7 +76,7 @@ final class MonthDetailViewModel: ObservableObject {
     }
 
     var formattedAverageDistance: String {
-        String(format: "%.2f km", averageDistancePerRun)
+        UnitFormatter.formatDistance(averageDistancePerRun)
     }
 
     var averageDurationPerRun: TimeInterval {

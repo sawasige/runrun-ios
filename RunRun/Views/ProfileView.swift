@@ -41,10 +41,7 @@ struct ProfileView: View {
     }
 
     private var formattedAveragePace: String {
-        guard let pace = averagePace else { return "--:--" }
-        let minutes = Int(pace) / 60
-        let seconds = Int(pace) % 60
-        return String(format: "%d:%02d /km", minutes, seconds)
+        UnitFormatter.formatPace(secondsPerKm: averagePace)
     }
 
     private var averageDistancePerRun: Double {
@@ -53,7 +50,7 @@ struct ProfileView: View {
     }
 
     private var formattedAverageDistance: String {
-        String(format: "%.2f km", averageDistancePerRun)
+        UnitFormatter.formatDistance(averageDistancePerRun)
     }
 
     private var averageDurationPerRun: TimeInterval {
@@ -170,7 +167,7 @@ struct ProfileView: View {
             // 合計
             Section("Totals") {
                 LabeledContent("Distance") {
-                    Text(String(format: "%.1f km", totalDistance))
+                    Text(UnitFormatter.formatDistance(totalDistance, decimals: 1))
                         .fontWeight(.bold)
                         .foregroundStyle(.primary)
                 }
@@ -324,7 +321,7 @@ struct ProfileView: View {
             ProfileShareSettingsView(
                 shareData: ProfileShareData(
                     displayName: displayedProfile.displayName,
-                    totalDistance: String(format: "%.1f km", totalDistance),
+                    totalDistance: UnitFormatter.formatDistance(totalDistance, decimals: 1),
                     runCount: totalRuns,
                     totalDuration: formattedTotalDuration,
                     averagePace: formattedAveragePace,
@@ -357,7 +354,7 @@ struct ProfileView: View {
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 5]))
             }
         }
-        .chartYAxisLabel("km")
+        .chartYAxisLabel(UnitFormatter.distanceUnit)
     }
 
     @ViewBuilder

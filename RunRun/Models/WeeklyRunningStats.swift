@@ -26,7 +26,7 @@ struct WeeklyRunningStats: Identifiable {
     }
 
     var formattedTotalDistance: String {
-        String(format: "%.2f km", totalDistanceInKilometers)
+        UnitFormatter.formatDistance(totalDistanceInKilometers)
     }
 
     /// 週の期間を表示（例: "12/23 - 12/29"）
@@ -50,9 +50,6 @@ struct WeeklyRunningStats: Identifiable {
     }
 
     var formattedAveragePace: String {
-        guard let pace = averagePacePerKm else { return "--:--" }
-        let minutes = Int(pace) / 60
-        let seconds = Int(pace) % 60
-        return String(format: "%d:%02d /km", minutes, seconds)
+        UnitFormatter.formatPace(secondsPerKm: averagePacePerKm)
     }
 }

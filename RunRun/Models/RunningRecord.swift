@@ -75,7 +75,7 @@ struct RunningRecord: Identifiable, Equatable, Hashable {
     }
 
     var formattedDistance: String {
-        String(format: "%.2f km", distanceInKilometers)
+        UnitFormatter.formatDistance(distanceInKilometers)
     }
 
     var formattedDuration: String {
@@ -96,10 +96,7 @@ struct RunningRecord: Identifiable, Equatable, Hashable {
     }
 
     var formattedPace: String {
-        guard let pace = averagePacePerKilometer else { return "--:--" }
-        let minutes = Int(pace) / 60
-        let seconds = Int(pace) % 60
-        return String(format: "%d:%02d /km", minutes, seconds)
+        UnitFormatter.formatPace(secondsPerKm: averagePacePerKilometer)
     }
 
     var formattedShortDate: String {

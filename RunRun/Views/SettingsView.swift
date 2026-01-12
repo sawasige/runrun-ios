@@ -60,6 +60,10 @@ struct SettingsView: View {
                     }
                 }
 
+                Section("Units") {
+                    DistanceUnitPicker()
+                }
+
                 Section("Account") {
                     Button("Sign Out", role: .destructive) {
                         try? authService.signOut()
@@ -316,6 +320,20 @@ struct SettingsView: View {
         }
     }
     #endif
+}
+
+/// 距離単位の選択ピッカー
+private struct DistanceUnitPicker: View {
+    @AppStorage("units.distance") private var useMetric = UnitFormatter.defaultUseMetric
+
+    var body: some View {
+        Picker("Distance", selection: $useMetric) {
+            Text("Kilometers (km)")
+                .tag(true)
+            Text("Miles (mi)")
+                .tag(false)
+        }
+    }
 }
 
 #Preview {

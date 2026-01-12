@@ -14,7 +14,7 @@ struct MonthlyRunningStats: Identifiable, Equatable {
     }
 
     var formattedTotalDistance: String {
-        String(format: "%.2f km", totalDistanceInKilometers)
+        UnitFormatter.formatDistance(totalDistanceInKilometers)
     }
 
     var formattedTotalDuration: String {

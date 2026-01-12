@@ -73,7 +73,7 @@ struct WeeklyStatsView: View {
             )
             .foregroundStyle(Color.accentColor.opacity(0.1))
         }
-        .chartYAxisLabel("km")
+        .chartYAxisLabel(UnitFormatter.distanceUnit)
         .chartXAxis {
             AxisMarks(values: .stride(by: .weekOfYear, count: 2)) { value in
                 AxisGridLine()
