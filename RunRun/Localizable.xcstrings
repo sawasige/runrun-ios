@@ -1338,6 +1338,16 @@
         }
       }
     },
+    "Open Settings" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定を開く"
+          }
+        }
+      }
+    },
     "Pace" : {
       "localizations" : {
         "ja" : {
@@ -1348,12 +1358,22 @@
         }
       }
     },
-    "Please allow photo library access in Settings." : {
+    "Photo Access Required" : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "設定で写真ライブラリへのアクセスを許可してください。"
+            "value" : "写真へのアクセスが必要です"
+          }
+        }
+      }
+    },
+    "Please allow photo library access to save images." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "写真を保存するには、写真ライブラリへのアクセスを許可してください。"
           }
         }
       }
