@@ -200,6 +200,7 @@ struct SettingsView: View {
         do {
             // 再認証してからアカウント削除（Sign in with Appleの確認画面が表示される）
             try await authService.reauthenticateAndDeleteAccount()
+            AnalyticsService.logEvent("delete_account")
             // 削除成功後、AuthServiceが自動的にサインアウト状態になる
         } catch {
             deleteError = String(localized: "Failed to delete account") + ": \(error.localizedDescription)"
@@ -332,6 +333,11 @@ private struct DistanceUnitPicker: View {
                 .tag(true)
             Text("Miles (mi)")
                 .tag(false)
+        }
+        .onChange(of: useMetric) { _, newValue in
+            AnalyticsService.logEvent("change_distance_unit", parameters: [
+                "unit": newValue ? "km" : "mi"
+            ])
         }
     }
 }

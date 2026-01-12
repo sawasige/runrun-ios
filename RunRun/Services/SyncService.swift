@@ -143,6 +143,9 @@ final class SyncService: ObservableObject {
         } catch {
             self.error = error
             phase = .failed
+            AnalyticsService.logEvent("sync_error", parameters: [
+                "error": error.localizedDescription
+            ])
         }
 
         isSyncing = false
