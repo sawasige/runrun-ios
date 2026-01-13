@@ -1,11 +1,4 @@
 Thank you for using RunRun!
 
-【New Features】
-・Added mile support (switchable in Settings)
-・Share run records and monthly summaries as images
-・Added mini calendar to timeline
-・Added highlights section to yearly records
-・Added calorie display
-
-【Bug Fixes】
-・Fixed profile being overwritten when logging in on a new device
+【Other】
+・Minimum iOS version changed to iOS 18.0
