@@ -2,6 +2,45 @@
 
 Apple Watchのランニング記録を月別に表示し、他のユーザーとランキングで競えるiOSアプリ。
 
+## 技術的特徴
+
+### アーキテクチャ
+- **MVVM**: View(SwiftUI) + ViewModel(@MainActor class) + Model(struct)
+- **Singleton**: サービス層は`shared`インスタンスで共有
+- **EnvironmentObject**: 認証・同期状態をビュー階層で共有
+
+### フレームワーク・ライブラリ
+
+| カテゴリ | 技術 |
+|---------|------|
+| UI | SwiftUI (iOS 18+), Charts |
+| データ | HealthKit, Firebase (Auth, Firestore, Storage) |
+| 地図 | MapKit (グラデーションペース表示) |
+| 通知 | Firebase Cloud Messaging |
+| 分析 | Firebase Analytics, Crashlytics |
+| 認証 | Sign in with Apple |
+
+### データソース
+- **HealthKit**: ワークアウト、心拍、ケイデンス、ルート座標
+- **Firestore**: ユーザープロフィール、ラン記録、フレンド
+- **ImageCache**: メモリ+ディスク2層キャッシュ
+
+### UI実装
+- **NavigationStack / TabView**: 画面遷移
+- **Charts**: 心拍チャート、統計グラフ
+- **MapKit**: ルートマップ（ペースをグラデーションで可視化）
+- **カレンダービュー**: 月間ラン一覧
+- **シェア機能**: 画像生成・共有
+
+### ローカライゼーション
+- **言語**: 日本語 / 英語
+- **単位**: km / マイル切り替え対応
+
+### その他
+- **同期処理**: HealthKit → Firestore バッチ同期
+- **プッシュ通知**: FCM + Cloud Functions
+- **スクリーンショットモード**: モックデータでUI自動撮影
+
 ## CI/CD
 
 ### ワークフロー一覧
