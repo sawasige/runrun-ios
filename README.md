@@ -4,11 +4,40 @@ Apple Watchのランニング記録を月別に表示し、他のユーザーと
 
 ## CI/CD
 
-タグをプッシュするとGitHub ActionsがTestFlightに自動アップロードします。
+### ワークフロー一覧
+
+| ワークフロー | トリガー | 説明 |
+|------------|---------|------|
+| Release to App Store | 手動実行 | ビルド→TestFlightにアップロード |
+| Update App Store Assets | 手動実行 | スクリーンショット撮影・メタデータ更新 |
+
+### リリース手順
+
+GitHub Actionsの「Release to App Store」ワークフローを手動実行します。
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+gh workflow run "Release to App Store"
+```
+
+または GitHub Actions ページから「Run workflow」ボタンで実行。
+
+- ビルド番号は `run_number` で自動インクリメント
+- 成功時に `build-{run_number}` タグが自動作成される
+
+### App Store アセット更新
+
+スクリーンショットやメタデータの更新はローカルで実行してください（CI実行は時間がかかるため）。
+
+```bash
+# スクリーンショット撮影
+bundle exec fastlane screenshots
+
+# フレーム追加
+bundle exec fastlane add_frames
+
+# App Store Connectにアップロード
+bundle exec fastlane upload_screenshots
+bundle exec fastlane upload_metadata
 ```
 
 ### 年1回の証明書・プロファイル更新手順
