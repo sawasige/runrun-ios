@@ -38,6 +38,24 @@ struct RunRunApp: App {
     @StateObject private var authService = AuthenticationService()
     @StateObject private var notificationService = NotificationService.shared
 
+    private func updateWidgetData(userId: String) async {
+        let calendar = Calendar.current
+        let now = Date()
+        let year = calendar.component(.year, from: now)
+        let month = calendar.component(.month, from: now)
+
+        do {
+            let records = try await FirestoreService.shared.getUserMonthlyRuns(
+                userId: userId,
+                year: year,
+                month: month
+            )
+            WidgetService.shared.updateFromRecords(records)
+        } catch {
+            // ウィジェット更新エラーは無視
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -48,7 +66,14 @@ struct RunRunApp: App {
                     Task {
                         if let userId = newUser?.uid {
                             await notificationService.updateFCMToken(userId: userId)
+                            await updateWidgetData(userId: userId)
                         }
+                    }
+                }
+                .task {
+                    // アプリ起動時にウィジェットデータを更新
+                    if let userId = authService.user?.uid {
+                        await updateWidgetData(userId: userId)
                     }
                 }
         }

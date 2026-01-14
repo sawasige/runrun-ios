@@ -107,6 +107,8 @@ final class SyncService: ObservableObject {
 
             if newBasicRecords.isEmpty {
                 phase = .completed(count: 0)
+                // ウィジェットを更新（新規レコードがなくても）
+                await updateWidget(userId: userId)
             } else {
                 // 新規レコードに対応するワークアウトを特定し、詳細を取得
                 let newWorkouts = workouts.filter { workout in
@@ -139,6 +141,9 @@ final class SyncService: ObservableObject {
                 AnalyticsService.logEvent("sync_completed", parameters: [
                     "record_count": count
                 ])
+
+                // ウィジェットを更新
+                await updateWidget(userId: userId)
             }
         } catch {
             self.error = error
@@ -149,5 +154,24 @@ final class SyncService: ObservableObject {
         }
 
         isSyncing = false
+    }
+
+    /// ウィジェットデータを更新
+    private func updateWidget(userId: String) async {
+        do {
+            let calendar = Calendar.current
+            let now = Date()
+            let year = calendar.component(.year, from: now)
+            let month = calendar.component(.month, from: now)
+
+            let records = try await firestoreService.getUserMonthlyRuns(
+                userId: userId,
+                year: year,
+                month: month
+            )
+            WidgetService.shared.updateFromRecords(records)
+        } catch {
+            // ウィジェット更新エラーは無視（メイン機能には影響しない）
+        }
     }
 }
