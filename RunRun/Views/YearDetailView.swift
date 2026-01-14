@@ -222,6 +222,11 @@ struct YearDetailView: View {
                     .frame(height: 200)
             }
 
+            Section("Distance Progress") {
+                cumulativeChart
+                    .frame(height: 200)
+            }
+
             Section("Totals") {
                 LabeledContent("Distance") {
                     Text(viewModel.formattedTotalYearlyDistance)
@@ -326,6 +331,65 @@ struct YearDetailView: View {
             }
         }
         .chartYAxisLabel(UnitFormatter.distanceUnit)
+    }
+
+    private var cumulativeChart: some View {
+        Chart {
+            // 当年の累積距離
+            ForEach(viewModel.cumulativeDistanceData, id: \.dayOfYear) { data in
+                LineMark(
+                    x: .value(String(localized: "Day"), data.dayOfYear),
+                    y: .value(String(localized: "Distance"), UnitFormatter.convertDistance(data.distance)),
+                    series: .value("Series", "current")
+                )
+                .foregroundStyle(Color.accentColor)
+                .lineStyle(StrokeStyle(lineWidth: 2))
+
+                AreaMark(
+                    x: .value(String(localized: "Day"), data.dayOfYear),
+                    y: .value(String(localized: "Distance"), UnitFormatter.convertDistance(data.distance))
+                )
+                .foregroundStyle(Color.accentColor.opacity(0.1))
+            }
+
+            // 前年の累積距離（比較用）
+            ForEach(viewModel.previousYearCumulativeData, id: \.dayOfYear) { data in
+                LineMark(
+                    x: .value(String(localized: "Day"), data.dayOfYear),
+                    y: .value(String(localized: "Distance"), UnitFormatter.convertDistance(data.distance)),
+                    series: .value("Series", "previous")
+                )
+                .foregroundStyle(Color.secondary)
+                .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5, 3]))
+            }
+        }
+        .chartXScale(domain: 1...365)
+        .chartXAxis {
+            AxisMarks(values: [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335]) { value in
+                AxisGridLine()
+                AxisValueLabel {
+                    if let day = value.as(Int.self) {
+                        let monthIndex = dayOfYearToMonth(day) - 1
+                        if monthIndex >= 0, monthIndex < 12 {
+                            Text(Calendar.current.shortMonthSymbols[monthIndex])
+                        }
+                    }
+                }
+            }
+        }
+        .chartYAxisLabel(UnitFormatter.distanceUnit)
+        .chartLegend(Visibility.hidden)
+    }
+
+    private func dayOfYearToMonth(_ dayOfYear: Int) -> Int {
+        // 各月の開始日（非閏年）
+        let monthStartDays = [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335]
+        for (index, startDay) in monthStartDays.enumerated().reversed() {
+            if dayOfYear >= startDay {
+                return index + 1
+            }
+        }
+        return 1
     }
 }
 

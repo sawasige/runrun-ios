@@ -4,7 +4,9 @@ import Combine
 @MainActor
 final class YearDetailViewModel: ObservableObject {
     @Published private(set) var monthlyStats: [MonthlyRunningStats] = []
+    @Published private(set) var previousYearMonthlyStats: [MonthlyRunningStats] = []
     @Published private(set) var yearlyRuns: [RunningRecord] = []
+    @Published private(set) var previousYearRuns: [RunningRecord] = []
     @Published private(set) var isLoading = false
     @Published private(set) var error: Error?
     @Published var selectedYear: Int
@@ -119,6 +121,52 @@ final class YearDetailViewModel: ObservableObject {
         return Array((currentYear - 5)...currentYear).reversed()
     }
 
+    // MARK: - 累積距離データ（日単位）
+
+    /// 累積距離データ（当年）- 日単位
+    var cumulativeDistanceData: [(dayOfYear: Int, distance: Double)] {
+        buildDailyCumulativeData(from: yearlyRuns, year: selectedYear)
+    }
+
+    /// 累積距離データ（前年）- 日単位
+    var previousYearCumulativeData: [(dayOfYear: Int, distance: Double)] {
+        buildDailyCumulativeData(from: previousYearRuns, year: selectedYear - 1)
+    }
+
+    private func buildDailyCumulativeData(from runs: [RunningRecord], year: Int) -> [(dayOfYear: Int, distance: Double)] {
+        let calendar = Calendar.current
+        let currentYear = calendar.component(.year, from: Date())
+        let currentDayOfYear = calendar.ordinality(of: .day, in: .year, for: Date()) ?? 1
+
+        // 当年の場合は今日まで、過去年の場合は年末まで
+        let maxDay = year < currentYear ? 365 : currentDayOfYear
+
+        // 日別に距離を合算
+        var dailyDistances: [Int: Double] = [:]
+        for run in runs {
+            if let dayOfYear = calendar.ordinality(of: .day, in: .year, for: run.date) {
+                dailyDistances[dayOfYear, default: 0] += run.distanceInKilometers
+            }
+        }
+
+        // 累積距離を計算
+        var result: [(dayOfYear: Int, distance: Double)] = []
+        var cumulative: Double = 0
+
+        // 最初の記録が1日目でなければ、1日目の0kmから開始
+        let sortedDays = dailyDistances.keys.sorted()
+        if let firstDay = sortedDays.first, firstDay > 1 {
+            result.append((1, 0))
+        }
+
+        for day in sortedDays where day <= maxDay {
+            cumulative += dailyDistances[day] ?? 0
+            result.append((day, cumulative))
+        }
+
+        return result
+    }
+
     init(userId: String, initialYear: Int? = nil) {
         self.userId = userId
         let currentYear = Calendar.current.component(.year, from: Date())
@@ -138,7 +186,9 @@ final class YearDetailViewModel: ObservableObject {
         // スクリーンショットモードではモックデータを使用
         if ScreenshotMode.isEnabled {
             monthlyStats = MockDataProvider.monthlyStats.filter { $0.year == selectedYear }
+            previousYearMonthlyStats = MockDataProvider.monthlyStats.filter { $0.year == selectedYear - 1 }
             yearlyRuns = MockDataProvider.monthDetailRecords
+            previousYearRuns = []
             isLoading = false
             return
         }
@@ -152,10 +202,13 @@ final class YearDetailViewModel: ObservableObject {
         do {
             async let runsTask = firestoreService.getUserRuns(userId: userId)
             async let yearlyRunsTask = firestoreService.getUserYearlyRuns(userId: userId, year: selectedYear)
+            async let prevYearRunsTask = firestoreService.getUserYearlyRuns(userId: userId, year: selectedYear - 1)
 
             let runs = try await runsTask
             monthlyStats = aggregateToMonthlyStats(runs: runs, for: selectedYear)
+            previousYearMonthlyStats = aggregateToMonthlyStats(runs: runs, for: selectedYear - 1)
             yearlyRuns = try await yearlyRunsTask
+            previousYearRuns = try await prevYearRunsTask
         } catch {
             self.error = error
         }
