@@ -3,8 +3,11 @@ import FirebaseAuth
 import FirebaseCore
 import FirebaseCrashlytics
 import FirebaseMessaging
+import BackgroundTasks
 
 class AppDelegate: NSObject, UIApplicationDelegate {
+    static let widgetRefreshTaskIdentifier = "com.himatsubu.RunRun.widget-refresh"
+
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
@@ -13,6 +16,9 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(true)
 
         NotificationService.shared.registerForRemoteNotifications()
+
+        // バックグラウンドタスクを登録
+        registerBackgroundTasks()
 
         return true
     }
@@ -30,6 +36,54 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     ) {
         print("Failed to register for remote notifications: \(error)")
     }
+
+    // MARK: - Background Tasks
+
+    private func registerBackgroundTasks() {
+        BGTaskScheduler.shared.register(
+            forTaskWithIdentifier: Self.widgetRefreshTaskIdentifier,
+            using: nil
+        ) { task in
+            self.handleWidgetRefresh(task: task as! BGAppRefreshTask)
+        }
+    }
+
+    private func handleWidgetRefresh(task: BGAppRefreshTask) {
+        // 次のリフレッシュをスケジュール
+        scheduleWidgetRefresh()
+
+        let refreshTask = Task {
+            await refreshWidgetData()
+        }
+
+        task.expirationHandler = {
+            refreshTask.cancel()
+        }
+
+        Task {
+            await refreshTask.value
+            task.setTaskCompleted(success: true)
+        }
+    }
+
+    private func refreshWidgetData() async {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+
+        // HealthKitと同期（SyncServiceが同期後にウィジェットも更新する）
+        let syncService = await SyncService()
+        await syncService.syncHealthKitData(userId: userId)
+    }
+
+    func scheduleWidgetRefresh() {
+        let request = BGAppRefreshTaskRequest(identifier: Self.widgetRefreshTaskIdentifier)
+        request.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60) // 15分後
+
+        do {
+            try BGTaskScheduler.shared.submit(request)
+        } catch {
+            print("Failed to schedule widget refresh: \(error)")
+        }
+    }
 }
 
 @main
@@ -37,6 +91,7 @@ struct RunRunApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @StateObject private var authService = AuthenticationService()
     @StateObject private var notificationService = NotificationService.shared
+    @Environment(\.scenePhase) private var scenePhase
 
     private func updateWidgetData(userId: String) async {
         let calendar = Calendar.current
@@ -74,6 +129,12 @@ struct RunRunApp: App {
                     // アプリ起動時にウィジェットデータを更新
                     if let userId = authService.user?.uid {
                         await updateWidgetData(userId: userId)
+                    }
+                }
+                .onChange(of: scenePhase) { _, newPhase in
+                    if newPhase == .background {
+                        // バックグラウンドに入る時にリフレッシュをスケジュール
+                        delegate.scheduleWidgetRefresh()
                     }
                 }
         }
