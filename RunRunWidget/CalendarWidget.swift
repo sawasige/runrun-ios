@@ -122,11 +122,43 @@ struct CalendarWidgetEntryView: View {
 
     var body: some View {
         switch family {
+        case .systemSmall:
+            smallBody
         case .systemLarge:
             largeBody
         default:
             mediumBody
         }
+    }
+
+    // MARK: - Small Layout
+
+    private var smallBody: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(monthName)
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+
+            Spacer()
+
+            Text("\(entry.runDays.count)")
+                .font(.system(size: 48, weight: .bold))
+                .foregroundStyle(.primary)
+
+            Text("Runs")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Spacer()
+
+            Text(formattedDistance)
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundStyle(Self.runColor)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
     }
 
     // MARK: - Medium Layout
@@ -354,11 +386,17 @@ struct CalendarWidget: Widget {
         }
         .configurationDisplayName("Monthly Calendar")
         .description("Shows your running calendar for this month.")
-        .supportedFamilies([.systemMedium, .systemLarge])
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
 
 // MARK: - Preview
+
+#Preview("Small", as: .systemSmall) {
+    CalendarWidget()
+} timeline: {
+    CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 10, 12, 15, 18, 20], totalDistance: 52.3, totalDuration: 3600 * 5 + 1800)
+}
 
 #Preview("Medium", as: .systemMedium) {
     CalendarWidget()
