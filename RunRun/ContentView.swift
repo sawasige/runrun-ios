@@ -74,6 +74,7 @@ struct ContentView: View {
                 }
                 .tag(AppTab.settings)
         }
+        .tabViewStyle(.sidebarAdaptable)
         .environmentObject(syncService)
         .environmentObject(badgeService)
     }
@@ -169,6 +170,7 @@ struct ContentView: View {
                     }
                     .tag(AppTab.settings)
             }
+            .tabViewStyle(.sidebarAdaptable)
             .environmentObject(syncService)
             .environmentObject(badgeService)
             .task {
