@@ -2,13 +2,34 @@ import Foundation
 
 // MARK: - Widget Data Model
 
+struct CumulativeDataPoint: Codable {
+    let day: Int
+    let distance: Double
+}
+
 struct WidgetData: Codable {
     let runDays: Set<Int>
     let totalDistance: Double
     let totalDuration: TimeInterval
+    let cumulativeDistances: [CumulativeDataPoint]
+    let previousMonthCumulativeDistances: [CumulativeDataPoint]
     let year: Int
     let month: Int
     let updatedAt: Date
+
+    // 後方互換性のためのデコーダー
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        runDays = try container.decode(Set<Int>.self, forKey: .runDays)
+        totalDistance = try container.decode(Double.self, forKey: .totalDistance)
+        totalDuration = try container.decode(TimeInterval.self, forKey: .totalDuration)
+        // 新しいフィールドはオプショナルとしてデコード
+        cumulativeDistances = try container.decodeIfPresent([CumulativeDataPoint].self, forKey: .cumulativeDistances) ?? []
+        previousMonthCumulativeDistances = try container.decodeIfPresent([CumulativeDataPoint].self, forKey: .previousMonthCumulativeDistances) ?? []
+        year = try container.decode(Int.self, forKey: .year)
+        month = try container.decode(Int.self, forKey: .month)
+        updatedAt = try container.decode(Date.self, forKey: .updatedAt)
+    }
 }
 
 // MARK: - Widget Data Store
