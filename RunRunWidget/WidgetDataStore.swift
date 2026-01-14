@@ -5,6 +5,7 @@ import Foundation
 struct WidgetData: Codable {
     let runDays: Set<Int>
     let totalDistance: Double
+    let totalDuration: TimeInterval
     let year: Int
     let month: Int
     let updatedAt: Date

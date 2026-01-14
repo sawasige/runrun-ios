@@ -5,7 +5,7 @@ import SwiftUI
 
 struct CalendarProvider: TimelineProvider {
     func placeholder(in context: Context) -> CalendarEntry {
-        CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 12, 15], totalDistance: 42.5)
+        CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 12, 15], totalDistance: 42.5, totalDuration: 3600 * 4)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (CalendarEntry) -> Void) {
@@ -26,7 +26,8 @@ struct CalendarProvider: TimelineProvider {
         return CalendarEntry(
             date: Date(),
             runDays: data?.runDays ?? [],
-            totalDistance: data?.totalDistance ?? 0
+            totalDistance: data?.totalDistance ?? 0,
+            totalDuration: data?.totalDuration ?? 0
         )
     }
 }
@@ -37,6 +38,7 @@ struct CalendarEntry: TimelineEntry {
     let date: Date
     let runDays: Set<Int>
     let totalDistance: Double
+    let totalDuration: TimeInterval
 }
 
 // MARK: - Widget View
@@ -69,6 +71,17 @@ struct CalendarWidgetEntryView: View {
 
     private var formattedDistance: String {
         String(format: "%.1f km", entry.totalDistance)
+    }
+
+    private var formattedDuration: String {
+        let totalSeconds = Int(entry.totalDuration)
+        let hours = totalSeconds / 3600
+        let minutes = (totalSeconds % 3600) / 60
+        if hours > 0 {
+            return String(format: String(localized: "%dh %dm"), hours, minutes)
+        } else {
+            return String(format: String(localized: "%dm"), minutes)
+        }
     }
 
     private var weekdaySymbols: [String] {
@@ -108,6 +121,17 @@ struct CalendarWidgetEntryView: View {
     }
 
     var body: some View {
+        switch family {
+        case .systemLarge:
+            largeBody
+        default:
+            mediumBody
+        }
+    }
+
+    // MARK: - Medium Layout
+
+    private var mediumBody: some View {
         HStack(spacing: 12) {
             // カレンダー部分
             VStack(spacing: 4) {
@@ -124,7 +148,7 @@ struct CalendarWidgetEntryView: View {
                 LazyVGrid(columns: columns, spacing: 2) {
                     ForEach(calendarCells, id: \.id) { cell in
                         if let day = cell.day {
-                            dayCell(day: day, weekday: cell.weekday)
+                            dayCell(day: day, weekday: cell.weekday, size: .medium)
                         } else {
                             Color.clear
                                 .frame(height: 16)
@@ -170,6 +194,79 @@ struct CalendarWidgetEntryView: View {
         .padding()
     }
 
+    // MARK: - Large Layout
+
+    private var largeBody: some View {
+        VStack(spacing: 12) {
+            // ヘッダー
+            HStack {
+                Text(monthYearName)
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.primary)
+                Spacer()
+            }
+
+            // カレンダー部分
+            VStack(spacing: 6) {
+                // 曜日ヘッダー
+                LazyVGrid(columns: columns, spacing: 4) {
+                    ForEach(0..<7, id: \.self) { index in
+                        Text(weekdaySymbols[index])
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(weekdayHeaderColor(index: index))
+                    }
+                }
+
+                // 日付グリッド
+                LazyVGrid(columns: columns, spacing: 4) {
+                    ForEach(calendarCells, id: \.id) { cell in
+                        if let day = cell.day {
+                            dayCell(day: day, weekday: cell.weekday, size: .large)
+                        } else {
+                            Color.clear
+                                .frame(height: 28)
+                        }
+                    }
+                }
+            }
+
+            Spacer()
+
+            // 統計部分
+            HStack(spacing: 12) {
+                statItem(value: formattedDistance, label: "Distance")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                statItem(value: formattedDuration, label: "Time")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                statItem(value: "\(entry.runDays.count)", label: "Runs")
+                    .fixedSize(horizontal: true, vertical: false)
+            }
+        }
+        .padding()
+    }
+
+    private var monthYearName: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale.current
+        formatter.setLocalizedDateFormatFromTemplate("MMMM yyyy")
+        return formatter.string(from: entry.date)
+    }
+
+    private func statItem(value: String, label: LocalizedStringKey) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(value)
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
     private static let runColor = Color("RunColor")
 
     private func weekdayHeaderColor(index: Int) -> Color {
@@ -199,7 +296,32 @@ struct CalendarWidgetEntryView: View {
         }
     }
 
-    private func dayCell(day: Int, weekday: Int) -> some View {
+    private enum CellSize {
+        case medium, large
+
+        var height: CGFloat {
+            switch self {
+            case .medium: return 16
+            case .large: return 28
+            }
+        }
+
+        var fontSize: CGFloat {
+            switch self {
+            case .medium: return 10
+            case .large: return 14
+            }
+        }
+
+        var strokeWidth: CGFloat {
+            switch self {
+            case .medium: return 1
+            case .large: return 1.5
+            }
+        }
+    }
+
+    private func dayCell(day: Int, weekday: Int, size: CellSize) -> some View {
         let hasRun = entry.runDays.contains(day)
         let isToday = day == today
 
@@ -209,14 +331,14 @@ struct CalendarWidgetEntryView: View {
                     .fill(Self.runColor)
             } else if isToday {
                 Circle()
-                    .stroke(Self.runColor, lineWidth: 1)
+                    .stroke(Self.runColor, lineWidth: size.strokeWidth)
             }
 
             Text("\(day)")
-                .font(.system(size: 10, weight: hasRun || isToday ? .semibold : .regular))
+                .font(.system(size: size.fontSize, weight: hasRun || isToday ? .semibold : .regular))
                 .foregroundStyle(dayTextColor(weekday: weekday, hasRun: hasRun, isToday: isToday))
         }
-        .frame(height: 16)
+        .frame(height: size.height)
     }
 }
 
@@ -232,14 +354,20 @@ struct CalendarWidget: Widget {
         }
         .configurationDisplayName("Monthly Calendar")
         .description("Shows your running calendar for this month.")
-        .supportedFamilies([.systemMedium])
+        .supportedFamilies([.systemMedium, .systemLarge])
     }
 }
 
 // MARK: - Preview
 
-#Preview(as: .systemMedium) {
+#Preview("Medium", as: .systemMedium) {
     CalendarWidget()
 } timeline: {
-    CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 10, 12, 15, 18, 20], totalDistance: 52.3)
+    CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 10, 12, 15, 18, 20], totalDistance: 52.3, totalDuration: 3600 * 5 + 1800)
+}
+
+#Preview("Large", as: .systemLarge) {
+    CalendarWidget()
+} timeline: {
+    CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 10, 12, 15, 18, 20], totalDistance: 52.3, totalDuration: 3600 * 5 + 1800)
 }

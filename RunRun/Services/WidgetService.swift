@@ -6,6 +6,7 @@ import WidgetKit
 struct WidgetData: Codable {
     let runDays: Set<Int>
     let totalDistance: Double
+    let totalDuration: TimeInterval
     let year: Int
     let month: Int
     let updatedAt: Date
@@ -26,13 +27,14 @@ final class WidgetService {
     private init() {}
 
     /// ウィジェットデータを更新
-    func updateWidgetData(runDays: Set<Int>, totalDistance: Double) {
+    func updateWidgetData(runDays: Set<Int>, totalDistance: Double, totalDuration: TimeInterval) {
         let calendar = Calendar.current
         let now = Date()
 
         let data = WidgetData(
             runDays: runDays,
             totalDistance: totalDistance,
+            totalDuration: totalDuration,
             year: calendar.component(.year, from: now),
             month: calendar.component(.month, from: now),
             updatedAt: now
@@ -59,14 +61,16 @@ final class WidgetService {
         // ランのある日を集計
         var runDays = Set<Int>()
         var totalDistance: Double = 0
+        var totalDuration: TimeInterval = 0
 
         for record in thisMonthRecords {
             let day = calendar.component(.day, from: record.date)
             runDays.insert(day)
             totalDistance += record.distanceInKilometers
+            totalDuration += record.durationInSeconds
         }
 
-        updateWidgetData(runDays: runDays, totalDistance: totalDistance)
+        updateWidgetData(runDays: runDays, totalDistance: totalDistance, totalDuration: totalDuration)
     }
 
     private func save(_ data: WidgetData) {
