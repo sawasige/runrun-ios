@@ -108,7 +108,7 @@ jobs:
               <dict>
                   <key>com.himatsubu.RunRun</key>
                   <string>RunRun Distribution</string>
-                  <key>com.himatsubu.RunRun.RunRunWidgetExtension</key>
+                  <key>com.himatsubu.RunRun.RunRunWidget</key>
                   <string>RunRunWidget Distribution</string>
               </dict>
           </dict>
