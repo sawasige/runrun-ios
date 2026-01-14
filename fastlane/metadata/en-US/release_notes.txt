@@ -1,4 +1,10 @@
 Thank you for using RunRun!
 
-【Other】
-・Minimum iOS version changed to iOS 18.0
+【New Features】
+・Added widgets (Calendar & Distance Progress)
+・Added cumulative distance chart to monthly/yearly details
+・iPad sidebar navigation support
+
+【Improvements】
+・Background auto-refresh for widgets
+・Added close button to sync error banner
