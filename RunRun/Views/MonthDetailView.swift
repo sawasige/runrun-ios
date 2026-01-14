@@ -185,6 +185,12 @@ struct MonthDetailView: View {
                     .frame(height: 150)
             }
 
+            // 累積距離グラフ
+            Section("Distance Progress") {
+                cumulativeChart
+                    .frame(height: 150)
+            }
+
             Section("Totals") {
                 LabeledContent("Distance") {
                     Text(viewModel.formattedTotalDistance)
@@ -256,7 +262,7 @@ struct MonthDetailView: View {
     private var dailyChart: some View {
         let calendar = Calendar.current
         let startOfMonth = calendar.date(from: DateComponents(year: viewModel.year, month: viewModel.month, day: 1))!
-        let endOfMonth = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: startOfMonth)!
+        let endOfMonth = calendar.date(byAdding: DateComponents(day: 31), to: startOfMonth)! // 常に31日分表示（バーが見切れないよう1日余裕）
 
         return Chart(viewModel.records) { record in
             BarMark(
@@ -279,6 +285,47 @@ struct MonthDetailView: View {
             }
         }
         .chartYAxisLabel(UnitFormatter.distanceUnit)
+    }
+
+    private var cumulativeChart: some View {
+        Chart {
+            // 当月の累積距離
+            ForEach(viewModel.cumulativeDistanceData, id: \.day) { data in
+                LineMark(
+                    x: .value(String(localized: "Day"), data.day),
+                    y: .value(String(localized: "Distance"), UnitFormatter.convertDistance(data.distance)),
+                    series: .value("Series", "current")
+                )
+                .foregroundStyle(Color.accentColor)
+                .lineStyle(StrokeStyle(lineWidth: 2))
+
+                AreaMark(
+                    x: .value(String(localized: "Day"), data.day),
+                    y: .value(String(localized: "Distance"), UnitFormatter.convertDistance(data.distance))
+                )
+                .foregroundStyle(Color.accentColor.opacity(0.1))
+            }
+
+            // 前月の累積距離（比較用）
+            ForEach(viewModel.previousMonthCumulativeData, id: \.day) { data in
+                LineMark(
+                    x: .value(String(localized: "Day"), data.day),
+                    y: .value(String(localized: "Distance"), UnitFormatter.convertDistance(data.distance)),
+                    series: .value("Series", "previous")
+                )
+                .foregroundStyle(Color.secondary)
+                .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5, 3]))
+            }
+        }
+        .chartXScale(domain: 1...31)
+        .chartXAxis {
+            AxisMarks(values: .stride(by: 7)) { _ in
+                AxisGridLine()
+                AxisValueLabel()
+            }
+        }
+        .chartYAxisLabel(UnitFormatter.distanceUnit)
+        .chartLegend(Visibility.hidden)
     }
 
     private var emptyView: some View {

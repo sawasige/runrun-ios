@@ -29,6 +29,18 @@ struct UnitFormatter {
         Locale.current.measurementSystem == .metric
     }
 
+    // MARK: - Distance Conversion
+
+    /// キロメートルを現在の単位に変換（数値のみ）
+    static func convertDistance(_ kilometers: Double) -> Double {
+        switch DistanceUnit.current {
+        case .kilometers:
+            return kilometers
+        case .miles:
+            return kilometers * kmToMiles
+        }
+    }
+
     // MARK: - Distance Formatting
 
     /// 距離をフォーマット（例: "5.23 km" or "3.25 mi"）
