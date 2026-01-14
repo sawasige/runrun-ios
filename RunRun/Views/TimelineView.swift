@@ -401,6 +401,8 @@ private struct MiniCalendarView: View {
     }
 
     private var today: Int? {
+        // スクリーンショットモードでは今日の表示をしない
+        guard !ScreenshotMode.isEnabled else { return nil }
         let now = Date()
         let currentYear = calendar.component(.year, from: now)
         let currentMonth = calendar.component(.month, from: now)
