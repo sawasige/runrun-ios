@@ -7,6 +7,8 @@ Your runs from Apple Watch, Strava, Nike Run Club, and other apps that sync with
 • Compete with friends on monthly distance rankings
 • Check friends' activities on the timeline
 • Visualize routes with pace-based gradient colors
+• Track monthly and yearly progress with cumulative distance graphs
+• Home screen widgets (Calendar & Distance Progress)
 
 【Compatible Apps】
 • Apple Watch Workouts
