@@ -187,7 +187,7 @@ final class YearDetailViewModel: ObservableObject {
         if ScreenshotMode.isEnabled {
             monthlyStats = MockDataProvider.monthlyStats.filter { $0.year == selectedYear }
             previousYearMonthlyStats = MockDataProvider.monthlyStats.filter { $0.year == selectedYear - 1 }
-            yearlyRuns = MockDataProvider.monthDetailRecords
+            yearlyRuns = MockDataProvider.yearDetailRecords
             previousYearRuns = []
             isLoading = false
             return

@@ -28,7 +28,7 @@ final class ScreenshotTests: XCTestCase {
         XCUIDevice.shared.orientation = .portrait
 
         // 起動待機
-        sleep(3)
+        sleep(1)
 
         // システムダイアログを閉じる（Apple Account確認、通知パーミッションなど）
         dismissSystemDialogs()
@@ -42,7 +42,7 @@ final class ScreenshotTests: XCTestCase {
             "記録タブが見つかりません"
         )
         recordsTab.tap()
-        sleep(2)
+        sleep(1)
         snapshot("02_Records")
 
         // 3. ランキング
@@ -67,7 +67,7 @@ final class ScreenshotTests: XCTestCase {
             "timeline_month_summary が見つかりません"
         )
         monthSummary.tap()
-        sleep(2)
+        sleep(1)
         snapshot("04_MonthDetail")
 
         // 5. ラン詳細画面
@@ -76,7 +76,7 @@ final class ScreenshotTests: XCTestCase {
             "first_run_row が見つかりません"
         )
         firstRunRow.tap()
-        sleep(3) // 地図読み込み待機
+        sleep(1) // 地図読み込み待機
         snapshot("05_RunDetail")
 
         // 6. 地図拡大画面
@@ -85,7 +85,7 @@ final class ScreenshotTests: XCTestCase {
             "expand_map_button が見つかりません"
         )
         expandMapButton.tap()
-        sleep(2)
+        sleep(1)
         snapshot("06_FullMap")
     }
 

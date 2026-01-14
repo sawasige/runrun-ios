@@ -255,6 +255,46 @@ struct MockDataProvider {
         (300, 360) // 5:00 〜 6:00
     }
 
+    // MARK: - 年詳細用（年間のラン記録）
+
+    static var yearDetailRecords: [RunningRecord] {
+        let calendar = Calendar.current
+        let now = Date()
+        let currentYear = calendar.component(.year, from: now) - 1 // 前年のデータ（12ヶ月分あるように）
+
+        var records: [RunningRecord] = []
+
+        // 各月に5〜8回のランを配置
+        for month in 1...12 {
+            let runsInMonth = Int.random(in: 5...8)
+            let daysUsed = Set((1...28).shuffled().prefix(runsInMonth))
+
+            for day in daysUsed {
+                var dateComponents = DateComponents()
+                dateComponents.year = currentYear
+                dateComponents.month = month
+                dateComponents.day = day
+                dateComponents.hour = Int.random(in: 6...9)
+
+                guard let date = calendar.date(from: dateComponents) else { continue }
+
+                let distance = Double.random(in: 3000...12000)
+                records.append(RunningRecord(
+                    id: UUID(),
+                    date: date,
+                    distanceInMeters: distance,
+                    durationInSeconds: distance / 1000 * Double.random(in: 300...400),
+                    caloriesBurned: distance / 15,
+                    averageHeartRate: Double.random(in: 140...160),
+                    maxHeartRate: Double.random(in: 165...180),
+                    minHeartRate: Double.random(in: 120...140)
+                ))
+            }
+        }
+
+        return records.sorted { $0.date < $1.date }
+    }
+
     // MARK: - 月詳細用
 
     static var monthDetailRecords: [RunningRecord] {
