@@ -11,6 +11,7 @@ import SwiftUI
 @main
 struct RunRunWidgetBundle: WidgetBundle {
     var body: some Widget {
+        ProgressWidget()
         CalendarWidget()
     }
 }

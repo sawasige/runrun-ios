@@ -120,15 +120,38 @@ struct CalendarWidgetEntryView: View {
         return cells
     }
 
+    private var hasData: Bool {
+        // データが読み込まれているかチェック（距離0かつラン日なしはデータ未同期とみなす）
+        !(entry.runDays.isEmpty && entry.totalDistance == 0)
+    }
+
     var body: some View {
-        switch family {
-        case .systemSmall:
-            smallBody
-        case .systemLarge:
-            largeBody
-        default:
-            mediumBody
+        if hasData {
+            switch family {
+            case .systemSmall:
+                smallBody
+            case .systemLarge:
+                largeBody
+            default:
+                mediumBody
+            }
+        } else {
+            emptyView
         }
+    }
+
+    private var emptyView: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "calendar")
+                .font(.largeTitle)
+                .foregroundStyle(.secondary)
+            Text("Open app to sync data")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
     }
 
     // MARK: - Small Layout

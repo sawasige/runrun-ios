@@ -164,12 +164,30 @@ final class SyncService: ObservableObject {
             let year = calendar.component(.year, from: now)
             let month = calendar.component(.month, from: now)
 
-            let records = try await firestoreService.getUserMonthlyRuns(
+            // 前月の年月を計算
+            let (prevYear, prevMonth): (Int, Int)
+            if month == 1 {
+                prevYear = year - 1
+                prevMonth = 12
+            } else {
+                prevYear = year
+                prevMonth = month - 1
+            }
+
+            async let currentRecords = firestoreService.getUserMonthlyRuns(
                 userId: userId,
                 year: year,
                 month: month
             )
-            WidgetService.shared.updateFromRecords(records)
+            async let prevRecords = firestoreService.getUserMonthlyRuns(
+                userId: userId,
+                year: prevYear,
+                month: prevMonth
+            )
+
+            let records = try await currentRecords
+            let previousMonthRecords = try await prevRecords
+            WidgetService.shared.updateFromRecords(records, previousMonthRecords: previousMonthRecords)
         } catch {
             // ウィジェット更新エラーは無視（メイン機能には影響しない）
         }
