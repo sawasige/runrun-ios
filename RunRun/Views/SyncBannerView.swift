@@ -76,6 +76,15 @@ struct SyncBannerView: View {
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
+                Button {
+                    withAnimation {
+                        isVisible = false
+                    }
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .padding(.horizontal, 16)
