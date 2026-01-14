@@ -4,6 +4,7 @@ import Combine
 @MainActor
 final class MonthDetailViewModel: ObservableObject {
     @Published private(set) var records: [RunningRecord] = []
+    @Published private(set) var previousMonthRecords: [RunningRecord] = []
     @Published private(set) var isLoading = false
     @Published private(set) var error: Error?
     @Published private(set) var year: Int
@@ -132,6 +133,7 @@ final class MonthDetailViewModel: ObservableObject {
         // スクリーンショットモードならモックデータを使用
         if ScreenshotMode.isEnabled {
             records = MockDataProvider.monthDetailRecords
+            previousMonthRecords = []
             isLoading = false
             return
         }
@@ -142,16 +144,74 @@ final class MonthDetailViewModel: ObservableObject {
         }
         error = nil
 
+        // 前月の年月を計算
+        let (prevYear, prevMonth) = previousYearMonth
+
         do {
-            records = try await firestoreService.getUserMonthlyRuns(
+            async let currentRecords = firestoreService.getUserMonthlyRuns(
                 userId: userId,
                 year: year,
                 month: month
             )
+            async let prevRecords = firestoreService.getUserMonthlyRuns(
+                userId: userId,
+                year: prevYear,
+                month: prevMonth
+            )
+
+            records = try await currentRecords
+            previousMonthRecords = try await prevRecords
         } catch {
             self.error = error
         }
 
         isLoading = false
+    }
+
+    private var previousYearMonth: (year: Int, month: Int) {
+        if month == 1 {
+            return (year - 1, 12)
+        } else {
+            return (year, month - 1)
+        }
+    }
+
+    /// 累積距離データ（当月）
+    var cumulativeDistanceData: [(day: Int, distance: Double)] {
+        buildCumulativeData(from: records)
+    }
+
+    /// 累積距離データ（前月）
+    var previousMonthCumulativeData: [(day: Int, distance: Double)] {
+        buildCumulativeData(from: previousMonthRecords)
+    }
+
+    private func buildCumulativeData(from records: [RunningRecord]) -> [(day: Int, distance: Double)] {
+        let calendar = Calendar.current
+        var result: [(day: Int, distance: Double)] = []
+
+        // 日別に距離を合算
+        var dailyDistances: [Int: Double] = [:]
+        for record in records {
+            let day = calendar.component(.day, from: record.date)
+            dailyDistances[day, default: 0] += record.distanceInKilometers
+        }
+
+        // 日付順にソート
+        let sortedDays = dailyDistances.keys.sorted()
+
+        // 最初の記録が1日でなければ、1日の0kmから開始
+        if let firstDay = sortedDays.first, firstDay > 1 {
+            result.append((1, 0))
+        }
+
+        // 累積距離を計算
+        var cumulative: Double = 0
+        for day in sortedDays {
+            cumulative += dailyDistances[day] ?? 0
+            result.append((day, cumulative))
+        }
+
+        return result
     }
 }
