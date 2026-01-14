@@ -46,6 +46,7 @@ struct CalendarEntry: TimelineEntry {
 struct CalendarWidgetEntryView: View {
     var entry: CalendarProvider.Entry
     @Environment(\.widgetFamily) var family
+    @Environment(\.widgetRenderingMode) var renderingMode
 
     private let calendar = Calendar.current
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 2), count: 7)
@@ -323,6 +324,7 @@ struct CalendarWidgetEntryView: View {
     }
 
     private static let runColor = Color("RunColor")
+    private static let runDayTextColor = Color("RunDayTextColor")
 
     private func weekdayHeaderColor(index: Int) -> Color {
         let firstWeekdayIndex = calendar.firstWeekday - 1
@@ -336,7 +338,7 @@ struct CalendarWidgetEntryView: View {
 
     private func dayTextColor(weekday: Int, hasRun: Bool, isToday: Bool) -> Color {
         if hasRun {
-            return .white
+            return Self.runDayTextColor
         }
         if isToday {
             return Self.runColor
@@ -379,21 +381,21 @@ struct CalendarWidgetEntryView: View {
     private func dayCell(day: Int, weekday: Int, size: CellSize) -> some View {
         let hasRun = entry.runDays.contains(day)
         let isToday = day == today
+        let fillOpacity = renderingMode == .fullColor ? 1.0 : 0.3
 
-        return ZStack {
-            if hasRun {
-                Circle()
-                    .fill(Self.runColor)
-            } else if isToday {
-                Circle()
-                    .stroke(Self.runColor, lineWidth: size.strokeWidth)
+        return Text("\(day)")
+            .font(.system(size: size.fontSize, weight: hasRun || isToday ? .semibold : .regular))
+            .foregroundStyle(dayTextColor(weekday: weekday, hasRun: hasRun, isToday: isToday))
+            .frame(width: size.height, height: size.height)
+            .background {
+                if hasRun {
+                    Circle()
+                        .fill(Self.runColor.opacity(fillOpacity))
+                } else if isToday {
+                    Circle()
+                        .stroke(Self.runColor, lineWidth: size.strokeWidth)
+                }
             }
-
-            Text("\(day)")
-                .font(.system(size: size.fontSize, weight: hasRun || isToday ? .semibold : .regular))
-                .foregroundStyle(dayTextColor(weekday: weekday, hasRun: hasRun, isToday: isToday))
-        }
-        .frame(height: size.height)
     }
 }
 
