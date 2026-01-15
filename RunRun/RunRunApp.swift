@@ -20,6 +20,11 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         // バックグラウンドタスクを登録
         registerBackgroundTasks()
 
+        // HealthKit監視を開始
+        Task {
+            await setupHealthKitObserver()
+        }
+
         return true
     }
 
@@ -82,6 +87,22 @@ class AppDelegate: NSObject, UIApplicationDelegate {
             try BGTaskScheduler.shared.submit(request)
         } catch {
             print("Failed to schedule widget refresh: \(error)")
+        }
+    }
+
+    // MARK: - HealthKit Observer
+
+    private func setupHealthKitObserver() async {
+        let healthKitService = HealthKitService()
+
+        do {
+            try await healthKitService.enableBackgroundDelivery()
+            healthKitService.startObservingWorkouts { [weak self] in
+                // ワークアウト変更を検知したらウィジェットリフレッシュをスケジュール
+                self?.scheduleWidgetRefresh()
+            }
+        } catch {
+            print("Failed to setup HealthKit observer: \(error)")
         }
     }
 }
