@@ -26,6 +26,30 @@ final class HealthKitService: Sendable {
         HKHealthStore.isHealthDataAvailable()
     }
 
+    // MARK: - Background Delivery
+
+    /// バックグラウンド配信を有効化（ワークアウト変更時にアプリを起動）
+    func enableBackgroundDelivery() async throws {
+        guard isAvailable else { return }
+        let workoutType = HKObjectType.workoutType()
+        try await healthStore.enableBackgroundDelivery(for: workoutType, frequency: .immediate)
+    }
+
+    /// ワークアウトの変更を監視
+    func startObservingWorkouts(onUpdate: @escaping @Sendable () -> Void) {
+        guard isAvailable else { return }
+        let workoutType = HKObjectType.workoutType()
+
+        let query = HKObserverQuery(sampleType: workoutType, predicate: nil) { _, completionHandler, error in
+            if error == nil {
+                onUpdate()
+            }
+            completionHandler()
+        }
+
+        healthStore.execute(query)
+    }
+
     func requestAuthorization() async throws {
         guard isAvailable else {
             throw HealthKitError.notAvailable
