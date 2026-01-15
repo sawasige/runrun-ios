@@ -1,6 +1,7 @@
 import SwiftUI
 import FirebaseAuth
 import FirebaseFunctions
+import WidgetKit
 
 struct SettingsView: View {
     @EnvironmentObject private var authService: AuthenticationService
@@ -338,6 +339,9 @@ private struct DistanceUnitPicker: View {
             AnalyticsService.logEvent("change_distance_unit", parameters: [
                 "unit": newValue ? "km" : "mi"
             ])
+            // ウィジェットデータを更新
+            WidgetService.shared.updateUseMetric(newValue)
+            WidgetCenter.shared.reloadAllTimelines()
         }
     }
 }
