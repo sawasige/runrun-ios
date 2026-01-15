@@ -157,8 +157,8 @@ struct ProgressWidgetEntryView: View {
                             .foregroundStyle(.secondary)
                     }
                     HStack(spacing: 4) {
-                        RoundedRectangle(cornerRadius: 1)
-                            .stroke(Color.secondary, style: StrokeStyle(lineWidth: 1, dash: [2, 2]))
+                        DashedLine()
+                            .stroke(Color.secondary, style: StrokeStyle(lineWidth: 1.5, dash: [2, 2]))
                             .frame(width: 12, height: 2)
                         Text("Last month")
                             .font(.system(size: 8))
@@ -219,6 +219,18 @@ struct ProgressWidgetEntryView: View {
             }
         }
         .chartLegend(.hidden)
+    }
+}
+
+// MARK: - Dashed Line Shape
+
+/// 凡例用の水平破線
+private struct DashedLine: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: rect.midY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.midY))
+        return path
     }
 }
 
