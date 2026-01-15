@@ -17,6 +17,7 @@ struct WidgetData: Codable {
     let year: Int
     let month: Int
     let updatedAt: Date
+    let useMetric: Bool  // true: km, false: miles
 }
 
 // MARK: - Widget Service
@@ -71,7 +72,8 @@ final class WidgetService {
             previousMonthCumulativeDistances: previousMonthCumulativeDistances,
             year: currentYear,
             month: currentMonth,
-            updatedAt: now
+            updatedAt: now,
+            useMetric: DistanceUnit.current == .kilometers
         )
 
         save(data)
@@ -105,6 +107,30 @@ final class WidgetService {
         }
 
         return result
+    }
+
+    /// 距離単位の設定のみを更新
+    func updateUseMetric(_ useMetric: Bool) {
+        guard let userDefaults = userDefaults,
+              let existingData = userDefaults.data(forKey: key),
+              let decoded = try? JSONDecoder().decode(WidgetData.self, from: existingData) else {
+            return
+        }
+
+        // 単位設定のみを更新した新しいデータを作成
+        let updatedData = WidgetData(
+            runDays: decoded.runDays,
+            totalDistance: decoded.totalDistance,
+            totalDuration: decoded.totalDuration,
+            cumulativeDistances: decoded.cumulativeDistances,
+            previousMonthCumulativeDistances: decoded.previousMonthCumulativeDistances,
+            year: decoded.year,
+            month: decoded.month,
+            updatedAt: decoded.updatedAt,
+            useMetric: useMetric
+        )
+
+        save(updatedData)
     }
 
     private func save(_ data: WidgetData) {

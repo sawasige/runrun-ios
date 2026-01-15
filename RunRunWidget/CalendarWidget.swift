@@ -4,8 +4,12 @@ import SwiftUI
 // MARK: - Timeline Provider
 
 struct CalendarProvider: TimelineProvider {
+    private var defaultUseMetric: Bool {
+        Locale.current.measurementSystem == .metric
+    }
+
     func placeholder(in context: Context) -> CalendarEntry {
-        CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 12, 15], totalDistance: 42.5, totalDuration: 3600 * 4)
+        CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 12, 15], totalDistance: 42.5, totalDuration: 3600 * 4, useMetric: defaultUseMetric)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (CalendarEntry) -> Void) {
@@ -27,7 +31,8 @@ struct CalendarProvider: TimelineProvider {
             date: Date(),
             runDays: data?.runDays ?? [],
             totalDistance: data?.totalDistance ?? 0,
-            totalDuration: data?.totalDuration ?? 0
+            totalDuration: data?.totalDuration ?? 0,
+            useMetric: data?.useMetric ?? defaultUseMetric
         )
     }
 }
@@ -39,6 +44,7 @@ struct CalendarEntry: TimelineEntry {
     let runDays: Set<Int>
     let totalDistance: Double
     let totalDuration: TimeInterval
+    let useMetric: Bool
 }
 
 // MARK: - Widget View
@@ -71,7 +77,12 @@ struct CalendarWidgetEntryView: View {
     }
 
     private var formattedDistance: String {
-        String(format: "%.1f km", entry.totalDistance)
+        if entry.useMetric {
+            return String(format: "%.1f km", entry.totalDistance)
+        } else {
+            let miles = entry.totalDistance * 0.621371
+            return String(format: "%.1f mi", miles)
+        }
     }
 
     private var formattedDuration: String {
@@ -420,17 +431,17 @@ struct CalendarWidget: Widget {
 #Preview("Small", as: .systemSmall) {
     CalendarWidget()
 } timeline: {
-    CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 10, 12, 15, 18, 20], totalDistance: 52.3, totalDuration: 3600 * 5 + 1800)
+    CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 10, 12, 15, 18, 20], totalDistance: 52.3, totalDuration: 3600 * 5 + 1800, useMetric: true)
 }
 
 #Preview("Medium", as: .systemMedium) {
     CalendarWidget()
 } timeline: {
-    CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 10, 12, 15, 18, 20], totalDistance: 52.3, totalDuration: 3600 * 5 + 1800)
+    CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 10, 12, 15, 18, 20], totalDistance: 52.3, totalDuration: 3600 * 5 + 1800, useMetric: true)
 }
 
 #Preview("Large", as: .systemLarge) {
     CalendarWidget()
 } timeline: {
-    CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 10, 12, 15, 18, 20], totalDistance: 52.3, totalDuration: 3600 * 5 + 1800)
+    CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 10, 12, 15, 18, 20], totalDistance: 52.3, totalDuration: 3600 * 5 + 1800, useMetric: true)
 }

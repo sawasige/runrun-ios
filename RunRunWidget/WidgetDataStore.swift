@@ -16,6 +16,7 @@ struct WidgetData: Codable {
     let year: Int
     let month: Int
     let updatedAt: Date
+    let useMetric: Bool  // true: km, false: miles
 
     // 後方互換性のためのデコーダー
     init(from decoder: Decoder) throws {
@@ -29,6 +30,8 @@ struct WidgetData: Codable {
         year = try container.decode(Int.self, forKey: .year)
         month = try container.decode(Int.self, forKey: .month)
         updatedAt = try container.decode(Date.self, forKey: .updatedAt)
+        // デフォルトはロケールに基づく
+        useMetric = try container.decodeIfPresent(Bool.self, forKey: .useMetric) ?? (Locale.current.measurementSystem == .metric)
     }
 }
 

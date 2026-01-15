@@ -5,6 +5,10 @@ import Charts
 // MARK: - Timeline Provider
 
 struct ProgressProvider: TimelineProvider {
+    private var defaultUseMetric: Bool {
+        Locale.current.measurementSystem == .metric
+    }
+
     func placeholder(in context: Context) -> ProgressEntry {
         ProgressEntry(
             date: Date(),
@@ -19,7 +23,8 @@ struct ProgressProvider: TimelineProvider {
                 CumulativeDataPoint(day: 8, distance: 15),
                 CumulativeDataPoint(day: 20, distance: 40)
             ],
-            totalDistance: 35.0
+            totalDistance: 35.0,
+            useMetric: defaultUseMetric
         )
     }
 
@@ -42,7 +47,8 @@ struct ProgressProvider: TimelineProvider {
             date: Date(),
             cumulativeDistances: data?.cumulativeDistances ?? [],
             previousMonthCumulativeDistances: data?.previousMonthCumulativeDistances ?? [],
-            totalDistance: data?.totalDistance ?? 0
+            totalDistance: data?.totalDistance ?? 0,
+            useMetric: data?.useMetric ?? defaultUseMetric
         )
     }
 }
@@ -54,6 +60,7 @@ struct ProgressEntry: TimelineEntry {
     let cumulativeDistances: [CumulativeDataPoint]
     let previousMonthCumulativeDistances: [CumulativeDataPoint]
     let totalDistance: Double
+    let useMetric: Bool
 }
 
 // MARK: - Widget View
@@ -69,7 +76,12 @@ struct ProgressWidgetEntryView: View {
     }
 
     private var formattedDistance: String {
-        String(format: "%.1f km", entry.totalDistance)
+        if entry.useMetric {
+            return String(format: "%.1f km", entry.totalDistance)
+        } else {
+            let miles = entry.totalDistance * 0.621371
+            return String(format: "%.1f mi", miles)
+        }
     }
 
     private var hasData: Bool {
@@ -77,6 +89,12 @@ struct ProgressWidgetEntryView: View {
     }
 
     private static let runColor = Color("RunColor")
+    private static let kmToMiles = 0.621371
+
+    /// グラフ用に距離を変換（マイル表示の場合）
+    private func convertDistance(_ km: Double) -> Double {
+        entry.useMetric ? km : km * Self.kmToMiles
+    }
 
     var body: some View {
         if hasData {
@@ -159,7 +177,7 @@ struct ProgressWidgetEntryView: View {
             ForEach(entry.previousMonthCumulativeDistances, id: \.day) { data in
                 LineMark(
                     x: .value("Day", data.day),
-                    y: .value("Distance", data.distance),
+                    y: .value("Distance", convertDistance(data.distance)),
                     series: .value("Series", "previous")
                 )
                 .foregroundStyle(Color.secondary)
@@ -170,7 +188,7 @@ struct ProgressWidgetEntryView: View {
             ForEach(entry.cumulativeDistances, id: \.day) { data in
                 AreaMark(
                     x: .value("Day", data.day),
-                    y: .value("Distance", data.distance),
+                    y: .value("Distance", convertDistance(data.distance)),
                     series: .value("Series", "currentArea")
                 )
                 .foregroundStyle(Self.runColor.opacity(0.15))
@@ -180,7 +198,7 @@ struct ProgressWidgetEntryView: View {
             ForEach(entry.cumulativeDistances, id: \.day) { data in
                 LineMark(
                     x: .value("Day", data.day),
-                    y: .value("Distance", data.distance),
+                    y: .value("Distance", convertDistance(data.distance)),
                     series: .value("Series", "current")
                 )
                 .foregroundStyle(Self.runColor)
@@ -245,6 +263,7 @@ struct ProgressWidget: Widget {
             CumulativeDataPoint(day: 25, distance: 42.0),
             CumulativeDataPoint(day: 30, distance: 50.0)
         ],
-        totalDistance: 38.2
+        totalDistance: 38.2,
+        useMetric: true
     )
 }
