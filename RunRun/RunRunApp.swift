@@ -15,7 +15,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         FirebaseApp.configure()
         Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(true)
 
-        NotificationService.shared.registerForRemoteNotifications()
+        NotificationService.shared.setup()
 
         // バックグラウンドタスクを登録
         registerBackgroundTasks()
@@ -159,6 +159,8 @@ struct RunRunApp: App {
                 .onChange(of: authService.user) { _, newUser in
                     Task {
                         if let userId = newUser?.uid {
+                            // ログイン後にプッシュ通知の許可をリクエスト
+                            await notificationService.requestAndRegister()
                             await notificationService.updateFCMToken(userId: userId)
                             await updateWidgetData(userId: userId)
                         }

@@ -1,2204 +1,2210 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-    " " : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : " "
+  "sourceLanguage": "en",
+  "strings": {
+    " ": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " "
           }
         }
       }
     },
-    "%@ bpm" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ bpm"
+    "%@ bpm": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ bpm"
           }
         }
       }
     },
-    "%@ Records" : {
-      "comment" : "Year records label for share",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ Records"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@年の記録"
-          }
-        }
-      }
-    },
-    "%d day_suffix" : {
-      "comment" : "Day format e.g. 15日",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%d"
+    "%@ Records": {
+      "comment": "Year records label for share",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ Records"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%d日"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@年の記録"
           }
         }
       }
     },
-    "%d new records synced" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%d件の新規記録を同期しました"
-          }
-        }
-      }
-    },
-    "%d Records" : {
-      "comment" : "Year records title",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%d Records"
+    "%d day_suffix": {
+      "comment": "Day format e.g. 15日",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%d年の記録"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d日"
           }
         }
       }
     },
-    "%d runs" : {
-      "comment" : "Run count",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%d runs"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%d回"
+    "%d new records synced": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d件の新規記録を同期しました"
           }
         }
       }
     },
-    "%d steps" : {
-      "comment" : "Step count format",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%d steps"
+    "%d Records": {
+      "comment": "Year records title",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d Records"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%d歩"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d年の記録"
           }
         }
       }
     },
-    "%dh %dm" : {
-      "comment" : "Duration format",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%dh %dm"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%d時間%d分"
-          }
-        }
-      }
-    },
-    "%dm" : {
-      "comment" : "Minutes only",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%dm"
+    "%d runs": {
+      "comment": "Run count",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d runs"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%d分"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d回"
           }
         }
       }
     },
-    "%lld" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld"
-          }
-        }
-      }
-    },
-    "%lld/%lld" : {
-      "comment" : "A text showing the current and total number of synced records.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld/%2$lld"
+    "%d steps": {
+      "comment": "Step count format",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d steps"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld/%2$lld"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d歩"
           }
         }
       }
     },
-    "Account" : {
-      "comment" : "A section header in the settings view for account-related settings.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アカウント"
-          }
-        }
-      }
-    },
-    "All" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "全員"
-          }
-        }
-      }
-    },
-    "Already synced" : {
-      "comment" : "Message shown when health data is already up-to-date and no sync is needed.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "同期済み"
-          }
-        }
-      }
-    },
-    "App Info" : {
-      "comment" : "A section in the settings menu that provides information about the app.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アプリ情報"
-          }
-        }
-      }
-    },
-    "Average" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "平均"
-          }
-        }
-      }
-    },
-    "Averages" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "平均"
-          }
-        }
-      }
-    },
-    "Avg %d" : {
-      "comment" : "Average heart rate",
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "平均 %d"
-          }
-        }
-      }
-    },
-    "Avg Distance" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "平均距離"
-          }
-        }
-      }
-    },
-    "Avg Heart Rate" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "平均心拍数"
-          }
-        }
-      }
-    },
-    "Avg Pace" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "平均ペース"
-          }
-        }
-      }
-    },
-    "Avg Time" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "平均時間"
-          }
-        }
-      }
-    },
-    "Best" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ベスト"
-          }
-        }
-      }
-    },
-    "Best Distance Day" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "最長距離日"
-          }
-        }
-      }
-    },
-    "Best Distance Month" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "最長距離月"
-          }
-        }
-      }
-    },
-    "Best Distance Year" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "最長距離年"
-          }
-        }
-      }
-    },
-    "Best Duration Day" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "最長時間日"
-          }
-        }
-      }
-    },
-    "Best Duration Month" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "最長時間月"
-          }
-        }
-      }
-    },
-    "Best Duration Year" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "最長時間年"
-          }
-        }
-      }
-    },
-    "bpm" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "bpm"
-          }
-        }
-      }
-    },
-    "Cadence" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ケイデンス"
-          }
-        }
-      }
-    },
-    "Calories" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "消費カロリー"
-          }
-        }
-      }
-    },
-    "Calories Burned" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "消費カロリー"
-          }
-        }
-      }
-    },
-    "Can request again in %dh %dm" : {
-      "comment" : "Remaining time with hours",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Can request again in %dh %dm"
+    "%dh %dm": {
+      "comment": "Duration format",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%dh %dm"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "あと%d時間%d分で再申請可能"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d時間%d分"
           }
         }
       }
     },
-    "Can request again in %dm" : {
-      "comment" : "Remaining time minutes only",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Can request again in %dm"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "あと%d分で再申請可能"
-          }
-        }
-      }
-    },
-    "Can request again soon" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "まもなく再申請可能"
-          }
-        }
-      }
-    },
-    "Cancel" : {
-      "comment" : "The text for a button that dismisses the current view.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "キャンセル"
-          }
-        }
-      }
-    },
-    "Change Photo" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "写真を変更"
-          }
-        }
-      }
-    },
-    "Close" : {
-      "comment" : "The label of a button to close a view.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "閉じる"
-          }
-        }
-      }
-    },
-    "Confirm Account Deletion" : {
-      "comment" : "An alert title that confirms the deletion of a user's account.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "退会確認"
-          }
-        }
-      }
-    },
-    "Connecting to Health..." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ヘルスケアに接続中..."
-          }
-        }
-      }
-    },
-    "Count" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "回数"
-          }
-        }
-      }
-    },
-    "Crashlytics Test" : {
-      "comment" : "A button that triggers a crash in debug mode for testing Crashlytics.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Crashlyticsテスト"
-          }
-        }
-      }
-    },
-    "Create Dummy Users" : {
-      "comment" : "A button that creates dummy users for testing purposes.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ダミーユーザーを作成"
-          }
-        }
-      }
-    },
-    "Daily Distance" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "日別距離"
-          }
-        }
-      }
-    },
-    "Data Sync" : {
-      "comment" : "A section in the settings menu that allows users to trigger a data sync.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "データ同期"
-          }
-        }
-      }
-    },
-    "Data to Export" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "出力するデータ"
-          }
-        }
-      }
-    },
-    "Day" : {
-      "comment" : "Label for the x-axis in the daily distance chart.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "日"
-          }
-        }
-      }
-    },
-    "Debug" : {
-      "comment" : "A section header in the settings view that links to debug options.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "デバッグ"
-          }
-        }
-      }
-    },
-    "Delete Account" : {
-      "comment" : "A button label that triggers account deletion",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "退会する"
-          }
-        }
-      }
-    },
-    "Delete My Run Data" : {
-      "comment" : "A button that deletes the user's run data.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ランニングデータを削除"
-          }
-        }
-      }
-    },
-    "Deleting your account will permanently remove all your data and cannot be undone. Are you sure?" : {
-      "comment" : "An alert message displayed when the user confirms deleting their account.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アカウントを削除すると、すべてのデータが完全に削除され、復元できません。本当に退会しますか？"
-          }
-        }
-      }
-    },
-    "Display Name" : {
-      "comment" : "A text field for the user to edit their display name.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "表示名"
-          }
-        }
-      }
-    },
-    "Distance" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "距離"
-          }
-        }
-      }
-    },
-    "Distance Progress" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "距離の推移"
-          }
-        }
-      }
-    },
-    "Distance/Run" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "距離/回"
-          }
-        }
-      }
-    },
-    "Duration" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "時間"
-          }
-        }
-      }
-    },
-    "Edit" : {
-      "comment" : "Edit profile button",
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "編集"
-          }
-        }
-      }
-    },
-    "Edit Profile" : {
-      "comment" : "The title of the view where a user can edit their profile.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "プロフィール編集"
-          }
-        }
-      }
-    },
-    "Efficiency" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "効率"
-          }
-        }
-      }
-    },
-    "Energy" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "エネルギー"
-          }
-        }
-      }
-    },
-    "Failed to convert image" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "画像の変換に失敗しました"
-          }
-        }
-      }
-    },
-    "Failed to delete account" : {
-      "comment" : "Error message displayed when deleting the user account fails.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アカウントの削除に失敗しました"
-          }
-        }
-      }
-    },
-    "Failed to fetch data" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "データの取得に失敗しました"
-          }
-        }
-      }
-    },
-    "Failed to get authentication token" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "認証トークンの取得に失敗しました"
-          }
-        }
-      }
-    },
-    "Failed to load profile" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "プロフィールの読み込みに失敗しました"
-          }
-        }
-      }
-    },
-    "Failed to Save" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "保存に失敗しました"
-          }
-        }
-      }
-    },
-    "Fast" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "速い"
-          }
-        }
-      }
-    },
-    "Fastest Day" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "最速日"
-          }
-        }
-      }
-    },
-    "Fetching data..." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "データを取得中..."
-          }
-        }
-      }
-    },
-    "Filter" : {
-      "comment" : "A label for the filter segment in the leaderboard view.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "フィルター"
-          }
-        }
-      }
-    },
-    "Friend" : {
-      "comment" : "A label indicating that a user is a friend.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "フレンド"
-          }
-        }
-      }
-    },
-    "Friend Request" : {
-      "comment" : "A label describing a friend request.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "フレンドリクエスト"
-          }
-        }
-      }
-    },
-    "FRIEND_ACCEPTED_BODY" : {
-      "comment" : "Push notification body when friend request is accepted",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ accepted your friend request"
+    "%dm": {
+      "comment": "Minutes only",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%dm"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@さんがフレンドリクエストを承認しました"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d分"
           }
         }
       }
     },
-    "FRIEND_ACCEPTED_TITLE" : {
-      "comment" : "Push notification title when friend request is accepted",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Friend Accepted"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "フレンド承認"
+    "%lld": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld"
           }
         }
       }
     },
-    "FRIEND_REQUEST_BODY" : {
-      "comment" : "Push notification body for friend request",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ sent you a friend request"
+    "%lld/%lld": {
+      "comment": "A text showing the current and total number of synced records.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld/%2$lld"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@さんからフレンドリクエストが届きました"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld/%2$lld"
           }
         }
       }
     },
-    "FRIEND_REQUEST_TITLE" : {
-      "comment" : "Push notification title for friend request",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Friend Request"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "フレンドリクエスト"
+    "Account": {
+      "comment": "A section header in the settings view for account-related settings.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アカウント"
           }
         }
       }
     },
-    "Friends" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "フレンド"
+    "All": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全員"
           }
         }
       }
     },
-    "Friends (%lld)" : {
-      "comment" : "A section that lists their friends. The number of friends is shown in parentheses.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "フレンド (%lld)"
+    "Already synced": {
+      "comment": "Message shown when health data is already up-to-date and no sync is needed.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同期済み"
           }
         }
       }
     },
-    "Health data access is not authorized" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ヘルスケアへのアクセスが許可されていません"
+    "App Info": {
+      "comment": "A section in the settings menu that provides information about the app.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリ情報"
           }
         }
       }
     },
-    "HealthKit" : {
-      "comment" : "A section in the settings menu related to HealthKit.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ヘルスケア"
+    "Average": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平均"
           }
         }
       }
     },
-    "HealthKit is not available on this device" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "HealthKitはこのデバイスで利用できません"
+    "Averages": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平均"
           }
         }
       }
     },
-    "Heart Rate" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "心拍数"
+    "Avg %d": {
+      "comment": "Average heart rate",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平均 %d"
           }
         }
       }
     },
-    "Heart Rate Graph" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "心拍数推移"
+    "Avg Distance": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平均距離"
           }
         }
       }
     },
-    "Highlights" : {
-      "comment" : "A section header that lists highlights from a user's yearly running summary.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ハイライト"
+    "Avg Heart Rate": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平均心拍数"
           }
         }
       }
     },
-    "Home" : {
-      "comment" : "The label for the \"Home\" tab in the tab view.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ホーム"
+    "Avg Pace": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平均ペース"
           }
         }
       }
     },
-    "Icon (shown when no photo)" : {
-      "comment" : "A section header describing the option to select an icon to display in the user's profile when no photo is set.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アイコン（写真がない場合に表示）"
+    "Avg Time": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平均時間"
           }
         }
       }
     },
-    "Invalid credentials" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "認証情報が無効です"
+    "Best": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ベスト"
           }
         }
       }
     },
-    "Kilometers (km)" : {
-      "comment" : "A label for kilometers.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "キロメートル (km)"
+    "Best Distance Day": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最長距離日"
           }
         }
       }
     },
-    "Last 12 Weeks" : {
-      "comment" : "A label describing a navigation link to a view that shows weekly trends for a user.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "過去12週間の推移"
+    "Best Distance Month": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最長距離月"
           }
         }
       }
     },
-    "Leaderboard" : {
-      "comment" : "The title of the leaderboard screen.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ランキング"
+    "Best Distance Year": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最長距離年"
           }
         }
       }
     },
-    "Licenses" : {
-      "comment" : "The title of the \"Licenses\" section in the settings menu.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ライセンス"
+    "Best Duration Day": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最長時間日"
           }
         }
       }
     },
-    "Loading Error" : {
-      "comment" : "A title for an alert that appears when there is an error loading data.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "読み込みエラー"
+    "Best Duration Month": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最長時間月"
           }
         }
       }
     },
-    "Loading..." : {
-      "comment" : "A text displayed while waiting for data to load.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "読み込み中..."
+    "Best Duration Year": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最長時間年"
           }
         }
       }
     },
-    "Max" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "最大"
+    "bpm": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bpm"
           }
         }
       }
     },
-    "max %lld" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "最大 %lld"
+    "Cadence": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ケイデンス"
           }
         }
       }
     },
-    "Miles (mi)" : {
-      "comment" : "An option in the distance unit picker, corresponding to miles.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "マイル (mi)"
+    "Calories": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "消費カロリー"
           }
         }
       }
     },
-    "min" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "分"
+    "Calories Burned": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "消費カロリー"
           }
         }
       }
     },
-    "Min" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "最小"
-          }
-        }
-      }
-    },
-    "Month" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "月"
-          }
-        }
-      }
-    },
-    "Monthly Distance" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "月別距離"
-          }
-        }
-      }
-    },
-    "Monthly Records" : {
-      "comment" : "A section header that indicates the display of monthly records.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "月別記録"
-          }
-        }
-      }
-    },
-    "Most Runs Month" : {
-      "comment" : "A label describing the month with the most running sessions.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "最多ラン月"
-          }
-        }
-      }
-    },
-    "Most Runs Year" : {
-      "comment" : "A label describing the year with the most running sessions.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "最多ラン年"
-          }
-        }
-      }
-    },
-    "No data available" : {
-      "comment" : "A message displayed when there is no data to display in the \"Weekly Trends\" view.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "データがありません"
-          }
-        }
-      }
-    },
-    "No data for this month" : {
-      "comment" : "A message displayed when there are no rankings available for the selected month.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "この月のデータがありません"
-          }
-        }
-      }
-    },
-    "No friends yet" : {
-      "comment" : "A message displayed when a user has no friends.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "フレンドがいません"
-          }
-        }
-      }
-    },
-    "No Rankings" : {
-      "comment" : "A message indicating that there are no rankings to display.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ランキングなし"
-          }
-        }
-      }
-    },
-    "No records yet" : {
-      "comment" : "A message indicating that there are no running records yet.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "まだ記録がありません"
-          }
-        }
-      }
-    },
-    "No running records for this month" : {
-      "comment" : "A message displayed when a user has no running records in a specific month.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "この月のランニング記録はありません"
-          }
-        }
-      }
-    },
-    "No users found" : {
-      "comment" : "A message displayed when no users match the search query.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ユーザーが見つかりません"
-          }
-        }
-      }
-    },
-    "Normal" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "普通"
-          }
-        }
-      }
-    },
-    "OK" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OK"
+    "Can request again in %dh %dm": {
+      "comment": "Remaining time with hours",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can request again in %dh %dm"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OK"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "あと%d時間%d分で再申請可能"
           }
         }
       }
     },
-    "Open Health Settings" : {
-      "comment" : "A button that opens the Health app on the user's device.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ヘルスケア設定を開く"
-          }
-        }
-      }
-    },
-    "Open Settings" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "設定を開く"
-          }
-        }
-      }
-    },
-    "Pace" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ペース"
-          }
-        }
-      }
-    },
-    "Photo Access Required" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "写真へのアクセスが必要です"
-          }
-        }
-      }
-    },
-    "Please allow photo library access to save images." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "写真を保存するには、写真ライブラリへのアクセスを許可してください。"
-          }
-        }
-      }
-    },
-    "Please select a photo" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "写真を選択してください"
-          }
-        }
-      }
-    },
-    "Privacy Policy" : {
-      "comment" : "A link to the privacy policy.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "プライバシーポリシー"
-          }
-        }
-      }
-    },
-    "PrivacyPolicyURL" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "https://sawasige.github.io/runrun-ios/en/privacy.html"
+    "Can request again in %dm": {
+      "comment": "Remaining time minutes only",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can request again in %dm"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "https://sawasige.github.io/runrun-ios/privacy.html"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "あと%d分で再申請可能"
           }
         }
       }
     },
-    "Profile" : {
-      "comment" : "The title of the profile view.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "プロフィール"
+    "Can request again soon": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "まもなく再申請可能"
           }
         }
       }
     },
-    "Profile Photo" : {
-      "comment" : "A section header in the profile edit view for uploading a profile photo.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "プロフィール画像"
+    "Cancel": {
+      "comment": "The text for a button that dismisses the current view.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キャンセル"
           }
         }
       }
     },
-    "Re-sync" : {
-      "comment" : "A button label that refreshes the user's data from their HealthKit store.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "再同期"
+    "Change Photo": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "写真を変更"
           }
         }
       }
     },
-    "Records" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "記録"
+    "Close": {
+      "comment": "The label of a button to close a view.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "閉じる"
           }
         }
       }
     },
-    "Records of %@" : {
-      "comment" : "Month records label for share",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Records of %@"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@の記録"
+    "Confirm Account Deletion": {
+      "comment": "An alert title that confirms the deletion of a user's account.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "退会確認"
           }
         }
       }
     },
-    "Reload" : {
-      "comment" : "The text on a button that reloads data.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "再読み込み"
+    "Connecting to Health...": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ヘルスケアに接続中..."
           }
         }
       }
     },
-    "Remove Friend" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "フレンドを解除"
+    "Count": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "回数"
           }
         }
       }
     },
-    "Remove Photo" : {
-      "comment" : "A button that removes the currently set profile photo.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "写真を削除"
+    "Crashlytics Test": {
+      "comment": "A button that triggers a crash in debug mode for testing Crashlytics.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crashlyticsテスト"
           }
         }
       }
     },
-    "Request Sent" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "申請済み"
+    "Create Dummy Users": {
+      "comment": "A button that creates dummy users for testing purposes.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ダミーユーザーを作成"
           }
         }
       }
     },
-    "Requests" : {
-      "comment" : "The header for the section containing friend request rows.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "リクエスト"
+    "Daily Distance": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日別距離"
           }
         }
       }
     },
-    "Retry" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "再試行"
+    "Data Sync": {
+      "comment": "A section in the settings menu that allows users to trigger a data sync.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "データ同期"
           }
         }
       }
     },
-    "Run Date" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ランニング日付"
+    "Data to Export": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "出力するデータ"
           }
         }
       }
     },
-    "Runner" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ランナー"
+    "Day": {
+      "comment": "Label for the x-axis in the daily distance chart.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日"
           }
         }
       }
     },
-    "Running Records" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ランニング記録"
+    "Debug": {
+      "comment": "A section header in the settings view that links to debug options.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "デバッグ"
           }
         }
       }
     },
-    "RunRun" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "RunRun"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "RunRun"
+    "Delete Account": {
+      "comment": "A button label that triggers account deletion",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "退会する"
           }
         }
       }
     },
-    "runs" : {
-      "comment" : "The plural form of \"run\".",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "回"
+    "Delete My Run Data": {
+      "comment": "A button that deletes the user's run data.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ランニングデータを削除"
           }
         }
       }
     },
-    "Runs" : {
-      "comment" : "A label describing the number of runs.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "回数"
+    "Deleting your account will permanently remove all your data and cannot be undone. Are you sure?": {
+      "comment": "An alert message displayed when the user confirms deleting their account.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アカウントを削除すると、すべてのデータが完全に削除され、復元できません。本当に退会しますか？"
           }
         }
       }
     },
-    "Save" : {
-      "comment" : "The text on a button that saves changes in a profile edit view.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "保存"
+    "Display Name": {
+      "comment": "A text field for the user to edit their display name.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "表示名"
           }
         }
       }
     },
-    "Saved" : {
-      "comment" : "The title of an alert that appears when an image is successfully saved to Photos.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "保存完了"
+    "Distance": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "距離"
           }
         }
       }
     },
-    "Saving..." : {
-      "comment" : "A message indicating that data is being saved.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "保存中..."
+    "Distance Progress": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "距離の推移"
           }
         }
       }
     },
-    "Search by display name" : {
-      "comment" : "A placeholder text for a search bar in the user search view.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "表示名で検索"
+    "Distance/Run": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "距離/回"
           }
         }
       }
     },
-    "Search Users" : {
-      "comment" : "The title of the view that allows users to search for other users.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ユーザー検索"
+    "Duration": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "時間"
           }
         }
       }
     },
-    "Select Photo" : {
-      "comment" : "A button label that allows a user to select a photo from their photo library.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "写真を選択"
+    "Edit": {
+      "comment": "Edit profile button",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "編集"
           }
         }
       }
     },
-    "Send Friend Request" : {
-      "comment" : "A button label that indicates a user can send a friend request.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "フレンド申請を送る"
+    "Edit Profile": {
+      "comment": "The title of the view where a user can edit their profile.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "プロフィール編集"
           }
         }
       }
     },
-    "Send Test Notification" : {
-      "comment" : "A button that sends a test notification to your device.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "テスト通知を送信"
+    "Efficiency": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "効率"
           }
         }
       }
     },
-    "Sent" : {
-      "comment" : "A label displayed when a user has sent a friend request to another user.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "送信済み"
+    "Energy": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "エネルギー"
           }
         }
       }
     },
-    "Series" : {
-      "comment" : "The `series` parameter in `LineMark` and `AreaMark` determines which dataset the data point belongs to.",
-      "isCommentAutoGenerated" : true
-    },
-    "Series" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "シリーズ"
+    "Failed to convert image": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画像の変換に失敗しました"
           }
         }
       }
     },
-    "Settings" : {
-      "comment" : "A tab label for the settings screen.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "設定"
+    "Failed to delete account": {
+      "comment": "Error message displayed when deleting the user account fails.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アカウントの削除に失敗しました"
           }
         }
       }
     },
-    "Share Settings" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "共有設定"
+    "Failed to fetch data": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "データの取得に失敗しました"
           }
         }
       }
     },
-    "Share your running records" : {
-      "comment" : "A description of the feature that allows users to share their running records.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ランニング記録を共有しよう"
+    "Failed to get authentication token": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "認証トークンの取得に失敗しました"
           }
         }
       }
     },
-    "Sign in failed" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "サインインに失敗しました"
+    "Failed to load profile": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "プロフィールの読み込みに失敗しました"
           }
         }
       }
     },
-    "Sign Out" : {
-      "comment" : "The text on a button that signs out the user from their account.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "サインアウト"
+    "Failed to Save": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存に失敗しました"
           }
         }
       }
     },
-    "Slow" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "遅い"
+    "Fast": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "速い"
           }
         }
       }
     },
-    "Splits" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "スプリット"
+    "Fastest Day": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最速日"
           }
         }
       }
     },
-    "Start" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "スタート"
+    "Fetching data...": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "データを取得中..."
           }
         }
       }
     },
-    "Start Time" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "スタート時間"
+    "Filter": {
+      "comment": "A label for the filter segment in the leaderboard view.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フィルター"
           }
         }
       }
     },
-    "Steps" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "歩数"
+    "Friend": {
+      "comment": "A label indicating that a user is a friend.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フレンド"
           }
         }
       }
     },
-    "Stride" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ストライド"
+    "Friend Request": {
+      "comment": "A label describing a friend request.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フレンドリクエスト"
           }
         }
       }
     },
-    "Support" : {
-      "comment" : "A link that takes the user to support information.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "サポート"
-          }
-        }
-      }
-    },
-    "SupportURL" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "https://sawasige.github.io/runrun-ios/en/support.html"
+    "FRIEND_ACCEPTED_BODY": {
+      "comment": "Push notification body when friend request is accepted",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ accepted your friend request"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "https://sawasige.github.io/runrun-ios/support.html"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@さんがフレンドリクエストを承認しました"
           }
         }
       }
     },
-    "Sync complete" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "同期完了"
-          }
-        }
-      }
-    },
-    "Sync error" : {
-      "comment" : "Error message displayed when there is an issue syncing health data.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "同期エラー"
-          }
-        }
-      }
-    },
-    "Sync failed" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "同期に失敗しました"
-          }
-        }
-      }
-    },
-    "Syncing..." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "同期中..."
-          }
-        }
-      }
-    },
-    "Terms of Service" : {
-      "comment" : "A link to the app's terms of service.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "利用規約"
-          }
-        }
-      }
-    },
-    "TermsOfServiceURL" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "https://sawasige.github.io/runrun-ios/en/terms.html"
+    "FRIEND_ACCEPTED_TITLE": {
+      "comment": "Push notification title when friend request is accepted",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Friend Accepted"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "https://sawasige.github.io/runrun-ios/terms.html"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フレンド承認"
           }
         }
       }
     },
-    "TEST_NOTIFICATION_BODY" : {
-      "comment" : "Push notification body for test notification",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Push notifications are working!"
+    "FRIEND_REQUEST_BODY": {
+      "comment": "Push notification body for friend request",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ sent you a friend request"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "プッシュ通知が正常に動作しています！"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@さんからフレンドリクエストが届きました"
           }
         }
       }
     },
-    "TEST_NOTIFICATION_TITLE" : {
-      "comment" : "Push notification title for test notification",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Test Notification"
+    "FRIEND_REQUEST_TITLE": {
+      "comment": "Push notification title for friend request",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Friend Request"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "テスト通知"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フレンドリクエスト"
           }
         }
       }
     },
-    "Time" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "時間"
+    "Friends": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フレンド"
           }
         }
       }
     },
-    "Time/Run" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "時間/回"
+    "Friends (%lld)": {
+      "comment": "A section that lists their friends. The number of friends is shown in parentheses.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フレンド (%lld)"
           }
         }
       }
     },
-    "Today" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "今日"
+    "Health data access is not authorized": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ヘルスケアへのアクセスが許可されていません"
           }
         }
       }
     },
-    "Total Distance" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "合計距離"
+    "HealthKit": {
+      "comment": "A section in the settings menu related to HealthKit.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ヘルスケア"
           }
         }
       }
     },
-    "Total Energy" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "合計エネルギー"
+    "HealthKit is not available on this device": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HealthKitはこのデバイスで利用できません"
           }
         }
       }
     },
-    "Total Runs" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "合計回数"
+    "Heart Rate": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "心拍数"
           }
         }
       }
     },
-    "Total Time" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "合計時間"
+    "Heart Rate Graph": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "心拍数推移"
           }
         }
       }
     },
-    "Totals" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "合計"
+    "Highlights": {
+      "comment": "A section header that lists highlights from a user's yearly running summary.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ハイライト"
           }
         }
       }
     },
-    "Units" : {
-      "comment" : "A section header that lists the user's units of measurement.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "単位"
+    "Home": {
+      "comment": "The label for the \"Home\" tab in the tab view.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ホーム"
           }
         }
       }
     },
-    "User" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ユーザー"
+    "Icon (shown when no photo)": {
+      "comment": "A section header describing the option to select an icon to display in the user's profile when no photo is set.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アイコン（写真がない場合に表示）"
           }
         }
       }
     },
-    "Version" : {
-      "comment" : "A label displayed next to the app version in the settings view.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "バージョン"
+    "Invalid credentials": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "認証情報が無効です"
           }
         }
       }
     },
-    "Week" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "週"
+    "Kilometers (km)": {
+      "comment": "A label for kilometers.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キロメートル (km)"
           }
         }
       }
     },
-    "Weekly Data" : {
-      "comment" : "A section header that indicates the display of weekly data.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "週間データ"
+    "Last 12 Weeks": {
+      "comment": "A label describing a navigation link to a view that shows weekly trends for a user.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "過去12週間の推移"
           }
         }
       }
     },
-    "Weekly Trends" : {
-      "comment" : "A section header that links to a view showing weekly trends.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "週間推移"
+    "Leaderboard": {
+      "comment": "The title of the leaderboard screen.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ランキング"
           }
         }
       }
     },
-    "Year" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "年"
+    "Licenses": {
+      "comment": "The title of the \"Licenses\" section in the settings menu.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ライセンス"
           }
         }
       }
     },
-    "Yearly Distance" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "年別距離"
+    "Loading Error": {
+      "comment": "A title for an alert that appears when there is an error loading data.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "読み込みエラー"
           }
         }
       }
     },
-    "Yearly Records" : {
-      "comment" : "A section header that links to a view showing yearly records for a user.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "年別記録"
+    "Loading...": {
+      "comment": "A text displayed while waiting for data to load.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "読み込み中..."
           }
         }
       }
     },
-    "Yesterday" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "昨日"
+    "Max": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最大"
           }
         }
       }
     },
-    "Your and your friends' running records will appear here" : {
-      "comment" : "A description text displayed when a user has no running records.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "あなたとフレンドのランニング記録がここに表示されます"
+    "max %lld": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最大 %lld"
+          }
+        }
+      }
+    },
+    "Miles (mi)": {
+      "comment": "An option in the distance unit picker, corresponding to miles.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "マイル (mi)"
+          }
+        }
+      }
+    },
+    "min": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分"
+          }
+        }
+      }
+    },
+    "Min": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最小"
+          }
+        }
+      }
+    },
+    "Month": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "月"
+          }
+        }
+      }
+    },
+    "Monthly Distance": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "月別距離"
+          }
+        }
+      }
+    },
+    "Monthly Records": {
+      "comment": "A section header that indicates the display of monthly records.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "月別記録"
+          }
+        }
+      }
+    },
+    "Most Runs Month": {
+      "comment": "A label describing the month with the most running sessions.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最多ラン月"
+          }
+        }
+      }
+    },
+    "Most Runs Year": {
+      "comment": "A label describing the year with the most running sessions.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最多ラン年"
+          }
+        }
+      }
+    },
+    "No data available": {
+      "comment": "A message displayed when there is no data to display in the \"Weekly Trends\" view.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "データがありません"
+          }
+        }
+      }
+    },
+    "No data for this month": {
+      "comment": "A message displayed when there are no rankings available for the selected month.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この月のデータがありません"
+          }
+        }
+      }
+    },
+    "No friends yet": {
+      "comment": "A message displayed when a user has no friends.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フレンドがいません"
+          }
+        }
+      }
+    },
+    "No Rankings": {
+      "comment": "A message indicating that there are no rankings to display.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ランキングなし"
+          }
+        }
+      }
+    },
+    "No records yet": {
+      "comment": "A message indicating that there are no running records yet.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "まだ記録がありません"
+          }
+        }
+      }
+    },
+    "No running records for this month": {
+      "comment": "A message displayed when a user has no running records in a specific month.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この月のランニング記録はありません"
+          }
+        }
+      }
+    },
+    "No users found": {
+      "comment": "A message displayed when no users match the search query.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ユーザーが見つかりません"
+          }
+        }
+      }
+    },
+    "Normal": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "普通"
+          }
+        }
+      }
+    },
+    "OK": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        }
+      }
+    },
+    "Open Health Settings": {
+      "comment": "A button that opens the Health app on the user's device.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ヘルスケア設定を開く"
+          }
+        }
+      }
+    },
+    "Open Settings": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定を開く"
+          }
+        }
+      }
+    },
+    "Pace": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ペース"
+          }
+        }
+      }
+    },
+    "Photo Access Required": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "写真へのアクセスが必要です"
+          }
+        }
+      }
+    },
+    "Please allow photo library access to save images.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "写真を保存するには、写真ライブラリへのアクセスを許可してください。"
+          }
+        }
+      }
+    },
+    "Please select a photo": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "写真を選択してください"
+          }
+        }
+      }
+    },
+    "Privacy Policy": {
+      "comment": "A link to the privacy policy.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "プライバシーポリシー"
+          }
+        }
+      }
+    },
+    "PrivacyPolicyURL": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "https://sawasige.github.io/runrun-ios/en/privacy.html"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "https://sawasige.github.io/runrun-ios/privacy.html"
+          }
+        }
+      }
+    },
+    "Profile": {
+      "comment": "The title of the profile view.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "プロフィール"
+          }
+        }
+      }
+    },
+    "Profile Photo": {
+      "comment": "A section header in the profile edit view for uploading a profile photo.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "プロフィール画像"
+          }
+        }
+      }
+    },
+    "Re-sync": {
+      "comment": "A button label that refreshes the user's data from their HealthKit store.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "再同期"
+          }
+        }
+      }
+    },
+    "Records": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記録"
+          }
+        }
+      }
+    },
+    "Records of %@": {
+      "comment": "Month records label for share",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Records of %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@の記録"
+          }
+        }
+      }
+    },
+    "Reload": {
+      "comment": "The text on a button that reloads data.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "再読み込み"
+          }
+        }
+      }
+    },
+    "Remove Friend": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フレンドを解除"
+          }
+        }
+      }
+    },
+    "Remove Photo": {
+      "comment": "A button that removes the currently set profile photo.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "写真を削除"
+          }
+        }
+      }
+    },
+    "Request Sent": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "申請済み"
+          }
+        }
+      }
+    },
+    "Requests": {
+      "comment": "The header for the section containing friend request rows.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "リクエスト"
+          }
+        }
+      }
+    },
+    "Retry": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "再試行"
+          }
+        }
+      }
+    },
+    "Run Date": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ランニング日付"
+          }
+        }
+      }
+    },
+    "Runner": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ランナー"
+          }
+        }
+      }
+    },
+    "Running Records": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ランニング記録"
+          }
+        }
+      }
+    },
+    "RunRun": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RunRun"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RunRun"
+          }
+        }
+      }
+    },
+    "runs": {
+      "comment": "The plural form of \"run\".",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "回"
+          }
+        }
+      }
+    },
+    "Runs": {
+      "comment": "A label describing the number of runs.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "回数"
+          }
+        }
+      }
+    },
+    "Save": {
+      "comment": "The text on a button that saves changes in a profile edit view.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存"
+          }
+        }
+      }
+    },
+    "Saved": {
+      "comment": "The title of an alert that appears when an image is successfully saved to Photos.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存完了"
+          }
+        }
+      }
+    },
+    "Saving...": {
+      "comment": "A message indicating that data is being saved.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存中..."
+          }
+        }
+      }
+    },
+    "Search by display name": {
+      "comment": "A placeholder text for a search bar in the user search view.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "表示名で検索"
+          }
+        }
+      }
+    },
+    "Search Users": {
+      "comment": "The title of the view that allows users to search for other users.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ユーザー検索"
+          }
+        }
+      }
+    },
+    "Select Photo": {
+      "comment": "A button label that allows a user to select a photo from their photo library.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "写真を選択"
+          }
+        }
+      }
+    },
+    "Send Friend Request": {
+      "comment": "A button label that indicates a user can send a friend request.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フレンド申請を送る"
+          }
+        }
+      }
+    },
+    "Send Test Notification": {
+      "comment": "A button that sends a test notification to your device.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テスト通知を送信"
+          }
+        }
+      }
+    },
+    "Sent": {
+      "comment": "A label displayed when a user has sent a friend request to another user.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "送信済み"
+          }
+        }
+      }
+    },
+    "Series": {
+      "comment": "The `series` parameter in `LineMark` and `AreaMark` determines which dataset the data point belongs to.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "系列"
+          }
+        }
+      }
+    },
+    "Settings": {
+      "comment": "A tab label for the settings screen.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定"
+          }
+        }
+      }
+    },
+    "Share Settings": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "共有設定"
+          }
+        }
+      }
+    },
+    "Sign in failed": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サインインに失敗しました"
+          }
+        }
+      }
+    },
+    "Sign Out": {
+      "comment": "The text on a button that signs out the user from their account.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サインアウト"
+          }
+        }
+      }
+    },
+    "Slow": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "遅い"
+          }
+        }
+      }
+    },
+    "Splits": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "スプリット"
+          }
+        }
+      }
+    },
+    "Start": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "スタート"
+          }
+        }
+      }
+    },
+    "Start Time": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "スタート時間"
+          }
+        }
+      }
+    },
+    "Steps": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "歩数"
+          }
+        }
+      }
+    },
+    "Stride": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ストライド"
+          }
+        }
+      }
+    },
+    "Support": {
+      "comment": "A link that takes the user to support information.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サポート"
+          }
+        }
+      }
+    },
+    "SupportURL": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "https://sawasige.github.io/runrun-ios/en/support.html"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "https://sawasige.github.io/runrun-ios/support.html"
+          }
+        }
+      }
+    },
+    "Sync complete": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同期完了"
+          }
+        }
+      }
+    },
+    "Sync error": {
+      "comment": "Error message displayed when there is an issue syncing health data.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同期エラー"
+          }
+        }
+      }
+    },
+    "Sync failed": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同期に失敗しました"
+          }
+        }
+      }
+    },
+    "Syncing...": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同期中..."
+          }
+        }
+      }
+    },
+    "Terms of Service": {
+      "comment": "A link to the app's terms of service.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "利用規約"
+          }
+        }
+      }
+    },
+    "TermsOfServiceURL": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "https://sawasige.github.io/runrun-ios/en/terms.html"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "https://sawasige.github.io/runrun-ios/terms.html"
+          }
+        }
+      }
+    },
+    "TEST_NOTIFICATION_BODY": {
+      "comment": "Push notification body for test notification",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Push notifications are working!"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "プッシュ通知が正常に動作しています！"
+          }
+        }
+      }
+    },
+    "TEST_NOTIFICATION_TITLE": {
+      "comment": "Push notification title for test notification",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test Notification"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テスト通知"
+          }
+        }
+      }
+    },
+    "Time": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "時間"
+          }
+        }
+      }
+    },
+    "Time/Run": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "時間/回"
+          }
+        }
+      }
+    },
+    "Today": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日"
+          }
+        }
+      }
+    },
+    "Total Distance": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "合計距離"
+          }
+        }
+      }
+    },
+    "Total Energy": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "合計エネルギー"
+          }
+        }
+      }
+    },
+    "Total Runs": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "合計回数"
+          }
+        }
+      }
+    },
+    "Total Time": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "合計時間"
+          }
+        }
+      }
+    },
+    "Totals": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "合計"
+          }
+        }
+      }
+    },
+    "Units": {
+      "comment": "A section header that lists the user's units of measurement.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "単位"
+          }
+        }
+      }
+    },
+    "User": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ユーザー"
+          }
+        }
+      }
+    },
+    "Version": {
+      "comment": "A label displayed next to the app version in the settings view.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バージョン"
+          }
+        }
+      }
+    },
+    "Visualize your running journey": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ランニングの記録を可視化"
+          }
+        }
+      }
+    },
+    "Week": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "週"
+          }
+        }
+      }
+    },
+    "Weekly Data": {
+      "comment": "A section header that indicates the display of weekly data.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "週間データ"
+          }
+        }
+      }
+    },
+    "Weekly Trends": {
+      "comment": "A section header that links to a view showing weekly trends.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "週間推移"
+          }
+        }
+      }
+    },
+    "Works with Apple Watch, Strava, Nike Run Club, Garmin, and more via Apple Health": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Watch、Strava、Nike Run Club、Garminなど、ヘルスケア経由で連携"
+          }
+        }
+      }
+    },
+    "Year": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "年"
+          }
+        }
+      }
+    },
+    "Yearly Distance": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "年別距離"
+          }
+        }
+      }
+    },
+    "Yearly Records": {
+      "comment": "A section header that links to a view showing yearly records for a user.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "年別記録"
+          }
+        }
+      }
+    },
+    "Yesterday": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "昨日"
+          }
+        }
+      }
+    },
+    "Your and your friends' running records will appear here": {
+      "comment": "A description text displayed when a user has no running records.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "あなたとフレンドのランニング記録がここに表示されます"
           }
         }
       }
     }
   },
-  "version" : "1.1"
+  "version": "1.1"
 }

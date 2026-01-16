@@ -38,17 +38,17 @@ final class NotificationService: NSObject, ObservableObject {
         }
     }
 
-    func registerForRemoteNotifications() {
+    /// デリゲートの設定のみ（許可リクエストなし）
+    func setup() {
         UNUserNotificationCenter.current().delegate = self
         Messaging.messaging().delegate = self
+    }
 
-        Task {
-            let granted = await requestAuthorization()
-            if granted {
-                await MainActor.run {
-                    UIApplication.shared.registerForRemoteNotifications()
-                }
-            }
+    /// 許可をリクエストしてリモート通知に登録
+    func requestAndRegister() async {
+        let granted = await requestAuthorization()
+        if granted {
+            UIApplication.shared.registerForRemoteNotifications()
         }
     }
 
