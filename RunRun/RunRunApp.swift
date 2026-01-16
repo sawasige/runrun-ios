@@ -8,6 +8,9 @@ import BackgroundTasks
 class AppDelegate: NSObject, UIApplicationDelegate {
     static let widgetRefreshTaskIdentifier = "com.himatsubu.RunRun.widget-refresh"
 
+    /// HealthKit監視用（解放されないように保持）
+    private var healthKitService: HealthKitService?
+
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
@@ -93,13 +96,14 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     // MARK: - HealthKit Observer
 
     private func setupHealthKitObserver() async {
-        let healthKitService = HealthKitService()
+        let service = HealthKitService()
+        self.healthKitService = service  // インスタンスを保持
 
         do {
-            try await healthKitService.enableBackgroundDelivery()
-            healthKitService.startObservingWorkouts { [weak self] in
-                // ワークアウト変更を検知したらウィジェットリフレッシュをスケジュール
-                self?.scheduleWidgetRefresh()
+            try await service.enableBackgroundDelivery()
+            service.startObservingWorkouts {
+                // ワークアウト変更を検知したら即座に同期してウィジェットを更新
+                await self.refreshWidgetData()
             }
         } catch {
             print("Failed to setup HealthKit observer: \(error)")
