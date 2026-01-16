@@ -73,20 +73,31 @@ struct MockDataProvider {
         let now = Date()
         let currentYear = calendar.component(.year, from: now)
 
-        // 前年のデータを表示（12ヶ月全てにデータあり）
+        // 今年の12ヶ月分を表示（1〜8月にデータあり、9〜12月は0）
         return (1...12).map { month in
-            let baseDistance = Double.random(in: 30000...80000)
-            let runCount = Int.random(in: 5...15)
-
-            return MonthlyRunningStats(
-                id: UUID(),
-                year: currentYear - 1,
-                month: month,
-                totalDistanceInMeters: baseDistance,
-                totalDurationInSeconds: baseDistance / 1000 * 330,
-                runCount: runCount,
-                totalCalories: baseDistance / 1000 * 60
-            )
+            if month <= 8 {
+                let baseDistance = Double.random(in: 30000...80000)
+                let runCount = Int.random(in: 5...15)
+                return MonthlyRunningStats(
+                    id: UUID(),
+                    year: currentYear,
+                    month: month,
+                    totalDistanceInMeters: baseDistance,
+                    totalDurationInSeconds: baseDistance / 1000 * 330,
+                    runCount: runCount,
+                    totalCalories: baseDistance / 1000 * 60
+                )
+            } else {
+                return MonthlyRunningStats(
+                    id: UUID(),
+                    year: currentYear,
+                    month: month,
+                    totalDistanceInMeters: 0,
+                    totalDurationInSeconds: 0,
+                    runCount: 0,
+                    totalCalories: 0
+                )
+            }
         }
     }
 
@@ -260,12 +271,12 @@ struct MockDataProvider {
     static var yearDetailRecords: [RunningRecord] {
         let calendar = Calendar.current
         let now = Date()
-        let currentYear = calendar.component(.year, from: now) - 1 // 前年のデータ（12ヶ月分あるように）
+        let currentYear = calendar.component(.year, from: now) // 今年のデータ（1〜8月）
 
         var records: [RunningRecord] = []
 
-        // 各月に5〜8回のランを配置
-        for month in 1...12 {
+        // 各月に5〜8回のランを配置（1〜8月）
+        for month in 1...8 {
             let runsInMonth = Int.random(in: 5...8)
             let daysUsed = Set((1...28).shuffled().prefix(runsInMonth))
 
@@ -279,6 +290,46 @@ struct MockDataProvider {
                 guard let date = calendar.date(from: dateComponents) else { continue }
 
                 let distance = Double.random(in: 3000...12000)
+                records.append(RunningRecord(
+                    id: UUID(),
+                    date: date,
+                    distanceInMeters: distance,
+                    durationInSeconds: distance / 1000 * Double.random(in: 300...400),
+                    caloriesBurned: distance / 15,
+                    averageHeartRate: Double.random(in: 140...160),
+                    maxHeartRate: Double.random(in: 165...180),
+                    minHeartRate: Double.random(in: 120...140)
+                ))
+            }
+        }
+
+        return records.sorted { $0.date < $1.date }
+    }
+
+    /// 前年のラン記録（今年より若干少ない総距離）
+    static var previousYearDetailRecords: [RunningRecord] {
+        let calendar = Calendar.current
+        let now = Date()
+        let previousYear = calendar.component(.year, from: now) - 1
+
+        var records: [RunningRecord] = []
+
+        // 各月に4〜6回のランを配置（12ヶ月分、今年より少なめ）
+        for month in 1...12 {
+            let runsInMonth = Int.random(in: 4...6)
+            let daysUsed = Set((1...28).shuffled().prefix(runsInMonth))
+
+            for day in daysUsed {
+                var dateComponents = DateComponents()
+                dateComponents.year = previousYear
+                dateComponents.month = month
+                dateComponents.day = day
+                dateComponents.hour = Int.random(in: 6...9)
+
+                guard let date = calendar.date(from: dateComponents) else { continue }
+
+                // 今年より若干短い距離
+                let distance = Double.random(in: 2500...10000)
                 records.append(RunningRecord(
                     id: UUID(),
                     date: date,
