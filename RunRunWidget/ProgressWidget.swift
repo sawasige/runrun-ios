@@ -153,7 +153,7 @@ struct ProgressWidgetEntryView: View {
                             .fill(Self.runColor)
                             .frame(width: 12, height: 2)
                         Text("This month")
-                            .font(.system(size: 8))
+                            .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
                     HStack(spacing: 4) {
@@ -161,7 +161,7 @@ struct ProgressWidgetEntryView: View {
                             .stroke(Color.secondary, style: StrokeStyle(lineWidth: 1.5, dash: [2, 2]))
                             .frame(width: 12, height: 2)
                         Text("Last month")
-                            .font(.system(size: 8))
+                            .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
                 }
