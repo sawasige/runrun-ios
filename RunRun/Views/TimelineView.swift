@@ -321,27 +321,44 @@ struct TimelineView: View {
 private struct TimelineRunRow: View {
     let run: TimelineRun
 
+    private var paceSecondsPerKm: Double? {
+        guard run.distanceKm > 0 else { return nil }
+        return run.durationSeconds / run.distanceKm
+    }
+
     var body: some View {
         HStack(spacing: 12) {
             ProfileAvatarView(iconName: run.iconName, avatarURL: run.avatarURL, size: 40)
 
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(run.displayName)
-                        .font(.headline)
-                    Spacer()
-                    Text(run.formattedTime)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+            // 左側: 名前と時間・ペース
+            VStack(alignment: .leading, spacing: 2) {
+                Text(run.displayName)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
 
-                HStack(spacing: 16) {
-                    Label(run.formattedDistance, systemImage: "ruler")
-                    Label(run.formattedDuration, systemImage: "clock")
-                    Label(run.formattedPace, systemImage: "speedometer")
+                // 時間とペース（控えめに）
+                HStack(spacing: 6) {
+                    Text(run.formattedDuration)
+                    Text("·")
+                    Text(UnitFormatter.formatPaceValue(secondsPerKm: paceSecondsPerKm))
+                    Text(UnitFormatter.paceUnit)
+                        .foregroundStyle(.tertiary)
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            // 右側: 距離（ヒーロー表示）
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Text(UnitFormatter.formatDistanceValue(run.distanceKm, decimals: 2))
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .monospacedDigit()
+                Text(UnitFormatter.distanceUnit)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             Image(systemName: "chevron.right")
