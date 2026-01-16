@@ -178,7 +178,8 @@ struct CalendarWidgetEntryView: View {
             Spacer()
 
             Text("\(entry.runDays.count)")
-                .font(.system(size: 48, weight: .bold))
+                .font(.largeTitle)
+                .fontWeight(.bold)
                 .foregroundStyle(.primary)
 
             Text("Runs")
@@ -206,7 +207,8 @@ struct CalendarWidgetEntryView: View {
                 LazyVGrid(columns: columns, spacing: 2) {
                     ForEach(0..<7, id: \.self) { index in
                         Text(weekdaySymbols[index])
-                            .font(.system(size: 8, weight: .medium))
+                            .font(.caption2)
+                            .fontWeight(.medium)
                             .foregroundStyle(weekdayHeaderColor(index: index))
                     }
                 }
@@ -280,7 +282,8 @@ struct CalendarWidgetEntryView: View {
                 LazyVGrid(columns: columns, spacing: 4) {
                     ForEach(0..<7, id: \.self) { index in
                         Text(weekdaySymbols[index])
-                            .font(.system(size: 12, weight: .medium))
+                            .font(.caption)
+                            .fontWeight(.medium)
                             .foregroundStyle(weekdayHeaderColor(index: index))
                     }
                 }
@@ -374,10 +377,10 @@ struct CalendarWidgetEntryView: View {
             }
         }
 
-        var fontSize: CGFloat {
+        var font: Font {
             switch self {
-            case .medium: return 10
-            case .large: return 14
+            case .medium: return .caption2
+            case .large: return .footnote
             }
         }
 
@@ -395,8 +398,11 @@ struct CalendarWidgetEntryView: View {
         let fillOpacity = renderingMode == .fullColor ? 1.0 : 0.3
 
         return Text("\(day)")
-            .font(.system(size: size.fontSize, weight: hasRun || isToday ? .semibold : .regular))
+            .font(size.font)
+            .fontWeight(hasRun || isToday ? .semibold : .regular)
             .foregroundStyle(dayTextColor(weekday: weekday, hasRun: hasRun, isToday: isToday))
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
             .frame(width: size.height, height: size.height)
             .background {
                 if hasRun {
