@@ -139,7 +139,15 @@ final class YearDetailViewModel: ObservableObject {
         let currentDayOfYear = calendar.ordinality(of: .day, in: .year, for: Date()) ?? 1
 
         // 当年の場合は今日まで、過去年の場合は年末まで
-        let maxDay = year < currentYear ? 365 : currentDayOfYear
+        // スクリーンショットモードでは8月末（243日目）まで表示
+        let maxDay: Int
+        if ScreenshotMode.isEnabled && year == currentYear {
+            maxDay = 243 // 8月末
+        } else if year < currentYear {
+            maxDay = 365
+        } else {
+            maxDay = currentDayOfYear
+        }
 
         // 日別に距離を合算
         var dailyDistances: [Int: Double] = [:]
@@ -173,8 +181,7 @@ final class YearDetailViewModel: ObservableObject {
         if let initialYear = initialYear {
             self.selectedYear = initialYear
         } else {
-            // スクリーンショットモードでは前年を表示
-            self.selectedYear = ScreenshotMode.isEnabled ? currentYear - 1 : currentYear
+            self.selectedYear = currentYear
         }
     }
 
@@ -188,7 +195,7 @@ final class YearDetailViewModel: ObservableObject {
             monthlyStats = MockDataProvider.monthlyStats.filter { $0.year == selectedYear }
             previousYearMonthlyStats = MockDataProvider.monthlyStats.filter { $0.year == selectedYear - 1 }
             yearlyRuns = MockDataProvider.yearDetailRecords
-            previousYearRuns = []
+            previousYearRuns = MockDataProvider.previousYearDetailRecords
             isLoading = false
             return
         }

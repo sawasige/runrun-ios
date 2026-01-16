@@ -8,8 +8,8 @@
     },
     "title": {
       "font": "./fonts/HiraginoMaruGo.ttc",
-      "font_size": 48,
-      "color": "#555555"
+      "font_size": 64,
+      "color": "#FFFFFF"
     },
     "background": "./background.png",
     "padding": 50,
@@ -34,8 +34,8 @@
       },
       "title": {
         "font": "./fonts/SFPro.ttf",
-        "font_size": 48,
-        "color": "#555555"
+        "font_size": 64,
+        "color": "#FFFFFF"
       }
     }
   ]
