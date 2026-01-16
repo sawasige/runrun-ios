@@ -8,11 +8,12 @@ RunRunはApple Watchのランニング記録を月別に表示し、他のユー
 
 ## Tech Stack
 
-- **UI**: SwiftUI (iOS 17+)
+- **UI**: SwiftUI (iOS 18+)
 - **Architecture**: MVVM
 - **Data Source**: HealthKit (Apple Watchの運動データ)
 - **Backend**: Firebase (Authentication, Firestore)
 - **認証**: Sign in with Apple
+- **Widget**: WidgetKit
 
 ## Build & Run
 
@@ -52,9 +53,16 @@ RunRun/
 │   ├── LoginView.swift              # ログイン画面
 │   ├── UserSearchView.swift         # ユーザー検索
 │   ├── SyncBannerView.swift         # 同期状態バナー
+│   ├── SyncProgressView.swift       # 同期進捗表示
 │   ├── GradientRouteMapView.swift   # ルートマップ表示
 │   ├── HeartRateChartView.swift     # 心拍チャート
-│   └── RunCalendarView.swift        # カレンダー表示
+│   ├── RunCalendarView.swift        # カレンダー表示
+│   ├── LicensesView.swift           # ライセンス一覧
+│   ├── ShareSheet.swift             # 共有シート
+│   ├── RunShareSettingsView.swift   # ラン共有設定
+│   ├── MonthShareSettingsView.swift # 月共有設定
+│   ├── YearShareSettingsView.swift  # 年共有設定
+│   └── ProfileShareSettingsView.swift # プロフィール共有設定
 ├── ViewModels/
 │   ├── TimelineViewModel.swift
 │   ├── YearDetailViewModel.swift
@@ -71,18 +79,28 @@ RunRun/
 │   ├── HeartRateSample.swift        # 心拍データ
 │   ├── RouteSegment.swift           # ルートセグメント
 │   └── Split.swift                  # スプリットデータ
-└── Services/
-    ├── HealthKitService.swift       # HealthKit連携
-    ├── AuthenticationService.swift  # Apple Sign In + Firebase Auth
-    ├── FirestoreService.swift       # Firestore CRUD操作
-    ├── StorageService.swift         # Firebase Storage
-    ├── SyncService.swift            # HealthKit→Firestore同期
-    ├── AnalyticsService.swift       # Firebase Analytics
-    ├── NotificationService.swift    # プッシュ通知
-    ├── BadgeService.swift           # バッジ管理
-    ├── ImageCacheService.swift      # 画像キャッシュ
-    ├── MockDataProvider.swift       # スクリーンショット用モックデータ
-    └── ScreenshotMode.swift         # スクリーンショットモード
+├── Services/
+│   ├── HealthKitService.swift       # HealthKit連携
+│   ├── AuthenticationService.swift  # Apple Sign In + Firebase Auth
+│   ├── FirestoreService.swift       # Firestore CRUD操作
+│   ├── StorageService.swift         # Firebase Storage
+│   ├── SyncService.swift            # HealthKit→Firestore同期
+│   ├── WidgetService.swift          # ウィジェットデータ更新
+│   ├── AnalyticsService.swift       # Firebase Analytics
+│   ├── NotificationService.swift    # プッシュ通知
+│   ├── BadgeService.swift           # バッジ管理
+│   ├── ImageCacheService.swift      # 画像キャッシュ
+│   ├── PhotoLibraryService.swift    # 写真ライブラリ保存
+│   ├── MockDataProvider.swift       # スクリーンショット用モックデータ
+│   └── ScreenshotMode.swift         # スクリーンショットモード
+└── Utilities/
+    └── UnitFormatter.swift          # 距離・時間のフォーマット
+
+RunRunWidget/
+├── RunRunWidgetBundle.swift     # ウィジェットバンドル
+├── CalendarWidget.swift         # 月間カレンダーウィジェット
+├── ProgressWidget.swift         # 累積距離グラフウィジェット
+└── WidgetDataStore.swift        # ウィジェット用データストア（App Groups経由）
 ```
 
 ## Architecture Conventions
@@ -103,8 +121,45 @@ RunRun/
 - 認証リクエスト: `requestAuthorization()`
 - ワークアウト取得: `fetchRunningWorkouts(from:to:)`
 - 月別統計: `fetchMonthlyStats(for:)`
+- バックグラウンド配信: `enableBackgroundDelivery()` + `startObservingWorkouts()`
 
 Info.plistに`NSHealthShareUsageDescription`が設定済み。
+
+### HKObserverQuery
+
+ランニング終了後にウィジェットを即時更新するため、`HKObserverQuery`でワークアウトの変更を監視:
+
+```swift
+healthKitService.startObservingWorkouts {
+    // ワークアウト変更時にBGAppRefreshTaskをスケジュール
+    scheduleWidgetRefresh()
+}
+```
+
+## Widget Integration
+
+### アーキテクチャ
+
+```
+[メインアプリ] → [WidgetService] → [App Groups UserDefaults] → [WidgetDataStore] → [Widget]
+```
+
+- **WidgetService**: メインアプリからウィジェットデータを保存
+- **WidgetDataStore**: ウィジェットからデータを読み込み
+- **App Groups**: `group.com.himatsubu.RunRun`でデータ共有
+
+### ウィジェット種類
+
+| ウィジェット | サイズ | 説明 |
+|-------------|--------|------|
+| CalendarWidget | Small/Medium/Large | 月間カレンダーでランした日をマーク |
+| ProgressWidget | Medium | 累積距離グラフ（当月 vs 前月） |
+
+### 更新タイミング
+
+1. **アプリ起動時**: `SyncService`が同期後に`WidgetService.updateFromRecords()`を呼び出し
+2. **バックグラウンド更新**: `BGAppRefreshTask`で定期更新（15分間隔）
+3. **HealthKit変更検知**: `HKObserverQuery`で即時更新
 
 ## Firebase Integration
 
@@ -185,7 +240,7 @@ firebase deploy --only firestore:indexes
 1. File > New > Project > iOS App
 2. Product Name: `RunRun`
 3. Interface: SwiftUI, Language: Swift
-4. Signing & Capabilities で「HealthKit」「Sign in with Apple」を追加
+4. Signing & Capabilities で「HealthKit」「Sign in with Apple」「Background Modes」「App Groups」を追加
 5. Firebase SDKをSwift Package Managerで追加
 
 ## Git Workflow
@@ -209,12 +264,34 @@ gh pr merge <PR番号> --merge --delete-branch
 - PRのタイトル・本文も日本語で書く
 
 ### リリース（GitHub Actions）
-タグをプッシュするとGitHub ActionsがTestFlightに自動アップロードする:
+
+#### TestFlightへのアップロード
+GitHub Actionsの「Release to App Store」ワークフローを手動実行:
+1. GitHub → Actions → 「Release to App Store」 → 「Run workflow」
+2. ビルド完了後、自動で`build-N`タグが作成される
+3. TestFlightで審査後、App Storeに提出
+
+#### App Storeメタデータの更新
+リリースノートやスクリーンショットの更新:
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+# ローカルでメタデータを更新
+bundle exec fastlane upload_metadata
+
+# または GitHub Actions で実行
+# Actions → 「Update App Store Assets」 → 「Run workflow」
 ```
 
-- ビルド番号は `run_number` で自動インクリメント
-- App Store Connect APIで自動署名（証明書のエクスポート不要）
-- 必要なSecrets: `ASC_ISSUER_ID`, `ASC_KEY_ID`, `ASC_PRIVATE_KEY`
+メタデータファイル:
+- `fastlane/metadata/ja/release_notes.txt` - 日本語リリースノート
+- `fastlane/metadata/en-US/release_notes.txt` - 英語リリースノート
+- `fastlane/metadata/ja/description.txt` - 日本語説明文
+- `fastlane/metadata/en-US/description.txt` - 英語説明文
+
+#### 必要なSecrets
+- `ASC_ISSUER_ID` - App Store Connect API Issuer ID
+- `ASC_KEY_ID` - App Store Connect API Key ID
+- `ASC_PRIVATE_KEY` - App Store Connect API Private Key
+- `DISTRIBUTION_CERTIFICATE_P12` - 配布用証明書（Base64）
+- `DISTRIBUTION_CERTIFICATE_PASSWORD` - 証明書パスワード
+- `PROVISIONING_PROFILE` - メインアプリ用プロビジョニングプロファイル
+- `WIDGET_PROVISIONING_PROFILE` - ウィジェット用プロビジョニングプロファイル
