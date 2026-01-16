@@ -39,6 +39,14 @@ struct ContentView: View {
                 LoginView()
             }
         }
+        .onChange(of: authService.isAuthenticated) { oldValue, newValue in
+            // サインイン時にタブと状態をリセット
+            if !oldValue && newValue {
+                selectedTab = .home
+                userProfile = nil
+                profileLoadError = nil
+            }
+        }
     }
 
     /// スクリーンショット用のタブビュー（認証不要）
