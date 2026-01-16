@@ -36,15 +36,20 @@ final class HealthKitService: Sendable {
     }
 
     /// ワークアウトの変更を監視
-    func startObservingWorkouts(onUpdate: @escaping @Sendable () -> Void) {
+    func startObservingWorkouts(onUpdate: @escaping @Sendable () async -> Void) {
         guard isAvailable else { return }
         let workoutType = HKObjectType.workoutType()
 
         let query = HKObserverQuery(sampleType: workoutType, predicate: nil) { _, completionHandler, error in
-            if error == nil {
-                onUpdate()
+            guard error == nil else {
+                completionHandler()
+                return
             }
-            completionHandler()
+            // 非同期処理を実行し、完了後にcompletionHandlerを呼ぶ
+            Task {
+                await onUpdate()
+                completionHandler()
+            }
         }
 
         healthStore.execute(query)
