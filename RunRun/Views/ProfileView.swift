@@ -122,6 +122,18 @@ struct ProfileView: View {
             .min { ($0.averagePacePerKilometer ?? .infinity) < ($1.averagePacePerKilometer ?? .infinity) }
     }
 
+    // MARK: - Personal Records
+
+    private var personalRecords: [PersonalRecord] {
+        PersonalRecord.DistanceType.allCases.map { type in
+            let matchingRuns = allRuns.filter { type.range.contains($0.distanceInKilometers) }
+            let bestRun = matchingRuns
+                .filter { $0.averagePacePerKilometer != nil }
+                .min { ($0.averagePacePerKilometer ?? .infinity) < ($1.averagePacePerKilometer ?? .infinity) }
+            return PersonalRecord(distanceType: type, record: bestRun)
+        }
+    }
+
     private func yearMonthDayString(from date: Date) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale.current
@@ -240,6 +252,34 @@ struct ProfileView: View {
                             RunDetailView(record: fastest, user: user)
                         } label: {
                             LabeledContent("Fastest Day", value: "\(yearMonthDayString(from: fastest.date)) (\(fastest.formattedPace))")
+                        }
+                    }
+                }
+            }
+
+            // Personal Records
+            if personalRecords.contains(where: { $0.record != nil }) {
+                Section("Personal Records") {
+                    ForEach(personalRecords) { pr in
+                        if let record = pr.record {
+                            NavigationLink {
+                                RunDetailView(record: record, user: user)
+                            } label: {
+                                LabeledContent {
+                                    VStack(alignment: .trailing) {
+                                        Text(record.formattedDuration)
+                                            .font(.body.monospacedDigit())
+                                        Text(record.formattedPace)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                } label: {
+                                    Text(pr.distanceType.displayName)
+                                }
+                            }
+                        } else {
+                            LabeledContent(pr.distanceType.displayName, value: "--")
+                                .foregroundStyle(.secondary)
                         }
                     }
                 }
