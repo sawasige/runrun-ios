@@ -41,8 +41,7 @@ final class MonthDetailViewModel: ObservableObject {
     }
 
     var formattedTotalCalories: String? {
-        guard totalCalories > 0 else { return nil }
-        return String(format: "%.0f kcal", totalCalories)
+        UnitFormatter.formatCalories(totalCalories)
     }
 
     var totalDuration: TimeInterval {
@@ -50,12 +49,7 @@ final class MonthDetailViewModel: ObservableObject {
     }
 
     var formattedTotalDuration: String {
-        let hours = Int(totalDuration) / 3600
-        let minutes = (Int(totalDuration) % 3600) / 60
-        if hours > 0 {
-            return String(format: String(localized: "%dh %dm", comment: "Duration format"), hours, minutes)
-        }
-        return String(format: String(localized: "%dm", comment: "Minutes only"), minutes)
+        UnitFormatter.formatDuration(totalDuration)
     }
 
     var runCount: Int {
@@ -86,13 +80,7 @@ final class MonthDetailViewModel: ObservableObject {
     }
 
     var formattedAverageDuration: String {
-        let duration = averageDurationPerRun
-        let hours = Int(duration) / 3600
-        let minutes = (Int(duration) % 3600) / 60
-        if hours > 0 {
-            return String(format: String(localized: "%dh %dm", comment: "Duration format"), hours, minutes)
-        }
-        return String(format: String(localized: "%dm", comment: "Minutes only"), minutes)
+        UnitFormatter.formatDuration(averageDurationPerRun)
     }
 
     // MARK: - ハイライト

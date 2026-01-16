@@ -28,12 +28,7 @@ struct MonthlyRunningStats: Identifiable, Equatable {
     }
 
     var formattedTotalDuration: String {
-        let hours = Int(totalDurationInSeconds) / 3600
-        let minutes = (Int(totalDurationInSeconds) % 3600) / 60
-        if hours > 0 {
-            return String(format: String(localized: "%dh %dm", comment: "Duration format"), hours, minutes)
-        }
-        return String(format: String(localized: "%dm", comment: "Minutes only"), minutes)
+        UnitFormatter.formatDuration(totalDurationInSeconds)
     }
 
     var formattedMonth: String {

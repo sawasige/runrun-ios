@@ -114,6 +114,26 @@ struct UnitFormatter {
         return String(format: "%d:%02d", minutes, seconds)
     }
 
+    // MARK: - Duration Formatting
+
+    /// 時間をフォーマット（例: "1h 30m" or "45m"）
+    static func formatDuration(_ seconds: TimeInterval) -> String {
+        let hours = Int(seconds) / 3600
+        let minutes = (Int(seconds) % 3600) / 60
+        if hours > 0 {
+            return String(format: String(localized: "%dh %dm", comment: "Duration format"), hours, minutes)
+        }
+        return String(format: String(localized: "%dm", comment: "Minutes only"), minutes)
+    }
+
+    // MARK: - Calories Formatting
+
+    /// カロリーをフォーマット（例: "320 kcal"）
+    static func formatCalories(_ calories: Double) -> String? {
+        guard calories > 0 else { return nil }
+        return String(format: "%.0f kcal", calories)
+    }
+
     // MARK: - Unit Labels
 
     /// 距離単位ラベル（"km" or "mi"）
