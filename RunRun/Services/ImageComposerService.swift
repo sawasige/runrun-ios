@@ -59,7 +59,9 @@ enum ImageComposer {
             drawTextOverlay(width: size.width, height: size.height, record: record, options: options)
         }
 
-        return CIImage(image: textUIImage)
+        // premultiplied alphaを正しく処理するためCGImageから作成
+        guard let cgImage = textUIImage.cgImage else { return nil }
+        return CIImage(cgImage: cgImage, options: [.applyOrientationProperty: true])
     }
 
     /// HEIF形式のDataを生成（HDR対応 - ファイル経由）
@@ -118,61 +120,129 @@ enum ImageComposer {
         }
     }
 
-    /// テキストオーバーレイを描画
+    /// テキストオーバーレイを描画（ヒーローレイアウト）
     private static func drawTextOverlay(width: CGFloat, height: CGFloat, record: RunningRecord, options: ExportOptions) {
         let overlayHeight = height / 3.0
         let baseFontSize = overlayHeight / 10.0
-        let lineHeight = baseFontSize * 1.4
         let padding = baseFontSize * 0.8
 
-        let valueFont = UIFont.rounded(ofSize: baseFontSize, weight: .semibold)
+        // フォントサイズのバリエーション
+        let heroFont = UIFont.rounded(ofSize: baseFontSize * 1.4, weight: .bold)      // 距離の数値
+        let unitFont = UIFont.rounded(ofSize: baseFontSize * 0.8, weight: .medium)    // 単位
+        let subFont = UIFont.rounded(ofSize: baseFontSize * 0.9, weight: .semibold)   // 時間・ペース
+        let metaFont = UIFont.rounded(ofSize: baseFontSize * 0.85, weight: .regular)  // 日付・その他
 
         var yOffset = height - padding
+        let x = width - padding
 
-        var lines: [(String, UIFont)] = []
+        // === 下から上に描画 ===
 
-        if options.showCalories, let cal = record.formattedCalories {
-            lines.append((cal, valueFont))
+        // 1. アプリロゴ（画像・HDRコントラスト調整）
+        let logoHeight = baseFontSize * 2.0
+        if let logo = UIImage(named: "Logo") {
+            let logoAspect = logo.size.width / logo.size.height
+            let logoWidth = logoHeight * logoAspect
+            let logoRect = CGRect(x: x - logoWidth, y: yOffset - logoHeight, width: logoWidth, height: logoHeight)
+
+            // 少し小さめの角丸にクリップ（白縁を隠す）
+            let inset = logoHeight * 0.06
+            let clipRect = logoRect.insetBy(dx: inset, dy: inset)
+            let cornerRadius = clipRect.height * 0.22
+            if let ctx = UIGraphicsGetCurrentContext() {
+                ctx.saveGState()
+                UIBezierPath(roundedRect: clipRect, cornerRadius: cornerRadius).addClip()
+            }
+
+            // ロゴをコントラスト強調して描画
+            if let ciLogo = CIImage(image: logo),
+               let filter = CIFilter(name: "CIColorControls") {
+                filter.setValue(ciLogo, forKey: kCIInputImageKey)
+                filter.setValue(1.5, forKey: kCIInputContrastKey)  // コントラスト強調
+                filter.setValue(0.1, forKey: kCIInputBrightnessKey)  // 少し明るく
+                filter.setValue(1.4, forKey: kCIInputSaturationKey)  // 彩度を上げる
+                if let output = filter.outputImage {
+                    let context = CIContext(options: [.workingColorSpace: CGColorSpace(name: CGColorSpace.extendedSRGB)!])
+                    if let cgImage = context.createCGImage(output, from: output.extent) {
+                        UIImage(cgImage: cgImage).draw(in: logoRect)
+                    } else {
+                        logo.draw(in: logoRect)
+                    }
+                } else {
+                    logo.draw(in: logoRect)
+                }
+            } else {
+                logo.draw(in: logoRect)
+            }
+
+            // クリップを解除
+            UIGraphicsGetCurrentContext()?.restoreGState()
+
+            yOffset -= logoHeight + baseFontSize * 0.3
         }
-        if options.showSteps, let steps = record.formattedStepCount {
-            lines.append((steps, valueFont))
+
+        // 2. 追加情報（カロリー、心拍、歩数）
+        var metaItems: [String] = []
+        if options.showCalories, let cal = record.formattedCalories {
+            metaItems.append(cal)
         }
         if options.showHeartRate, let hr = record.formattedAverageHeartRate {
-            lines.append((hr, valueFont))
+            metaItems.append(hr)
         }
-        if options.showPace {
-            lines.append((record.formattedPace, valueFont))
+        if options.showSteps, let steps = record.formattedStepCount {
+            metaItems.append(steps)
         }
-        if options.showDuration {
-            lines.append((record.formattedDuration, valueFont))
-        }
-        if options.showDistance {
-            lines.append((record.formattedDistance, valueFont))
-        }
-
-        // 時間を先に追加（下から上に描画されるので、時間が日付の下に来る）
-        if options.showStartTime {
-            let timeFormatter = DateFormatter()
-            timeFormatter.locale = Locale.current
-            timeFormatter.dateStyle = .none
-            timeFormatter.timeStyle = .short
-            let timeString = timeFormatter.string(from: record.date) + " " + String(localized: "Start")
-            lines.append((timeString, valueFont))
+        if !metaItems.isEmpty {
+            let metaText = metaItems.joined(separator: "  ")
+            yOffset -= baseFontSize * 1.0
+            drawOutlinedText(metaText, at: CGPoint(x: x, y: yOffset), font: metaFont)
         }
 
-        // 日付をロングフォーマットで追加
+        // 3. 日付と時間（別々に処理）
+        var dateTimeItems: [String] = []
         if options.showDate {
             let dateFormatter = DateFormatter()
             dateFormatter.locale = Locale.current
             dateFormatter.dateStyle = .long
             dateFormatter.timeStyle = .none
-            lines.append((dateFormatter.string(from: record.date), valueFont))
+            dateTimeItems.append(dateFormatter.string(from: record.date))
+        }
+        if options.showStartTime {
+            let timeFormatter = DateFormatter()
+            timeFormatter.locale = Locale.current
+            timeFormatter.dateStyle = .none
+            timeFormatter.timeStyle = .short
+            dateTimeItems.append(timeFormatter.string(from: record.date))
+        }
+        if !dateTimeItems.isEmpty {
+            let dateTimeText = dateTimeItems.joined(separator: " · ")
+            yOffset -= baseFontSize * 1.2
+            drawOutlinedText(dateTimeText, at: CGPoint(x: x, y: yOffset), font: metaFont)
         }
 
-        for (text, font) in lines {
-            yOffset -= lineHeight
-            let x = width - padding
-            drawOutlinedText(text, at: CGPoint(x: x, y: yOffset), font: font)
+        // 4. 時間・ペース（1行にまとめる）
+        if options.showDuration || options.showPace {
+            var subItems: [String] = []
+            if options.showDuration {
+                subItems.append(record.formattedDuration)
+            }
+            if options.showPace {
+                subItems.append(record.formattedPace)
+            }
+            let subText = subItems.joined(separator: "  ")
+            yOffset -= baseFontSize * 1.5
+            drawOutlinedText(subText, at: CGPoint(x: x, y: yOffset), font: subFont)
+        }
+
+        // 5. 距離（ヒーロー表示: 数値と単位を分離）
+        if options.showDistance {
+            // 単位
+            yOffset -= baseFontSize * 1.0
+            drawOutlinedText(UnitFormatter.distanceUnit, at: CGPoint(x: x, y: yOffset), font: unitFont)
+
+            // 数値（大きく）
+            let distanceValue = UnitFormatter.formatDistanceValue(record.distanceInKilometers, decimals: 2)
+            yOffset -= baseFontSize * 1.6
+            drawOutlinedText(distanceValue, at: CGPoint(x: x, y: yOffset), font: heroFont)
         }
     }
 
