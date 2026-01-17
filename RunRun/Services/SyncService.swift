@@ -1,6 +1,8 @@
 import Foundation
 import Combine
 import HealthKit
+import UIKit
+import FirebaseCrashlytics
 
 enum SyncPhase: Equatable {
     case idle
@@ -151,8 +153,20 @@ final class SyncService: ObservableObject {
         } catch {
             self.error = error
             phase = .failed
+
+            // 詳細なエラーログ
+            let isBackground = UIApplication.shared.applicationState != .active
             AnalyticsService.logEvent("sync_error", parameters: [
-                "error": error.localizedDescription
+                "error": error.localizedDescription,
+                "error_type": String(describing: type(of: error)),
+                "is_background": isBackground
+            ])
+
+            // Crashlyticsにnon-fatalエラーとして記録
+            let nsError = error as NSError
+            Crashlytics.crashlytics().record(error: nsError, userInfo: [
+                "is_background": isBackground,
+                "phase": String(describing: phase)
             ])
         }
 
