@@ -144,6 +144,9 @@ final class SyncService: ObservableObject {
 
                 // ウィジェットを更新
                 await updateWidget(userId: userId)
+
+                // 同期回数を記録（レビューリクエスト用）
+                ReviewService.shared.recordSync()
             }
         } catch {
             self.error = error
