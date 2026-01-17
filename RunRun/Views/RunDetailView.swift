@@ -338,6 +338,10 @@ struct RunDetailView: View {
             await loadRouteData()
             await loadAdjacentRecords()
         }
+        .onDisappear {
+            // ラン詳細を見た後にレビューをリクエスト
+            ReviewService.shared.requestReviewIfAppropriate()
+        }
     }
 
     /// ペースのパーセンタイル（10%〜90%）
