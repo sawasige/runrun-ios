@@ -1,3 +1,13 @@
 Thank you for using RunRun!
 
-・Minor improvements and bug fixes
+【New Features】
+・Display personal records (PRs) on profile screen
+
+【Improvements】
+・Improved timeline layout for better readability
+・Improved login screen design
+・Widget font size now follows system settings
+
+【Bug Fixes】
+・Fixed widget not updating in background
+・Fixed tab not resetting on sign in
