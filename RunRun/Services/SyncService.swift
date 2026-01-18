@@ -185,6 +185,108 @@ final class SyncService: ObservableObject {
         isSyncing = false
     }
 
+    /// HealthKitと完全同期（削除も含む）
+    func forceSyncHealthKitData(userId: String) async -> (added: Int, deleted: Int) {
+        guard !isSyncing else { return (0, 0) }
+
+        isSyncing = true
+        error = nil
+        syncedCount = 0
+        phase = .connecting
+
+        var addedCount = 0
+        var deletedCount = 0
+
+        do {
+            try await healthKitService.requestAuthorization()
+
+            phase = .fetching
+
+            // HealthKitとFirestoreのデータを並行取得
+            async let healthKitWorkoutsTask = Task.detached(priority: .userInitiated) {
+                try await self.healthKitService.fetchAllRawRunningWorkouts()
+            }.value
+            async let firestoreRunsTask = firestoreService.getUserRunsWithIds(userId: userId)
+
+            let workouts = try await healthKitWorkoutsTask
+            let firestoreRuns = try await firestoreRunsTask
+
+            // HealthKitのワークアウトを基本情報に変換
+            let healthKitRecords = workouts.map { workout in
+                (date: workout.startDate, distanceKm: (workout.totalDistance?.doubleValue(for: .meter()) ?? 0) / 1000)
+            }
+
+            // 削除対象: Firestoreにあって、HealthKitにないもの
+            let toDelete = firestoreRuns.filter { firestoreRun in
+                !healthKitRecords.contains { healthKitRecord in
+                    abs(healthKitRecord.date.timeIntervalSince(firestoreRun.date)) < 60 &&
+                    abs(healthKitRecord.distanceKm - firestoreRun.distanceKm) < 0.1
+                }
+            }
+
+            // 追加対象: HealthKitにあって、Firestoreにないもの
+            let toAddWorkouts = workouts.filter { workout in
+                let workoutDistanceKm = (workout.totalDistance?.doubleValue(for: .meter()) ?? 0) / 1000
+                return !firestoreRuns.contains { firestoreRun in
+                    abs(workout.startDate.timeIntervalSince(firestoreRun.date)) < 60 &&
+                    abs(workoutDistanceKm - firestoreRun.distanceKm) < 0.1
+                }
+            }
+
+            let totalOperations = toDelete.count + toAddWorkouts.count
+            var currentOperation = 0
+
+            // 削除実行
+            if !toDelete.isEmpty {
+                phase = .syncing(current: currentOperation, total: totalOperations)
+                deletedCount = try await firestoreService.deleteRuns(documentIds: toDelete.map { $0.id })
+                currentOperation += deletedCount
+            }
+
+            // 追加実行
+            if !toAddWorkouts.isEmpty {
+                let healthKit = self.healthKitService
+                var detailedRecords: [RunningRecord] = []
+                for workout in toAddWorkouts {
+                    let record = await Task.detached(priority: .userInitiated) {
+                        await healthKit.createRunningRecord(from: workout, withDetails: true)
+                    }.value
+                    detailedRecords.append(record)
+                    currentOperation += 1
+                    phase = .syncing(current: currentOperation, total: totalOperations)
+                }
+
+                addedCount = try await firestoreService.syncRunRecords(userId: userId, records: detailedRecords)
+            }
+
+            syncedCount = addedCount
+            phase = .completed(count: addedCount)
+
+            // 変更があった場合はビューの更新をトリガー
+            if addedCount > 0 || deletedCount > 0 {
+                lastSyncedAt = Date()
+            }
+
+            // ウィジェット更新
+            await updateWidget(userId: userId)
+
+            AnalyticsService.logEvent("force_sync_completed", parameters: [
+                "added_count": addedCount,
+                "deleted_count": deletedCount
+            ])
+
+        } catch {
+            self.error = error
+            phase = .failed
+            AnalyticsService.logEvent("force_sync_error", parameters: [
+                "error": error.localizedDescription
+            ])
+        }
+
+        isSyncing = false
+        return (addedCount, deletedCount)
+    }
+
     /// ウィジェットデータを更新
     private func updateWidget(userId: String) async {
         do {

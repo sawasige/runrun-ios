@@ -10,6 +10,8 @@ struct SettingsView: View {
     @State private var userProfile: UserProfile?
     @State private var showingProfileEdit = false
     @State private var showingDeleteConfirmation = false
+    @State private var showingForceSyncConfirmation = false
+    @State private var forceSyncResult: String?
     @State private var isDeleting = false
     @State private var deleteError: String?
     @State private var debugMessage: String?
@@ -109,6 +111,26 @@ struct SettingsView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
+
+                    Button {
+                        showingForceSyncConfirmation = true
+                    } label: {
+                        HStack {
+                            Text("Force Sync", comment: "Settings button")
+                            Spacer()
+                        }
+                    }
+                    .disabled(syncService.isSyncing)
+
+                    if let result = forceSyncResult {
+                        Text(result)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Text("Force sync will add new records and remove records that no longer exist in HealthKit.", comment: "Settings description")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
 
                 Section("HealthKit") {
@@ -191,6 +213,14 @@ struct SettingsView: View {
             } message: {
                 Text("Deleting your account will permanently remove all your data and cannot be undone. Are you sure?")
             }
+            .alert(String(localized: "Force Sync"), isPresented: $showingForceSyncConfirmation) {
+                Button(String(localized: "Cancel"), role: .cancel) {}
+                Button(String(localized: "Force Sync"), role: .destructive) {
+                    Task { await forceSync() }
+                }
+            } message: {
+                Text("This will sync all data with HealthKit. Records deleted from HealthKit will also be removed from this app.", comment: "Force sync confirmation message")
+            }
         }
     }
 
@@ -243,6 +273,30 @@ struct SettingsView: View {
             lastSyncMessage = String(format: String(localized: "%d new records synced"), syncService.syncedCount)
         } else {
             lastSyncMessage = String(localized: "Already synced")
+        }
+    }
+
+    private func forceSync() async {
+        guard let userId = authService.user?.uid else { return }
+
+        forceSyncResult = nil
+        let result = await syncService.forceSyncHealthKitData(userId: userId)
+
+        if let error = syncService.error {
+            forceSyncResult = String(localized: "Sync error") + ": \(error.localizedDescription)"
+        } else {
+            var messages: [String] = []
+            if result.added > 0 {
+                messages.append(String(localized: "\(result.added) added"))
+            }
+            if result.deleted > 0 {
+                messages.append(String(localized: "\(result.deleted) deleted"))
+            }
+            if messages.isEmpty {
+                forceSyncResult = String(localized: "Already synced")
+            } else {
+                forceSyncResult = messages.joined(separator: ", ")
+            }
         }
     }
 

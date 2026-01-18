@@ -94,4 +94,31 @@ extension FirestoreService {
             }
         }
     }
+
+    /// ドキュメントIDを含むユーザーのラン一覧を取得
+    func getUserRunsWithIds(userId: String) async throws -> [(id: String, date: Date, distanceKm: Double)] {
+        let snapshot = try await runsCollection
+            .whereField("userId", isEqualTo: userId)
+            .getDocuments()
+
+        return snapshot.documents.compactMap { doc -> (String, Date, Double)? in
+            let data = doc.data()
+            guard let timestamp = data["date"] as? Timestamp,
+                  let distance = data["distanceKm"] as? Double else {
+                return nil
+            }
+            return (doc.documentID, timestamp.dateValue(), distance)
+        }
+    }
+
+    /// 指定したドキュメントIDのランを削除
+    func deleteRuns(documentIds: [String]) async throws -> Int {
+        guard !documentIds.isEmpty else { return 0 }
+
+        for id in documentIds {
+            try await runsCollection.document(id).delete()
+        }
+
+        return documentIds.count
+    }
 }
