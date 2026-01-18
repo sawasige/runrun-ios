@@ -114,7 +114,7 @@ final class SyncService: ObservableObject {
             } else {
                 // 新規レコードに対応するワークアウトを特定し、詳細を取得
                 let newWorkouts = workouts.filter { workout in
-                    newBasicRecords.contains { Calendar.current.isDate($0.date, inSameDayAs: workout.startDate) }
+                    newBasicRecords.contains { abs($0.date.timeIntervalSince(workout.startDate)) < 60 }
                 }
 
                 phase = .syncing(current: 0, total: newWorkouts.count)
