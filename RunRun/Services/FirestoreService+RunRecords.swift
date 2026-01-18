@@ -92,7 +92,8 @@ extension FirestoreService {
     func getNewRecordsToSync(userId: String, records: [RunningRecord]) async throws -> [RunningRecord] {
         let existingDates = try await getExistingSyncedDates(userId: userId)
         return records.filter { record in
-            !existingDates.contains { Calendar.current.isDate($0, inSameDayAs: record.date) }
+            // 開始時刻（秒単位）で重複チェック（同日複数ランに対応）
+            !existingDates.contains { abs($0.timeIntervalSince(record.date)) < 60 }
         }
     }
 }
