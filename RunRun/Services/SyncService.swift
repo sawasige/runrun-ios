@@ -114,7 +114,11 @@ final class SyncService: ObservableObject {
             } else {
                 // 新規レコードに対応するワークアウトを特定し、詳細を取得
                 let newWorkouts = workouts.filter { workout in
-                    newBasicRecords.contains { abs($0.date.timeIntervalSince(workout.startDate)) < 60 }
+                    let workoutDistance = workout.totalDistance?.doubleValue(for: .meter()) ?? 0
+                    return newBasicRecords.contains { record in
+                        abs(record.date.timeIntervalSince(workout.startDate)) < 60 &&
+                        abs(record.distanceInMeters - workoutDistance) < 100
+                    }
                 }
 
                 phase = .syncing(current: 0, total: newWorkouts.count)

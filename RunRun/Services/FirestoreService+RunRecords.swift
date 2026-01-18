@@ -84,16 +84,14 @@ extension FirestoreService {
         }
     }
 
-    func getExistingSyncedDates(userId: String) async throws -> [Date] {
-        let runs = try await getUserRuns(userId: userId)
-        return runs.map { $0.date }
-    }
-
     func getNewRecordsToSync(userId: String, records: [RunningRecord]) async throws -> [RunningRecord] {
-        let existingDates = try await getExistingSyncedDates(userId: userId)
+        let existingRuns = try await getUserRuns(userId: userId)
         return records.filter { record in
-            // 開始時刻（秒単位）で重複チェック（同日複数ランに対応）
-            !existingDates.contains { abs($0.timeIntervalSince(record.date)) < 60 }
+            // タイムスタンプ（60秒以内）と距離（100m以内）の両方で重複チェック
+            !existingRuns.contains { existing in
+                abs(existing.date.timeIntervalSince(record.date)) < 60 &&
+                abs(existing.distanceKm - record.distanceInKilometers) < 0.1
+            }
         }
     }
 }

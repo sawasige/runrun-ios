@@ -9,6 +9,7 @@ struct CumulativeDataPoint: Codable {
 
 struct WidgetData: Codable {
     let runDays: Set<Int>
+    let runCount: Int  // 総ラン回数（同日複数回を含む）
     let totalDistance: Double
     let totalDuration: TimeInterval
     let cumulativeDistances: [CumulativeDataPoint]
@@ -22,6 +23,8 @@ struct WidgetData: Codable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         runDays = try container.decode(Set<Int>.self, forKey: .runDays)
+        // runCountがない場合はrunDays.countをフォールバック
+        runCount = try container.decodeIfPresent(Int.self, forKey: .runCount) ?? runDays.count
         totalDistance = try container.decode(Double.self, forKey: .totalDistance)
         totalDuration = try container.decode(TimeInterval.self, forKey: .totalDuration)
         // 新しいフィールドはオプショナルとしてデコード

@@ -10,6 +10,7 @@ struct CumulativeDataPoint: Codable {
 
 struct WidgetData: Codable {
     let runDays: Set<Int>
+    let runCount: Int  // 総ラン回数（同日複数回を含む）
     let totalDistance: Double
     let totalDuration: TimeInterval
     let cumulativeDistances: [CumulativeDataPoint]
@@ -66,6 +67,7 @@ final class WidgetService {
 
         let data = WidgetData(
             runDays: runDays,
+            runCount: thisMonthRecords.count,
             totalDistance: totalDistance,
             totalDuration: totalDuration,
             cumulativeDistances: cumulativeDistances,
@@ -120,6 +122,7 @@ final class WidgetService {
         // 単位設定のみを更新した新しいデータを作成
         let updatedData = WidgetData(
             runDays: decoded.runDays,
+            runCount: decoded.runCount,
             totalDistance: decoded.totalDistance,
             totalDuration: decoded.totalDuration,
             cumulativeDistances: decoded.cumulativeDistances,
