@@ -35,8 +35,8 @@ struct ProgressProvider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<ProgressEntry>) -> Void) {
         let entry = loadEntry()
-        // 1時間ごとに更新
-        let nextUpdate = Calendar.current.date(byAdding: .hour, value: 1, to: Date()) ?? Date()
+        // 30分ごとに更新
+        let nextUpdate = Calendar.current.date(byAdding: .minute, value: 30, to: Date()) ?? Date()
         let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
         completion(timeline)
     }
