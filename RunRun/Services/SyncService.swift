@@ -65,6 +65,8 @@ enum SyncPhase: Equatable {
 
 @MainActor
 final class SyncService: ObservableObject {
+    static let shared = SyncService()
+
     @Published private(set) var isSyncing = false
     @Published private(set) var phase: SyncPhase = .idle
     @Published private(set) var syncedCount = 0
@@ -75,7 +77,13 @@ final class SyncService: ObservableObject {
     private let healthKitService = HealthKitService()
     private let firestoreService = FirestoreService.shared
 
+    /// プレビュー用。本番では`SyncService.shared`を使用
+    init() {}
+
     func syncHealthKitData(userId: String) async {
+        // 同時実行を防止
+        guard !isSyncing else { return }
+
         isSyncing = true
         error = nil
         syncedCount = 0

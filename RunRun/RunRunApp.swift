@@ -78,8 +78,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         guard let userId = Auth.auth().currentUser?.uid else { return }
 
         // HealthKitと同期（SyncServiceが同期後にウィジェットも更新する）
-        let syncService = SyncService()
-        await syncService.syncHealthKitData(userId: userId)
+        await SyncService.shared.syncHealthKitData(userId: userId)
     }
 
     func scheduleWidgetRefresh() {

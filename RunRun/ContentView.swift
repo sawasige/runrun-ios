@@ -4,7 +4,7 @@ import FirebaseAuth
 struct ContentView: View {
     @EnvironmentObject private var authService: AuthenticationService
     @EnvironmentObject private var notificationService: NotificationService
-    @StateObject private var syncService = SyncService()
+    @ObservedObject private var syncService = SyncService.shared
     @ObservedObject private var badgeService = BadgeService.shared
     @State private var selectedTab: AppTab = .home
     @State private var userProfile: UserProfile?
