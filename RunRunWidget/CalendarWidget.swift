@@ -9,7 +9,7 @@ struct CalendarProvider: TimelineProvider {
     }
 
     func placeholder(in context: Context) -> CalendarEntry {
-        CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 12, 15], totalDistance: 42.5, totalDuration: 3600 * 4, useMetric: defaultUseMetric)
+        CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 12, 15], runCount: 6, totalDistance: 42.5, totalDuration: 3600 * 4, useMetric: defaultUseMetric)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (CalendarEntry) -> Void) {
@@ -30,6 +30,7 @@ struct CalendarProvider: TimelineProvider {
         return CalendarEntry(
             date: Date(),
             runDays: data?.runDays ?? [],
+            runCount: data?.runCount ?? 0,
             totalDistance: data?.totalDistance ?? 0,
             totalDuration: data?.totalDuration ?? 0,
             useMetric: data?.useMetric ?? defaultUseMetric
@@ -42,6 +43,7 @@ struct CalendarProvider: TimelineProvider {
 struct CalendarEntry: TimelineEntry {
     let date: Date
     let runDays: Set<Int>
+    let runCount: Int  // 総ラン回数
     let totalDistance: Double
     let totalDuration: TimeInterval
     let useMetric: Bool
@@ -177,7 +179,7 @@ struct CalendarWidgetEntryView: View {
 
             Spacer()
 
-            Text("\(entry.runDays.count)")
+            Text("\(entry.runCount)")
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .foregroundStyle(.primary)
@@ -253,7 +255,7 @@ struct CalendarWidgetEntryView: View {
                     Circle()
                         .fill(Self.runColor)
                         .frame(width: 8, height: 8)
-                    Text("\(entry.runDays.count) runs")
+                    Text("\(entry.runCount) runs")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
@@ -309,7 +311,7 @@ struct CalendarWidgetEntryView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 statItem(value: formattedDuration, label: "Time")
                     .frame(maxWidth: .infinity, alignment: .leading)
-                statItem(value: "\(entry.runDays.count)", label: "Runs")
+                statItem(value: "\(entry.runCount)", label: "Runs")
                     .fixedSize(horizontal: true, vertical: false)
             }
         }
@@ -437,17 +439,17 @@ struct CalendarWidget: Widget {
 #Preview("Small", as: .systemSmall) {
     CalendarWidget()
 } timeline: {
-    CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 10, 12, 15, 18, 20], totalDistance: 52.3, totalDuration: 3600 * 5 + 1800, useMetric: true)
+    CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 10, 12, 15, 18, 20], runCount: 9, totalDistance: 52.3, totalDuration: 3600 * 5 + 1800, useMetric: true)
 }
 
 #Preview("Medium", as: .systemMedium) {
     CalendarWidget()
 } timeline: {
-    CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 10, 12, 15, 18, 20], totalDistance: 52.3, totalDuration: 3600 * 5 + 1800, useMetric: true)
+    CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 10, 12, 15, 18, 20], runCount: 9, totalDistance: 52.3, totalDuration: 3600 * 5 + 1800, useMetric: true)
 }
 
 #Preview("Large", as: .systemLarge) {
     CalendarWidget()
 } timeline: {
-    CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 10, 12, 15, 18, 20], totalDistance: 52.3, totalDuration: 3600 * 5 + 1800, useMetric: true)
+    CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 10, 12, 15, 18, 20], runCount: 9, totalDistance: 52.3, totalDuration: 3600 * 5 + 1800, useMetric: true)
 }
