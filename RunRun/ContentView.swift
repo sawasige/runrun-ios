@@ -9,6 +9,7 @@ struct ContentView: View {
     @State private var selectedTab: AppTab = .home
     @State private var userProfile: UserProfile?
     @State private var profileLoadError: Error?
+    @State private var hasProcessedInitialPendingTab = false
 
     private let firestoreService = FirestoreService.shared
 
@@ -45,6 +46,7 @@ struct ContentView: View {
                 selectedTab = .home
                 userProfile = nil
                 profileLoadError = nil
+                hasProcessedInitialPendingTab = false
             }
         }
     }
@@ -185,8 +187,9 @@ struct ContentView: View {
                 await badgeService.updateBadgeCounts(userId: userId)
             }
             .onAppear {
-                // アプリ起動時に保留中のタブ遷移があれば処理
-                if let tab = notificationService.pendingTab {
+                // アプリ起動時に保留中のタブ遷移があれば処理（初回のみ）
+                if !hasProcessedInitialPendingTab, let tab = notificationService.pendingTab {
+                    hasProcessedInitialPendingTab = true
                     selectedTab = tab
                     notificationService.pendingTab = nil
                 }
