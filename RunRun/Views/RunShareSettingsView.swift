@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreLocation
 
 /// 共有画像に出力するデータの選択状態
 struct ExportOptions: Equatable, Hashable {
@@ -10,10 +11,12 @@ struct ExportOptions: Equatable, Hashable {
     var showHeartRate = true
     var showSteps = true
     var showCalories = true
+    var showRoute = true
 }
 
 struct RunShareSettingsView: View {
     let record: RunningRecord
+    let routeCoordinates: [CLLocationCoordinate2D]
     @Binding var isPresented: Bool
 
     // データ選択（保存される）
@@ -25,6 +28,7 @@ struct RunShareSettingsView: View {
     @AppStorage("runShare.showHeartRate") private var showHeartRate = true
     @AppStorage("runShare.showSteps") private var showSteps = true
     @AppStorage("runShare.showCalories") private var showCalories = true
+    @AppStorage("runShare.showRoute") private var showRoute = true
 
     private var options: ExportOptions {
         ExportOptions(
@@ -35,7 +39,8 @@ struct RunShareSettingsView: View {
             showPace: showPace,
             showHeartRate: showHeartRate,
             showSteps: showSteps,
-            showCalories: showCalories
+            showCalories: showCalories,
+            showRoute: showRoute && !routeCoordinates.isEmpty
         )
     }
 
@@ -45,7 +50,7 @@ struct RunShareSettingsView: View {
             analyticsScreenName: "ShareSettings",
             optionsChangeId: AnyHashable(options),
             composeImage: { data in
-                await ImageComposer.composeAsHEIF(imageData: data, record: record, options: options)
+                await ImageComposer.composeAsHEIF(imageData: data, record: record, options: options, routeCoordinates: routeCoordinates)
             },
             logSaveEvent: {
                 AnalyticsService.logEvent("share_image_saved", parameters: [
@@ -56,7 +61,8 @@ struct RunShareSettingsView: View {
                     "show_pace": options.showPace,
                     "show_heart_rate": options.showHeartRate,
                     "show_steps": options.showSteps,
-                    "show_calories": options.showCalories
+                    "show_calories": options.showCalories,
+                    "show_route": options.showRoute
                 ])
             },
             logShareEvent: {
@@ -68,7 +74,8 @@ struct RunShareSettingsView: View {
                     "show_pace": options.showPace,
                     "show_heart_rate": options.showHeartRate,
                     "show_steps": options.showSteps,
-                    "show_calories": options.showCalories
+                    "show_calories": options.showCalories,
+                    "show_route": options.showRoute
                 ])
             }
         ) {
@@ -78,6 +85,10 @@ struct RunShareSettingsView: View {
 
     private var dataOptionsSection: some View {
         ShareOptionsSection {
+            if !routeCoordinates.isEmpty {
+                ShareOptionRow(title: String(localized: "Route"), isOn: $showRoute)
+                Divider()
+            }
             ShareOptionRow(title: String(localized: "Run Date"), isOn: $showDate)
             Divider()
             ShareOptionRow(title: String(localized: "Start Time"), isOn: $showStartTime)
@@ -115,6 +126,7 @@ struct RunShareSettingsView: View {
             averageHeartRate: 155,
             stepCount: 5160
         ),
+        routeCoordinates: [],
         isPresented: .constant(true)
     )
 }

@@ -329,7 +329,7 @@ struct RunDetailView: View {
             )
         }
         .sheet(isPresented: $showShareSettings) {
-            RunShareSettingsView(record: record, isPresented: $showShareSettings)
+            RunShareSettingsView(record: record, routeCoordinates: routeCoordinates, isPresented: $showShareSettings)
         }
         .task {
             AnalyticsService.logEvent("view_run_detail", parameters: [

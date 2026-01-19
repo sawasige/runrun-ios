@@ -1,6 +1,7 @@
 import SwiftUI
 import CoreImage
 import UIKit
+import CoreLocation
 
 // MARK: - Image Composer (WWDC 2024 Strategy B - HDR対応)
 
@@ -9,7 +10,7 @@ enum ImageComposer {
     /// - SDRとHDRの両方に同じテキストを描画
     /// - 両者の対応関係を維持してGain Mapを再計算
     /// - PHPhotoLibraryに直接渡すためにDataを返す
-    static func composeAsHEIF(imageData: Data, record: RunningRecord, options: ExportOptions) async -> Data? {
+    static func composeAsHEIF(imageData: Data, record: RunningRecord, options: ExportOptions, routeCoordinates: [CLLocationCoordinate2D] = []) async -> Data? {
         // 1. SDR画像を読み込み（向き自動適用）
         guard let sdrImage = CIImage(data: imageData, options: [
             .applyOrientationProperty: true
@@ -17,8 +18,16 @@ enum ImageComposer {
             return nil
         }
 
-        // 2. テキストオーバーレイ画像を作成（一度だけ）
-        let textOverlay = createTextOverlay(size: sdrImage.extent.size, record: record, options: options)
+        // 2. ルート描画領域の明るさを計算
+        let routeAreaBrightness: CGFloat?
+        if options.showRoute && routeCoordinates.count >= 2 {
+            routeAreaBrightness = calculateRouteAreaBrightness(image: sdrImage, routeCoordinates: routeCoordinates)
+        } else {
+            routeAreaBrightness = nil
+        }
+
+        // 3. テキストオーバーレイ画像を作成（一度だけ）
+        let textOverlay = createTextOverlay(size: sdrImage.extent.size, record: record, options: options, routeCoordinates: routeCoordinates, routeAreaBrightness: routeAreaBrightness)
 
         // 3. SDRにテキストを合成
         let sdrWithText: CIImage
@@ -48,7 +57,7 @@ enum ImageComposer {
     }
 
     /// テキストオーバーレイ画像を作成
-    private static func createTextOverlay(size: CGSize, record: RunningRecord, options: ExportOptions) -> CIImage? {
+    private static func createTextOverlay(size: CGSize, record: RunningRecord, options: ExportOptions, routeCoordinates: [CLLocationCoordinate2D] = [], routeAreaBrightness: CGFloat? = nil) -> CIImage? {
         let format = UIGraphicsImageRendererFormat()
         format.preferredRange = .extended
         format.scale = 1.0
@@ -56,12 +65,63 @@ enum ImageComposer {
 
         let renderer = UIGraphicsImageRenderer(size: size, format: format)
         let textUIImage = renderer.image { _ in
-            drawTextOverlay(width: size.width, height: size.height, record: record, options: options)
+            drawTextOverlay(width: size.width, height: size.height, record: record, options: options, routeCoordinates: routeCoordinates, routeAreaBrightness: routeAreaBrightness)
         }
 
         // premultiplied alphaを正しく処理するためCGImageから作成
         guard let cgImage = textUIImage.cgImage else { return nil }
         return CIImage(cgImage: cgImage, options: [.applyOrientationProperty: true])
+    }
+
+    /// ルート描画領域の平均明るさを計算（0.0〜1.0）
+    private static func calculateRouteAreaBrightness(image: CIImage, routeCoordinates: [CLLocationCoordinate2D]) -> CGFloat {
+        let size = image.extent.size
+        let overlayHeight = size.height / 3.0
+        let baseFontSize = overlayHeight / 10.0
+        let padding = baseFontSize * 0.8
+        let routeHeight = baseFontSize * 3.6  // drawTextOverlayと同じサイズ
+        let routeWidth = routeHeight * 1.5
+
+        // ルート描画領域を計算（右下に配置）
+        let routeRect = CGRect(
+            x: size.width - padding - routeWidth,
+            y: size.height - padding - baseFontSize * 10 - routeHeight,  // テキストの上
+            width: routeWidth,
+            height: routeHeight
+        )
+
+        // CIImageの座標系はY軸が反転しているので調整
+        let ciRect = CGRect(
+            x: routeRect.minX,
+            y: size.height - routeRect.maxY,
+            width: routeRect.width,
+            height: routeRect.height
+        ).intersection(image.extent)
+
+        guard !ciRect.isEmpty else { return 0.5 }
+
+        // 領域を切り出して平均色を計算
+        let croppedImage = image.cropped(to: ciRect)
+        let context = CIContext()
+
+        // CIAreaAverageフィルタで平均色を取得
+        guard let avgFilter = CIFilter(name: "CIAreaAverage") else { return 0.5 }
+        avgFilter.setValue(croppedImage, forKey: kCIInputImageKey)
+        avgFilter.setValue(CIVector(cgRect: croppedImage.extent), forKey: kCIInputExtentKey)
+
+        guard let outputImage = avgFilter.outputImage else { return 0.5 }
+
+        // 1x1ピクセルのビットマップとして取得
+        var bitmap = [UInt8](repeating: 0, count: 4)
+        context.render(outputImage, toBitmap: &bitmap, rowBytes: 4, bounds: CGRect(x: 0, y: 0, width: 1, height: 1), format: .RGBA8, colorSpace: CGColorSpaceCreateDeviceRGB())
+
+        // 輝度を計算（ITU-R BT.709）
+        let r = CGFloat(bitmap[0]) / 255.0
+        let g = CGFloat(bitmap[1]) / 255.0
+        let b = CGFloat(bitmap[2]) / 255.0
+        let brightness = 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+        return brightness
     }
 
     /// HEIF形式のDataを生成（HDR対応 - ファイル経由）
@@ -121,7 +181,7 @@ enum ImageComposer {
     }
 
     /// テキストオーバーレイを描画（ヒーローレイアウト）
-    private static func drawTextOverlay(width: CGFloat, height: CGFloat, record: RunningRecord, options: ExportOptions) {
+    private static func drawTextOverlay(width: CGFloat, height: CGFloat, record: RunningRecord, options: ExportOptions, routeCoordinates: [CLLocationCoordinate2D] = [], routeAreaBrightness: CGFloat? = nil) {
         let overlayHeight = height / 3.0
         let baseFontSize = overlayHeight / 10.0
         let padding = baseFontSize * 0.8
@@ -244,6 +304,92 @@ enum ImageComposer {
             yOffset -= baseFontSize * 1.6
             drawOutlinedText(distanceValue, at: CGPoint(x: x, y: yOffset), font: heroFont)
         }
+
+        // 6. ルート（テキストの上に描画）
+        if options.showRoute && routeCoordinates.count >= 2 {
+            yOffset -= baseFontSize * 0.5  // スペース
+            let routeHeight = baseFontSize * 3.6  // 1.2倍に拡大
+            let routeWidth = routeHeight * 1.5  // 横長のアスペクト比
+            let routeRect = CGRect(x: x - routeWidth, y: yOffset - routeHeight, width: routeWidth, height: routeHeight)
+            drawRoute(coordinates: routeCoordinates, in: routeRect, backgroundBrightness: routeAreaBrightness ?? 0.5)
+        }
+    }
+
+    /// ルートを描画（背景の明るさに応じてアウトライン色を調整）
+    private static func drawRoute(coordinates: [CLLocationCoordinate2D], in rect: CGRect, backgroundBrightness: CGFloat) {
+        guard coordinates.count >= 2 else { return }
+
+        // 座標のバウンディングボックスを計算
+        let lats = coordinates.map { $0.latitude }
+        let lons = coordinates.map { $0.longitude }
+        guard let minLat = lats.min(), let maxLat = lats.max(),
+              let minLon = lons.min(), let maxLon = lons.max() else { return }
+
+        let latRange = maxLat - minLat
+        let lonRange = maxLon - minLon
+
+        // 範囲が0の場合は描画しない
+        guard latRange > 0 || lonRange > 0 else { return }
+
+        // アスペクト比を維持してスケール
+        let effectiveLatRange = max(latRange, 0.0001)
+        let effectiveLonRange = max(lonRange, 0.0001)
+
+        let scaleX = rect.width / CGFloat(effectiveLonRange)
+        let scaleY = rect.height / CGFloat(effectiveLatRange)
+        let scale = min(scaleX, scaleY) * 0.9  // 90%に縮小してマージンを確保
+
+        // 中心を計算
+        let centerLat = (minLat + maxLat) / 2
+        let centerLon = (minLon + maxLon) / 2
+
+        // 座標を画像座標に変換する関数
+        func toImagePoint(_ coord: CLLocationCoordinate2D) -> CGPoint {
+            let x = rect.midX + CGFloat(coord.longitude - centerLon) * scale
+            // 緯度は上下反転（画像座標系は上が0）
+            let y = rect.midY - CGFloat(coord.latitude - centerLat) * scale
+            return CGPoint(x: x, y: y)
+        }
+
+        // パスを作成
+        let path = UIBezierPath()
+        let firstPoint = toImagePoint(coordinates[0])
+        path.move(to: firstPoint)
+
+        for coord in coordinates.dropFirst() {
+            path.addLine(to: toImagePoint(coord))
+        }
+
+        // 線の太さを設定（rect高さの4%程度）
+        let lineWidth = rect.height * 0.04
+
+        path.lineCapStyle = .round
+        path.lineJoinStyle = .round
+
+        let colorSpace = CGColorSpace(name: CGColorSpace.extendedLinearDisplayP3)!
+
+        // 背景の明るさに応じてアウトライン色を決定（背景に馴染む色）
+        let outlineColor: UIColor
+        if backgroundBrightness > 0.5 {
+            // 明るい背景 → 白のアウトライン
+            let hdrWhite = CGColor(colorSpace: colorSpace, components: [2.0, 2.0, 2.0, 1.0])!
+            outlineColor = UIColor(cgColor: hdrWhite)
+        } else {
+            // 暗い背景 → 黒のアウトライン
+            outlineColor = UIColor.black
+        }
+
+        // アウトラインを描画
+        outlineColor.setStroke()
+        path.lineWidth = lineWidth * 1.4
+        path.stroke()
+
+        // アクセントカラーの線（最内層）
+        // Display P3 (0.921, 0.296, 0.274) をガンマ→線形変換 (^2.2) してから輝度2倍
+        let hdrAccent = CGColor(colorSpace: colorSpace, components: [1.67, 0.14, 0.12, 1.0])!
+        UIColor(cgColor: hdrAccent).setStroke()
+        path.lineWidth = lineWidth
+        path.stroke()
     }
 
     private static func drawOutlinedText(_ text: String, at point: CGPoint, font: UIFont) {
