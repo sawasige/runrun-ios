@@ -19,6 +19,7 @@ final class NotificationService: NSObject, ObservableObject {
     @Published var fcmToken: String?
     @Published var isAuthorized = false
     @Published var pendingTab: AppTab?
+    @Published var pendingRunInfo: (date: Date, distanceKm: Double)?
 
     private let firestoreService = FirestoreService.shared
 
@@ -69,6 +70,34 @@ final class NotificationService: NSObject, ObservableObject {
             print("Failed to remove FCM token: \(error)")
         }
     }
+
+    /// 新規ラン同期の通知を送信
+    func sendNewRunNotification(records: [RunningRecord]) async {
+        // バックグラウンド起動時はisAuthorizedが未設定なので、直接設定を確認
+        let settings = await UNUserNotificationCenter.current().notificationSettings()
+        guard settings.authorizationStatus == .authorized else { return }
+        guard let latestRecord = records.max(by: { $0.date < $1.date }) else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = String(localized: "New Run Synced")
+        content.body = String(localized: "\(UnitFormatter.formatDistance(latestRecord.distanceInKilometers)) run recorded")
+        content.sound = .default
+        content.userInfo = [
+            "type": "new_run",
+            "runDate": latestRecord.date.timeIntervalSince1970,
+            "distanceKm": latestRecord.distanceInKilometers
+        ]
+
+        // バックグラウンドからの即時配信はうまくいかないことがあるため、1秒後にトリガー
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        let request = UNNotificationRequest(
+            identifier: "new_run_\(Int(latestRecord.date.timeIntervalSince1970))",
+            content: content,
+            trigger: trigger
+        )
+
+        try? await UNUserNotificationCenter.current().add(request)
+    }
 }
 
 // MARK: - UNUserNotificationCenterDelegate
@@ -88,6 +117,19 @@ extension NotificationService: UNUserNotificationCenterDelegate {
 
         if let type = userInfo["type"] as? String {
             switch type {
+            case "new_run":
+                // ラン詳細に遷移
+                if let runDate = userInfo["runDate"] as? TimeInterval,
+                   let distanceKm = userInfo["distanceKm"] as? Double {
+                    await MainActor.run {
+                        self.pendingTab = .home
+                    }
+                    // タブ切り替えを待ってからpendingRunInfoを設定
+                    try? await Task.sleep(nanoseconds: 500_000_000) // 0.5秒
+                    await MainActor.run {
+                        self.pendingRunInfo = (Date(timeIntervalSince1970: runDate), distanceKm)
+                    }
+                }
             case "friend_request", "friend_accepted":
                 // フレンドタブに遷移
                 await MainActor.run {
@@ -107,7 +149,6 @@ extension NotificationService: MessagingDelegate {
 
         Task { @MainActor in
             self.fcmToken = token
-            print("FCM token: \(token)")
         }
     }
 }

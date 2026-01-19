@@ -50,6 +50,17 @@
         }
       }
     },
+    "%@ run recorded" : {
+      "comment" : "Notification body for new run sync",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ のランを記録しました"
+          }
+        }
+      }
+    },
     "%d day_suffix" : {
       "comment" : "Day format e.g. 15日",
       "localizations" : {
@@ -1280,6 +1291,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "最多ラン年"
+          }
+        }
+      }
+    },
+    "New Run Synced" : {
+      "comment" : "Notification title for new run sync",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新しいランを同期しました"
           }
         }
       }

@@ -11,10 +11,21 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     /// HealthKit監視用（解放されないように保持）
     private var healthKitService: HealthKitService?
 
+    /// 最後に同期した時刻（スロットリング用）
+    private var lastSyncTime: Date?
+    /// スロットリング間隔（秒）
+    private let syncThrottleInterval: TimeInterval = 10
+
+    /// 起動時にバックグラウンドだったかどうか
+    private var launchedInBackground = false
+
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
+        // launchOptionsが空でなければバックグラウンド起動
+        launchedInBackground = launchOptions != nil && !launchOptions!.isEmpty
+
         FirebaseApp.configure()
         Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(true)
 
@@ -75,10 +86,42 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     }
 
     private func refreshWidgetData() async {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
+        // バックグラウンドタスクを開始（サスペンドを遅延させる）
+        var backgroundTaskId: UIBackgroundTaskIdentifier = .invalid
+        backgroundTaskId = UIApplication.shared.beginBackgroundTask(withName: "HealthKitSync") {
+            if backgroundTaskId != .invalid {
+                UIApplication.shared.endBackgroundTask(backgroundTaskId)
+                backgroundTaskId = .invalid
+            }
+        }
 
+        defer {
+            if backgroundTaskId != .invalid {
+                UIApplication.shared.endBackgroundTask(backgroundTaskId)
+            }
+        }
+
+        // スロットリング: 直近N秒以内に同期した場合はスキップ
+        if let lastSync = lastSyncTime,
+           Date().timeIntervalSince(lastSync) < syncThrottleInterval {
+            return
+        }
+
+        // Firebase Auth のセッション復元を待つ（最大3秒）
+        var userId = Auth.auth().currentUser?.uid
+        if userId == nil {
+            for _ in 0..<6 {
+                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5秒
+                userId = Auth.auth().currentUser?.uid
+                if userId != nil { break }
+            }
+        }
+
+        guard let userId = userId else { return }
+
+        lastSyncTime = Date()
         // HealthKitと同期（SyncServiceが同期後にウィジェットも更新する）
-        await SyncService.shared.syncHealthKitData(userId: userId)
+        await SyncService.shared.syncHealthKitData(userId: userId, isBackgroundSync: launchedInBackground)
     }
 
     func scheduleWidgetRefresh() {
