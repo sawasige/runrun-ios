@@ -80,7 +80,7 @@ final class SyncService: ObservableObject {
     /// プレビュー用。本番では`SyncService.shared`を使用
     init() {}
 
-    func syncHealthKitData(userId: String) async {
+    func syncHealthKitData(userId: String, isBackgroundSync: Bool = false) async {
         // 同時実行を防止
         guard !isSyncing else { return }
 
@@ -151,6 +151,11 @@ final class SyncService: ObservableObject {
                 phase = .completed(count: count)
                 if count > 0 {
                     lastSyncedAt = Date()
+
+                    // バックグラウンドで同期した場合は通知を送信
+                    if isBackgroundSync {
+                        await NotificationService.shared.sendNewRunNotification(records: detailedRecords)
+                    }
                 }
                 AnalyticsService.logEvent("sync_completed", parameters: [
                     "record_count": count
