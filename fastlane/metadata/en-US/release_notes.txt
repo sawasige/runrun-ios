@@ -1,13 +1,12 @@
 Thank you for using RunRun!
 
 【New Features】
-・Display personal records (PRs) on profile screen
+・Added "Force Sync" feature in settings (syncs deleted HealthKit data)
 
 【Improvements】
-・Improved timeline layout for better readability
-・Improved login screen design
-・Widget font size now follows system settings
+・Improved share image design
+・Improved sync stability
 
 【Bug Fixes】
-・Fixed widget not updating in background
-・Fixed tab not resetting on sign in
+・Fixed multiple runs on the same day not syncing correctly
+・Fixed widget run count display
