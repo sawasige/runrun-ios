@@ -1674,6 +1674,16 @@
         }
       }
     },
+    "Route" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コース"
+          }
+        }
+      }
+    },
     "Run Date" : {
       "localizations" : {
         "ja" : {
