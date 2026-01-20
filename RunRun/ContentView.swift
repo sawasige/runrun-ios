@@ -11,6 +11,13 @@ struct ContentView: View {
     @State private var profileLoadError: Error?
     @State private var hasProcessedInitialPendingTab = false
 
+    // 各タブのNavigationPath
+    @State private var homeNavigationPath = NavigationPath()
+    @State private var recordNavigationPath = NavigationPath()
+    @State private var leaderboardNavigationPath = NavigationPath()
+    @State private var friendsNavigationPath = NavigationPath()
+    @State private var settingsNavigationPath = NavigationPath()
+
     private let firestoreService = FirestoreService.shared
 
     var body: some View {
@@ -54,35 +61,65 @@ struct ContentView: View {
     /// スクリーンショット用のタブビュー（認証不要）
     private var screenshotTabView: some View {
         TabView(selection: $selectedTab) {
-            TimelineView(userId: MockDataProvider.currentUserId, userProfile: MockDataProvider.currentUser)
-                .tabItem {
-                    Label("Home", systemImage: "house")
-                }
-                .tag(AppTab.home)
+            NavigationStack(path: $homeNavigationPath) {
+                TimelineView(userId: MockDataProvider.currentUserId, userProfile: MockDataProvider.currentUser)
+                    .navigationDestination(for: ScreenType.self) { screen in
+                        destinationView(for: screen)
+                    }
+            }
+            .environment(\.navigationAction, NavigationAction { homeNavigationPath.append($0) })
+            .tabItem {
+                Label("Home", systemImage: "house")
+            }
+            .tag(AppTab.home)
 
-            YearDetailView(user: MockDataProvider.currentUser)
-                .tabItem {
-                    Label("Records", systemImage: "figure.run")
-                }
-                .tag(AppTab.record)
+            NavigationStack(path: $recordNavigationPath) {
+                YearDetailView(user: MockDataProvider.currentUser)
+                    .navigationDestination(for: ScreenType.self) { screen in
+                        destinationView(for: screen)
+                    }
+            }
+            .environment(\.navigationAction, NavigationAction { recordNavigationPath.append($0) })
+            .tabItem {
+                Label("Records", systemImage: "figure.run")
+            }
+            .tag(AppTab.record)
 
-            LeaderboardView()
-                .tabItem {
-                    Label("Leaderboard", systemImage: "trophy")
-                }
-                .tag(AppTab.leaderboard)
+            NavigationStack(path: $leaderboardNavigationPath) {
+                LeaderboardView()
+                    .navigationDestination(for: ScreenType.self) { screen in
+                        destinationView(for: screen)
+                    }
+            }
+            .environment(\.navigationAction, NavigationAction { leaderboardNavigationPath.append($0) })
+            .tabItem {
+                Label("Leaderboard", systemImage: "trophy")
+            }
+            .tag(AppTab.leaderboard)
 
-            FriendsView()
-                .tabItem {
-                    Label("Friends", systemImage: "person.2")
-                }
-                .tag(AppTab.friends)
+            NavigationStack(path: $friendsNavigationPath) {
+                FriendsView()
+                    .navigationDestination(for: ScreenType.self) { screen in
+                        destinationView(for: screen)
+                    }
+            }
+            .environment(\.navigationAction, NavigationAction { friendsNavigationPath.append($0) })
+            .tabItem {
+                Label("Friends", systemImage: "person.2")
+            }
+            .tag(AppTab.friends)
 
-            SettingsView()
-                .tabItem {
-                    Label("Settings", systemImage: "gear")
-                }
-                .tag(AppTab.settings)
+            NavigationStack(path: $settingsNavigationPath) {
+                SettingsView()
+                    .navigationDestination(for: ScreenType.self) { screen in
+                        destinationView(for: screen)
+                    }
+            }
+            .environment(\.navigationAction, NavigationAction { settingsNavigationPath.append($0) })
+            .tabItem {
+                Label("Settings", systemImage: "gear")
+            }
+            .tag(AppTab.settings)
         }
         .tabViewStyle(.sidebarAdaptable)
         .environmentObject(syncService)
@@ -149,36 +186,66 @@ struct ContentView: View {
     private func mainTabView(userId: String, userProfile: UserProfile) -> some View {
         ZStack(alignment: .top) {
             TabView(selection: $selectedTab) {
-                TimelineView(userId: userId, userProfile: userProfile)
-                    .tabItem {
-                        Label("Home", systemImage: "house")
-                    }
-                    .tag(AppTab.home)
+                NavigationStack(path: $homeNavigationPath) {
+                    TimelineView(userId: userId, userProfile: userProfile)
+                        .navigationDestination(for: ScreenType.self) { screen in
+                            destinationView(for: screen)
+                        }
+                }
+                .environment(\.navigationAction, NavigationAction { homeNavigationPath.append($0) })
+                .tabItem {
+                    Label("Home", systemImage: "house")
+                }
+                .tag(AppTab.home)
 
-                YearDetailView(user: userProfile)
-                    .tabItem {
-                        Label("Records", systemImage: "figure.run")
-                    }
-                    .tag(AppTab.record)
+                NavigationStack(path: $recordNavigationPath) {
+                    YearDetailView(user: userProfile)
+                        .navigationDestination(for: ScreenType.self) { screen in
+                            destinationView(for: screen)
+                        }
+                }
+                .environment(\.navigationAction, NavigationAction { recordNavigationPath.append($0) })
+                .tabItem {
+                    Label("Records", systemImage: "figure.run")
+                }
+                .tag(AppTab.record)
 
-                LeaderboardView()
-                    .tabItem {
-                        Label("Leaderboard", systemImage: "trophy")
-                    }
-                    .tag(AppTab.leaderboard)
+                NavigationStack(path: $leaderboardNavigationPath) {
+                    LeaderboardView()
+                        .navigationDestination(for: ScreenType.self) { screen in
+                            destinationView(for: screen)
+                        }
+                }
+                .environment(\.navigationAction, NavigationAction { leaderboardNavigationPath.append($0) })
+                .tabItem {
+                    Label("Leaderboard", systemImage: "trophy")
+                }
+                .tag(AppTab.leaderboard)
 
-                FriendsView()
-                    .tabItem {
-                        Label("Friends", systemImage: "person.2")
-                    }
-                    .badge(badgeService.totalBadgeCount)
-                    .tag(AppTab.friends)
+                NavigationStack(path: $friendsNavigationPath) {
+                    FriendsView()
+                        .navigationDestination(for: ScreenType.self) { screen in
+                            destinationView(for: screen)
+                        }
+                }
+                .environment(\.navigationAction, NavigationAction { friendsNavigationPath.append($0) })
+                .tabItem {
+                    Label("Friends", systemImage: "person.2")
+                }
+                .badge(badgeService.totalBadgeCount)
+                .tag(AppTab.friends)
 
-                SettingsView()
-                    .tabItem {
-                        Label("Settings", systemImage: "gear")
-                    }
-                    .tag(AppTab.settings)
+                NavigationStack(path: $settingsNavigationPath) {
+                    SettingsView()
+                        .navigationDestination(for: ScreenType.self) { screen in
+                            destinationView(for: screen)
+                        }
+                }
+                .environment(\.navigationAction, NavigationAction { settingsNavigationPath.append($0) })
+                .tabItem {
+                    Label("Settings", systemImage: "gear")
+                }
+                .tag(AppTab.settings)
             }
             .tabViewStyle(.sidebarAdaptable)
             .environmentObject(syncService)
@@ -196,8 +263,19 @@ struct ContentView: View {
             }
             .onChange(of: notificationService.pendingTab) { _, newTab in
                 if let tab = newTab {
-                    selectedTab = tab
                     notificationService.pendingTab = nil
+                    selectedTab = tab
+                    // NavigationPathをリセット（遅延実行でUIの更新を待つ）
+                    Task { @MainActor in
+                        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1秒
+                        resetNavigationPath(for: tab)
+                    }
+                }
+            }
+            .onChange(of: notificationService.pendingRunInfo?.date) { _, newValue in
+                if let info = notificationService.pendingRunInfo, newValue != nil {
+                    notificationService.pendingRunInfo = nil
+                    handlePendingRunNavigation(info: info, userProfile: userProfile)
                 }
             }
 
@@ -206,6 +284,71 @@ struct ContentView: View {
                 .padding(.top, 8)
         }
         .transition(.opacity)
+    }
+
+    /// 通知からのラン詳細遷移を処理
+    private func handlePendingRunNavigation(info: (date: Date, distanceKm: Double), userProfile: UserProfile) {
+        // Firestoreから該当レコードを検索して遷移
+        // ※NavigationPathのリセットはonChange(of: pendingTab)で実行済み
+        Task { @MainActor in
+            if let record = await findRunRecord(date: info.date, distanceKm: info.distanceKm) {
+                homeNavigationPath.append(ScreenType.runDetail(record: record, user: userProfile))
+            }
+        }
+    }
+
+    /// 通知からのナビゲーション用：該当するランを検索
+    private func findRunRecord(date: Date, distanceKm: Double) async -> RunningRecord? {
+        let calendar = Calendar.current
+        let year = calendar.component(.year, from: date)
+        let month = calendar.component(.month, from: date)
+
+        do {
+            guard let userId = authService.user?.uid else { return nil }
+            let runs = try await firestoreService.getUserMonthlyRuns(userId: userId, year: year, month: month)
+            return runs.first { record in
+                abs(record.date.timeIntervalSince(date)) < 60 &&
+                abs(record.distanceInKilometers - distanceKm) < 0.1
+            }
+        } catch {
+            print("Failed to find run record: \(error)")
+            return nil
+        }
+    }
+
+    /// 指定タブのNavigationPathをリセット
+    private func resetNavigationPath(for tab: AppTab) {
+        switch tab {
+        case .home:
+            homeNavigationPath = NavigationPath()
+        case .record:
+            recordNavigationPath = NavigationPath()
+        case .leaderboard:
+            leaderboardNavigationPath = NavigationPath()
+        case .friends:
+            friendsNavigationPath = NavigationPath()
+        case .settings:
+            settingsNavigationPath = NavigationPath()
+        }
+    }
+
+    /// ScreenTypeに応じた遷移先Viewを返す
+    @ViewBuilder
+    private func destinationView(for screen: ScreenType) -> some View {
+        switch screen {
+        case .profile(let user):
+            ProfileView(user: user)
+        case .yearDetail(let user, let initialYear):
+            YearDetailView(user: user, initialYear: initialYear)
+        case .monthDetail(let user, let year, let month):
+            MonthDetailView(user: user, year: year, month: month)
+        case .runDetail(let record, let user):
+            RunDetailView(record: record, user: user)
+        case .weeklyStats(let user):
+            WeeklyStatsView(user: user)
+        case .licenses:
+            LicensesView()
+        }
     }
 }
 

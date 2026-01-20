@@ -104,37 +104,37 @@ final class NotificationService: NSObject, ObservableObject {
 extension NotificationService: UNUserNotificationCenterDelegate {
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
-        willPresent notification: UNNotification
-    ) async -> UNNotificationPresentationOptions {
-        return [.banner, .badge, .sound]
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .badge, .sound])
     }
 
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
-        didReceive response: UNNotificationResponse
-    ) async {
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
         let userInfo = response.notification.request.content.userInfo
 
-        if let type = userInfo["type"] as? String {
+        Task { @MainActor in
+            defer { completionHandler() }
+
+            guard let type = userInfo["type"] as? String else { return }
+
             switch type {
             case "new_run":
                 // ラン詳細に遷移
                 if let runDate = userInfo["runDate"] as? TimeInterval,
                    let distanceKm = userInfo["distanceKm"] as? Double {
-                    await MainActor.run {
-                        self.pendingTab = .home
-                    }
+                    self.pendingTab = .home
                     // タブ切り替えを待ってからpendingRunInfoを設定
                     try? await Task.sleep(nanoseconds: 500_000_000) // 0.5秒
-                    await MainActor.run {
-                        self.pendingRunInfo = (Date(timeIntervalSince1970: runDate), distanceKm)
-                    }
+                    self.pendingRunInfo = (Date(timeIntervalSince1970: runDate), distanceKm)
                 }
             case "friend_request", "friend_accepted":
                 // フレンドタブに遷移
-                await MainActor.run {
-                    self.pendingTab = .friends
-                }
+                self.pendingTab = .friends
             default:
                 break
             }

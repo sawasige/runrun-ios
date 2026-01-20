@@ -3,12 +3,10 @@ import SwiftUI
 struct TimelineView: View {
     @StateObject private var viewModel: TimelineViewModel
     @EnvironmentObject private var syncService: SyncService
-    @EnvironmentObject private var notificationService: NotificationService
     @State private var showNavBarLogo = false
     @State private var monthlyDistance: Double = 0
     @State private var monthlyRunCount: Int = 0
     @State private var monthlyRecords: [RunningRecord] = []
-    @State private var navigateToRunDetail: RunningRecord?
 
     let userProfile: UserProfile
 
@@ -35,102 +33,58 @@ struct TimelineView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                if viewModel.isLoading && viewModel.runs.isEmpty {
-                    loadingView
-                } else if let error = viewModel.error, viewModel.runs.isEmpty {
-                    errorView(error: error)
-                } else if viewModel.runs.isEmpty {
-                    emptyView
-                } else {
-                    timelineList
-                }
+        ZStack {
+            if viewModel.isLoading && viewModel.runs.isEmpty {
+                loadingView
+            } else if let error = viewModel.error, viewModel.runs.isEmpty {
+                errorView(error: error)
+            } else if viewModel.runs.isEmpty {
+                emptyView
+            } else {
+                timelineList
             }
-            .animation(.easeInOut(duration: 0.4), value: contentState)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    HStack(spacing: 6) {
-                        Image("Logo")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(height: 28)
-                        Text("RunRun")
-                            .font(.headline)
-                            .fontWeight(.bold)
-                    }
-                    .opacity(showNavBarLogo ? 1 : 0)
-                    .blur(radius: showNavBarLogo ? 0 : 8)
-                    .offset(y: showNavBarLogo ? 0 : 16)
+        }
+        .animation(.easeInOut(duration: 0.4), value: contentState)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                HStack(spacing: 6) {
+                    Image("Logo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 28)
+                    Text("RunRun")
+                        .font(.headline)
+                        .fontWeight(.bold)
                 }
+                .opacity(showNavBarLogo ? 1 : 0)
+                .blur(radius: showNavBarLogo ? 0 : 8)
+                .offset(y: showNavBarLogo ? 0 : 16)
+            }
 
-                ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink {
-                        ProfileView(user: userProfile)
-                    } label: {
-                        ProfileAvatarView(user: userProfile, size: 28)
-                    }
-                }
-            }
-            .refreshable {
-                await viewModel.refresh()
-                await loadMonthlySummary()
-            }
-            .task {
-                await viewModel.onAppear()
-                await loadMonthlySummary()
-            }
-            .onAppear {
-                AnalyticsService.logScreenView("Timeline")
-            }
-            .onChange(of: syncService.lastSyncedAt) { _, _ in
-                Task {
-                    await viewModel.refresh()
-                    await loadMonthlySummary()
-                }
-            }
-            .navigationDestination(item: $navigateToRunDetail) { record in
-                RunDetailView(record: record, user: userProfile)
-            }
-            .onReceive(notificationService.$pendingRunInfo) { info in
-                print("[RunRun] pendingRunInfo received: \(String(describing: info))")
-                guard let info = info else {
-                    print("[RunRun] pendingRunInfo is nil, returning")
-                    return
-                }
-                print("[RunRun] Processing pendingRunInfo: date=\(info.date), distanceKm=\(info.distanceKm)")
-                // MainActorのブロックを避けるため少し遅延させる
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    print("[RunRun] Delayed handler started")
-                    Task { @MainActor in
-                        print("[RunRun] Task started, runs count: \(viewModel.runs.count)")
-                        // データが読み込まれていない場合はリフレッシュ
-                        if viewModel.runs.isEmpty {
-                            print("[RunRun] runs is empty, refreshing")
-                            await viewModel.refresh()
-                        }
-                        print("[RunRun] Searching for record in \(viewModel.runs.count) runs")
-                        if let record = findRecord(date: info.date, distanceKm: info.distanceKm) {
-                            print("[RunRun] Found record: \(record.distanceInKilometers) km")
-                            navigateToRunDetail = record
-                        } else {
-                            print("[RunRun] Record not found")
-                        }
-                        notificationService.pendingRunInfo = nil
-                        print("[RunRun] Cleared pendingRunInfo")
-                    }
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink(value: ScreenType.profile(userProfile)) {
+                    ProfileAvatarView(user: userProfile, size: 28)
                 }
             }
         }
-    }
-
-    /// 通知からのナビゲーション用：該当するランを検索
-    private func findRecord(date: Date, distanceKm: Double) -> RunningRecord? {
-        viewModel.runs.first { run in
-            abs(run.date.timeIntervalSince(date)) < 60 &&
-            abs(run.distanceKm - distanceKm) < 0.1
-        }?.toRunningRecord()
+        .refreshable {
+            await viewModel.refresh()
+            await loadMonthlySummary()
+        }
+        .task {
+            await viewModel.onAppear()
+            await loadMonthlySummary()
+        }
+        .onAppear {
+            AnalyticsService.logScreenView("Timeline")
+        }
+        .onChange(of: syncService.lastSyncedAt) { _, _ in
+            Task {
+                await viewModel.refresh()
+                await loadMonthlySummary()
+            }
+        }
     }
 
     private var expandedHeaderView: some View {
@@ -148,13 +102,11 @@ struct TimelineView: View {
             }
 
             // 今月のサマリ（タップで月詳細へ）
-            NavigationLink {
-                MonthDetailView(
-                    user: userProfile,
-                    year: Calendar.current.component(.year, from: Date()),
-                    month: Calendar.current.component(.month, from: Date())
-                )
-            } label: {
+            NavigationLink(value: ScreenType.monthDetail(
+                user: userProfile,
+                year: Calendar.current.component(.year, from: Date()),
+                month: Calendar.current.component(.month, from: Date())
+            )) {
                 monthSummaryStats
             }
             .buttonStyle(.plain)
@@ -315,9 +267,7 @@ struct TimelineView: View {
                     ForEach(group.runs) { run in
                         let isOwn = run.userId == viewModel.userId
                         let profile = isOwn ? userProfile : run.toUserProfile()
-                        NavigationLink {
-                            RunDetailView(record: run.toRunningRecord(), user: profile)
-                        } label: {
+                        NavigationLink(value: ScreenType.runDetail(record: run.toRunningRecord(), user: profile)) {
                             TimelineRunRow(run: run)
                         }
                         .buttonStyle(.plain)
@@ -553,5 +503,10 @@ private struct MiniCalendarView: View {
 }
 
 #Preview {
-    TimelineView(userId: "preview", userProfile: UserProfile(id: "preview", displayName: "Preview User", email: nil, iconName: "figure.run"))
+    NavigationStack {
+        TimelineView(userId: "preview", userProfile: UserProfile(id: "preview", displayName: "Preview User", email: nil, iconName: "figure.run"))
+            .navigationDestination(for: ScreenType.self) { _ in
+                EmptyView()
+            }
+    }
 }

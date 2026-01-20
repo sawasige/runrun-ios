@@ -80,7 +80,7 @@ final class SyncService: ObservableObject {
     /// プレビュー用。本番では`SyncService.shared`を使用
     init() {}
 
-    func syncHealthKitData(userId: String, isBackgroundSync: Bool = false) async {
+    func syncHealthKitData(userId: String) async {
         // 同時実行を防止
         guard !isSyncing else { return }
 
@@ -153,7 +153,8 @@ final class SyncService: ObservableObject {
                     lastSyncedAt = Date()
 
                     // バックグラウンドで同期した場合は通知を送信
-                    if isBackgroundSync {
+                    let isBackground = UIApplication.shared.applicationState != .active
+                    if isBackground {
                         await NotificationService.shared.sendNewRunNotification(records: detailedRecords)
                     }
                 }

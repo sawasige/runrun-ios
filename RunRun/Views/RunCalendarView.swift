@@ -4,7 +4,7 @@ struct RunCalendarView: View {
     let year: Int
     let month: Int
     let records: [RunningRecord]
-    @Binding var selectedRecord: RunningRecord?
+    var onSelectRecord: ((RunningRecord) -> Void)?
 
     @ScaledMetric(relativeTo: .caption) private var cellHeight: CGFloat = 44
 
@@ -104,42 +104,48 @@ struct RunCalendarView: View {
         let hasRun = !dayRecords.isEmpty
         let totalDistance = dayRecords.reduce(0) { $0 + $1.distanceInKilometers }
 
-        Button {
-            if let record = dayRecords.first {
-                selectedRecord = record
+        if let record = dayRecords.first {
+            Button {
+                onSelectRecord?(record)
+            } label: {
+                dayCellContent(day: day, weekday: weekday, isToday: isToday, hasRun: hasRun, totalDistance: totalDistance)
             }
-        } label: {
-            VStack(spacing: 2) {
-                Text("\(day)")
-                    .font(.caption)
-                    .fontWeight(hasRun ? .bold : .regular)
-                    .foregroundStyle(dayTextColor(weekday: weekday, hasRun: hasRun, isToday: isToday))
+            .buttonStyle(.plain)
+        } else {
+            dayCellContent(day: day, weekday: weekday, isToday: isToday, hasRun: hasRun, totalDistance: totalDistance)
+        }
+    }
 
-                if hasRun {
-                    Text(UnitFormatter.formatDistanceValue(totalDistance, decimals: 1))
-                        .font(.caption2.weight(.medium))
-                        .foregroundStyle(.white)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                } else {
-                    Text(" ")
-                        .font(.caption2)
-                }
-            }
-            .frame(height: cellHeight)
-            .frame(maxWidth: .infinity)
-            .background {
-                if hasRun {
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.accentColor)
-                } else if isToday {
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color.accentColor, lineWidth: 1)
-                }
+    @ViewBuilder
+    private func dayCellContent(day: Int, weekday: Int, isToday: Bool, hasRun: Bool, totalDistance: Double) -> some View {
+        VStack(spacing: 2) {
+            Text("\(day)")
+                .font(.caption)
+                .fontWeight(hasRun ? .bold : .regular)
+                .foregroundStyle(dayTextColor(weekday: weekday, hasRun: hasRun, isToday: isToday))
+
+            if hasRun {
+                Text(UnitFormatter.formatDistanceValue(totalDistance, decimals: 1))
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            } else {
+                Text(" ")
+                    .font(.caption2)
             }
         }
-        .buttonStyle(.plain)
-        .disabled(!hasRun)
+        .frame(height: cellHeight)
+        .frame(maxWidth: .infinity)
+        .background {
+            if hasRun {
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color.accentColor)
+            } else if isToday {
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(Color.accentColor, lineWidth: 1)
+            }
+        }
     }
 
     private func dayTextColor(weekday: Int, hasRun: Bool, isToday: Bool) -> Color {
@@ -158,7 +164,6 @@ struct RunCalendarView: View {
 }
 
 #Preview {
-    @Previewable @State var selectedRecord: RunningRecord?
     NavigationStack {
         List {
             Section {
@@ -168,9 +173,10 @@ struct RunCalendarView: View {
                     records: [
                         RunningRecord(date: Date(), distanceKm: 5.2, durationSeconds: 1800),
                         RunningRecord(date: Calendar.current.date(byAdding: .day, value: -2, to: Date())!, distanceKm: 3.5, durationSeconds: 1200)
-                    ],
-                    selectedRecord: $selectedRecord
-                )
+                    ]
+                ) { record in
+                    print("Selected: \(record)")
+                }
             }
         }
     }

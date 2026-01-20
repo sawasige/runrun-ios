@@ -12,64 +12,60 @@ struct FriendsView: View {
     private let firestoreService = FirestoreService.shared
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if isLoading {
-                    ProgressView()
-                } else {
-                    List {
-                        if !friendRequests.isEmpty {
-                            Section("Requests") {
-                                ForEach(friendRequests) { request in
-                                    FriendRequestRow(
-                                        request: request,
-                                        onAccept: { await acceptRequest(request) },
-                                        onReject: { await rejectRequest(request) }
-                                    )
-                                }
+        Group {
+            if isLoading {
+                ProgressView()
+            } else {
+                List {
+                    if !friendRequests.isEmpty {
+                        Section("Requests") {
+                            ForEach(friendRequests) { request in
+                                FriendRequestRow(
+                                    request: request,
+                                    onAccept: { await acceptRequest(request) },
+                                    onReject: { await rejectRequest(request) }
+                                )
                             }
                         }
+                    }
 
-                        Section("Friends (\(friends.count))") {
-                            if friends.isEmpty {
-                                Text("No friends yet")
-                                    .foregroundStyle(.secondary)
-                            } else {
-                                ForEach(friends) { friend in
-                                    NavigationLink {
-                                        ProfileView(user: friend)
-                                    } label: {
-                                        FriendRow(friend: friend)
-                                    }
+                    Section("Friends (\(friends.count))") {
+                        if friends.isEmpty {
+                            Text("No friends yet")
+                                .foregroundStyle(.secondary)
+                        } else {
+                            ForEach(friends) { friend in
+                                NavigationLink(value: ScreenType.profile(friend)) {
+                                    FriendRow(friend: friend)
                                 }
-                                .onDelete(perform: deleteFriend)
                             }
+                            .onDelete(perform: deleteFriend)
                         }
                     }
                 }
             }
-            .navigationTitle("Friends")
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        showingSearch = true
-                    } label: {
-                        Image(systemName: "person.badge.plus")
-                    }
+        }
+        .navigationTitle("Friends")
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    showingSearch = true
+                } label: {
+                    Image(systemName: "person.badge.plus")
                 }
             }
-            .sheet(isPresented: $showingSearch) {
-                UserSearchView()
-            }
-            .refreshable {
-                await loadData()
-            }
-            .task {
-                await loadData()
-            }
-            .onAppear {
-                AnalyticsService.logScreenView("Friends")
-            }
+        }
+        .sheet(isPresented: $showingSearch) {
+            UserSearchView()
+        }
+        .refreshable {
+            await loadData()
+        }
+        .task {
+            await loadData()
+        }
+        .onAppear {
+            AnalyticsService.logScreenView("Friends")
         }
     }
 

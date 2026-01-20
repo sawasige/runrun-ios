@@ -19,34 +19,15 @@ struct SettingsView: View {
     private let firestoreService = FirestoreService.shared
 
     var body: some View {
-        NavigationStack {
-            List {
-                Section("Profile") {
-                    if let profile = userProfile {
-                        NavigationLink {
-                            ProfileView(user: profile)
-                        } label: {
-                            HStack(spacing: 16) {
-                                ProfileAvatarView(user: profile, size: 50)
-
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(profile.displayName)
-                                        .font(.headline)
-                                    if let email = authService.user?.email {
-                                        Text(email)
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
-                            }
-                            .padding(.vertical, 4)
-                        }
-                    } else {
+        List {
+            Section("Profile") {
+                if let profile = userProfile {
+                    NavigationLink(value: ScreenType.profile(profile)) {
                         HStack(spacing: 16) {
-                            ProfileAvatarView(iconName: "figure.run", avatarURL: nil, size: 50)
+                            ProfileAvatarView(user: profile, size: 50)
 
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(String(localized: "Loading..."))
+                                Text(profile.displayName)
                                     .font(.headline)
                                 if let email = authService.user?.email {
                                     Text(email)
@@ -57,11 +38,27 @@ struct SettingsView: View {
                         }
                         .padding(.vertical, 4)
                     }
+                } else {
+                    HStack(spacing: 16) {
+                        ProfileAvatarView(iconName: "figure.run", avatarURL: nil, size: 50)
 
-                    Button("Edit Profile") {
-                        showingProfileEdit = true
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(String(localized: "Loading..."))
+                                .font(.headline)
+                            if let email = authService.user?.email {
+                                Text(email)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
                     }
+                    .padding(.vertical, 4)
                 }
+
+                Button("Edit Profile") {
+                    showingProfileEdit = true
+                }
+            }
 
                 Section("Units") {
                     DistanceUnitPicker()
@@ -155,8 +152,8 @@ struct SettingsView: View {
 
                     Link("Support", destination: URL(string: String(localized: "SupportURL"))!)
 
-                    NavigationLink("Licenses") {
-                        LicensesView()
+                    NavigationLink(value: ScreenType.licenses) {
+                        Text("Licenses")
                     }
                 }
 
@@ -164,6 +161,14 @@ struct SettingsView: View {
                 Section("Debug") {
                     Button("Send Test Notification") {
                         Task { await sendTestNotification() }
+                    }
+
+                    Button("Send Local Run Notification") {
+                        Task { await sendLocalRunNotification() }
+                    }
+
+                    Button("Send Friend Request Notification") {
+                        Task { await sendFriendNotification() }
                     }
 
                     Button("Create Dummy Users") {
@@ -221,7 +226,6 @@ struct SettingsView: View {
             } message: {
                 Text("This will sync all data with HealthKit. Records deleted from HealthKit will also be removed from this app.", comment: "Force sync confirmation message")
             }
-        }
     }
 
     private func deleteAccount() async {
@@ -313,6 +317,63 @@ struct SettingsView: View {
             } else {
                 debugMessage = "Notification sent"
             }
+        } catch {
+            debugMessage = "Error: \(error.localizedDescription)"
+        }
+    }
+
+    private func sendLocalRunNotification() async {
+        guard let userId = authService.user?.uid else {
+            debugMessage = "Not logged in"
+            return
+        }
+
+        debugMessage = "Fetching latest run..."
+
+        do {
+            // 最新のランを取得
+            let calendar = Calendar.current
+            let now = Date()
+            let year = calendar.component(.year, from: now)
+            let month = calendar.component(.month, from: now)
+
+            let runs = try await firestoreService.getUserMonthlyRuns(
+                userId: userId,
+                year: year,
+                month: month
+            )
+
+            guard let latestRun = runs.max(by: { $0.date < $1.date }) else {
+                debugMessage = "No runs found this month"
+                return
+            }
+
+            // 実際のランで通知を送信
+            await NotificationService.shared.sendNewRunNotification(records: [latestRun])
+            debugMessage = "Notification sent for \(latestRun.formattedDistance) run"
+        } catch {
+            debugMessage = "Error: \(error.localizedDescription)"
+        }
+    }
+
+    private func sendFriendNotification() async {
+        debugMessage = "Sending..."
+
+        let content = UNMutableNotificationContent()
+        content.title = String(localized: "New Friend Request")
+        content.body = String(localized: "Test User wants to be your friend")
+        content.sound = .default
+        content.userInfo = ["type": "friend_request", "requestId": "test-request-id"]
+
+        let request = UNNotificationRequest(
+            identifier: UUID().uuidString,
+            content: content,
+            trigger: UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        )
+
+        do {
+            try await UNUserNotificationCenter.current().add(request)
+            debugMessage = "Friend notification scheduled"
         } catch {
             debugMessage = "Error: \(error.localizedDescription)"
         }

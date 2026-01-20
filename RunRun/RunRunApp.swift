@@ -16,16 +16,10 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     /// スロットリング間隔（秒）
     private let syncThrottleInterval: TimeInterval = 10
 
-    /// 起動時にバックグラウンドだったかどうか
-    private var launchedInBackground = false
-
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
-        // launchOptionsが空でなければバックグラウンド起動
-        launchedInBackground = launchOptions != nil && !launchOptions!.isEmpty
-
         FirebaseApp.configure()
         Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(true)
 
@@ -121,7 +115,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
         lastSyncTime = Date()
         // HealthKitと同期（SyncServiceが同期後にウィジェットも更新する）
-        await SyncService.shared.syncHealthKitData(userId: userId, isBackgroundSync: launchedInBackground)
+        await SyncService.shared.syncHealthKitData(userId: userId)
     }
 
     func scheduleWidgetRefresh() {
