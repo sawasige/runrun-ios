@@ -3,12 +3,10 @@ import SwiftUI
 struct TimelineView: View {
     @StateObject private var viewModel: TimelineViewModel
     @EnvironmentObject private var syncService: SyncService
-    @EnvironmentObject private var notificationService: NotificationService
     @State private var showNavBarLogo = false
     @State private var monthlyDistance: Double = 0
     @State private var monthlyRunCount: Int = 0
     @State private var monthlyRecords: [RunningRecord] = []
-    @Binding var navigationPath: NavigationPath
 
     let userProfile: UserProfile
 
@@ -22,10 +20,9 @@ struct TimelineView: View {
         return formatter.string(from: now)
     }
 
-    init(userId: String, userProfile: UserProfile, navigationPath: Binding<NavigationPath>) {
+    init(userId: String, userProfile: UserProfile) {
         _viewModel = StateObject(wrappedValue: TimelineViewModel(userId: userId))
         self.userProfile = userProfile
-        _navigationPath = navigationPath
     }
 
     private var contentState: Int {
@@ -81,8 +78,6 @@ struct TimelineView: View {
         }
         .onAppear {
             AnalyticsService.logScreenView("Timeline")
-            // 他のタブから戻ってきた時にpendingRunInfoが設定されていたら処理
-            handlePendingRunInfo()
         }
         .onChange(of: syncService.lastSyncedAt) { _, _ in
             Task {
@@ -90,39 +85,6 @@ struct TimelineView: View {
                 await loadMonthlySummary()
             }
         }
-        .onReceive(notificationService.$pendingRunInfo) { _ in
-            handlePendingRunInfo()
-        }
-    }
-
-    /// 通知からのナビゲーション処理
-    private func handlePendingRunInfo() {
-        guard let info = notificationService.pendingRunInfo else { return }
-        notificationService.pendingRunInfo = nil  // 先にクリアして二重実行を防ぐ
-
-        // まずナビゲーションスタックをルートに戻す
-        navigationPath = NavigationPath()
-
-        // 遅延させてからナビゲーション
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            Task { @MainActor in
-                // データが読み込まれていない場合はリフレッシュ
-                if viewModel.runs.isEmpty {
-                    await viewModel.refresh()
-                }
-                if let record = findRecord(date: info.date, distanceKm: info.distanceKm) {
-                    navigationPath.append(ScreenType.runDetail(record: record, user: userProfile))
-                }
-            }
-        }
-    }
-
-    /// 通知からのナビゲーション用：該当するランを検索
-    private func findRecord(date: Date, distanceKm: Double) -> RunningRecord? {
-        viewModel.runs.first { run in
-            abs(run.date.timeIntervalSince(date)) < 60 &&
-            abs(run.distanceKm - distanceKm) < 0.1
-        }?.toRunningRecord()
     }
 
     private var expandedHeaderView: some View {
@@ -541,9 +503,8 @@ private struct MiniCalendarView: View {
 }
 
 #Preview {
-    @Previewable @State var path = NavigationPath()
-    NavigationStack(path: $path) {
-        TimelineView(userId: "preview", userProfile: UserProfile(id: "preview", displayName: "Preview User", email: nil, iconName: "figure.run"), navigationPath: $path)
+    NavigationStack {
+        TimelineView(userId: "preview", userProfile: UserProfile(id: "preview", displayName: "Preview User", email: nil, iconName: "figure.run"))
             .navigationDestination(for: ScreenType.self) { _ in
                 EmptyView()
             }

@@ -62,7 +62,7 @@ struct ContentView: View {
     private var screenshotTabView: some View {
         TabView(selection: $selectedTab) {
             NavigationStack(path: $homeNavigationPath) {
-                TimelineView(userId: MockDataProvider.currentUserId, userProfile: MockDataProvider.currentUser, navigationPath: $homeNavigationPath)
+                TimelineView(userId: MockDataProvider.currentUserId, userProfile: MockDataProvider.currentUser)
                     .navigationDestination(for: ScreenType.self) { screen in
                         destinationView(for: screen)
                     }
@@ -182,7 +182,7 @@ struct ContentView: View {
         ZStack(alignment: .top) {
             TabView(selection: $selectedTab) {
                 NavigationStack(path: $homeNavigationPath) {
-                    TimelineView(userId: userId, userProfile: userProfile, navigationPath: $homeNavigationPath)
+                    TimelineView(userId: userId, userProfile: userProfile)
                         .navigationDestination(for: ScreenType.self) { screen in
                             destinationView(for: screen)
                         }
@@ -258,12 +258,9 @@ struct ContentView: View {
                 }
             }
             .onChange(of: notificationService.pendingRunInfo?.date) { _, newValue in
-                if newValue != nil {
-                    selectedTab = .home
-                    // タブ切り替え後に少し待ってからNavigationPathをリセット
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        homeNavigationPath = NavigationPath()
-                    }
+                if let info = notificationService.pendingRunInfo, newValue != nil {
+                    notificationService.pendingRunInfo = nil
+                    handlePendingRunNavigation(info: info, userProfile: userProfile)
                 }
             }
 
@@ -272,6 +269,43 @@ struct ContentView: View {
                 .padding(.top, 8)
         }
         .transition(.opacity)
+    }
+
+    /// 通知からのラン詳細遷移を処理
+    private func handlePendingRunNavigation(info: (date: Date, distanceKm: Double), userProfile: UserProfile) {
+        // Homeタブに切り替え
+        selectedTab = .home
+
+        // NavigationPathをリセットしてから遷移
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            homeNavigationPath = NavigationPath()
+
+            // Firestoreから該当レコードを検索して遷移
+            Task { @MainActor in
+                if let record = await findRunRecord(date: info.date, distanceKm: info.distanceKm) {
+                    homeNavigationPath.append(ScreenType.runDetail(record: record, user: userProfile))
+                }
+            }
+        }
+    }
+
+    /// 通知からのナビゲーション用：該当するランを検索
+    private func findRunRecord(date: Date, distanceKm: Double) async -> RunningRecord? {
+        let calendar = Calendar.current
+        let year = calendar.component(.year, from: date)
+        let month = calendar.component(.month, from: date)
+
+        do {
+            guard let userId = authService.user?.uid else { return nil }
+            let runs = try await firestoreService.getUserMonthlyRuns(userId: userId, year: year, month: month)
+            return runs.first { record in
+                abs(record.date.timeIntervalSince(date)) < 60 &&
+                abs(record.distanceInKilometers - distanceKm) < 0.1
+            }
+        } catch {
+            print("Failed to find run record: \(error)")
+            return nil
+        }
     }
 
     /// ScreenTypeに応じた遷移先Viewを返す
