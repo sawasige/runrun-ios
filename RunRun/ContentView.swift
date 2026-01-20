@@ -263,8 +263,13 @@ struct ContentView: View {
             }
             .onChange(of: notificationService.pendingTab) { _, newTab in
                 if let tab = newTab {
-                    selectedTab = tab
                     notificationService.pendingTab = nil
+                    selectedTab = tab
+                    // NavigationPathをリセット（遅延実行でUIの更新を待つ）
+                    Task { @MainActor in
+                        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1秒
+                        resetNavigationPath(for: tab)
+                    }
                 }
             }
             .onChange(of: notificationService.pendingRunInfo?.date) { _, newValue in
@@ -283,18 +288,11 @@ struct ContentView: View {
 
     /// 通知からのラン詳細遷移を処理
     private func handlePendingRunNavigation(info: (date: Date, distanceKm: Double), userProfile: UserProfile) {
-        // Homeタブに切り替え
-        selectedTab = .home
-
-        // NavigationPathをリセットしてから遷移
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            homeNavigationPath = NavigationPath()
-
-            // Firestoreから該当レコードを検索して遷移
-            Task { @MainActor in
-                if let record = await findRunRecord(date: info.date, distanceKm: info.distanceKm) {
-                    homeNavigationPath.append(ScreenType.runDetail(record: record, user: userProfile))
-                }
+        // Firestoreから該当レコードを検索して遷移
+        // ※NavigationPathのリセットはonChange(of: pendingTab)で実行済み
+        Task { @MainActor in
+            if let record = await findRunRecord(date: info.date, distanceKm: info.distanceKm) {
+                homeNavigationPath.append(ScreenType.runDetail(record: record, user: userProfile))
             }
         }
     }
@@ -315,6 +313,22 @@ struct ContentView: View {
         } catch {
             print("Failed to find run record: \(error)")
             return nil
+        }
+    }
+
+    /// 指定タブのNavigationPathをリセット
+    private func resetNavigationPath(for tab: AppTab) {
+        switch tab {
+        case .home:
+            homeNavigationPath = NavigationPath()
+        case .record:
+            recordNavigationPath = NavigationPath()
+        case .leaderboard:
+            leaderboardNavigationPath = NavigationPath()
+        case .friends:
+            friendsNavigationPath = NavigationPath()
+        case .settings:
+            settingsNavigationPath = NavigationPath()
         }
     }
 

@@ -167,6 +167,10 @@ struct SettingsView: View {
                         Task { await sendLocalRunNotification() }
                     }
 
+                    Button("Send Friend Request Notification") {
+                        Task { await sendFriendNotification() }
+                    }
+
                     Button("Create Dummy Users") {
                         Task { await createDummyData() }
                     }
@@ -347,6 +351,29 @@ struct SettingsView: View {
             // 実際のランで通知を送信
             await NotificationService.shared.sendNewRunNotification(records: [latestRun])
             debugMessage = "Notification sent for \(latestRun.formattedDistance) run"
+        } catch {
+            debugMessage = "Error: \(error.localizedDescription)"
+        }
+    }
+
+    private func sendFriendNotification() async {
+        debugMessage = "Sending..."
+
+        let content = UNMutableNotificationContent()
+        content.title = String(localized: "New Friend Request")
+        content.body = String(localized: "Test User wants to be your friend")
+        content.sound = .default
+        content.userInfo = ["type": "friend_request", "requestId": "test-request-id"]
+
+        let request = UNNotificationRequest(
+            identifier: UUID().uuidString,
+            content: content,
+            trigger: UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        )
+
+        do {
+            try await UNUserNotificationCenter.current().add(request)
+            debugMessage = "Friend notification scheduled"
         } catch {
             debugMessage = "Error: \(error.localizedDescription)"
         }
