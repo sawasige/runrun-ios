@@ -19,34 +19,15 @@ struct SettingsView: View {
     private let firestoreService = FirestoreService.shared
 
     var body: some View {
-        NavigationStack {
-            List {
-                Section("Profile") {
-                    if let profile = userProfile {
-                        NavigationLink {
-                            ProfileView(user: profile)
-                        } label: {
-                            HStack(spacing: 16) {
-                                ProfileAvatarView(user: profile, size: 50)
-
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(profile.displayName)
-                                        .font(.headline)
-                                    if let email = authService.user?.email {
-                                        Text(email)
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
-                            }
-                            .padding(.vertical, 4)
-                        }
-                    } else {
+        List {
+            Section("Profile") {
+                if let profile = userProfile {
+                    NavigationLink(value: ScreenType.profile(profile)) {
                         HStack(spacing: 16) {
-                            ProfileAvatarView(iconName: "figure.run", avatarURL: nil, size: 50)
+                            ProfileAvatarView(user: profile, size: 50)
 
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(String(localized: "Loading..."))
+                                Text(profile.displayName)
                                     .font(.headline)
                                 if let email = authService.user?.email {
                                     Text(email)
@@ -57,11 +38,27 @@ struct SettingsView: View {
                         }
                         .padding(.vertical, 4)
                     }
+                } else {
+                    HStack(spacing: 16) {
+                        ProfileAvatarView(iconName: "figure.run", avatarURL: nil, size: 50)
 
-                    Button("Edit Profile") {
-                        showingProfileEdit = true
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(String(localized: "Loading..."))
+                                .font(.headline)
+                            if let email = authService.user?.email {
+                                Text(email)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
                     }
+                    .padding(.vertical, 4)
                 }
+
+                Button("Edit Profile") {
+                    showingProfileEdit = true
+                }
+            }
 
                 Section("Units") {
                     DistanceUnitPicker()
@@ -155,8 +152,8 @@ struct SettingsView: View {
 
                     Link("Support", destination: URL(string: String(localized: "SupportURL"))!)
 
-                    NavigationLink("Licenses") {
-                        LicensesView()
+                    NavigationLink(value: ScreenType.licenses) {
+                        Text("Licenses")
                     }
                 }
 
@@ -225,7 +222,6 @@ struct SettingsView: View {
             } message: {
                 Text("This will sync all data with HealthKit. Records deleted from HealthKit will also be removed from this app.", comment: "Force sync confirmation message")
             }
-        }
     }
 
     private func deleteAccount() async {

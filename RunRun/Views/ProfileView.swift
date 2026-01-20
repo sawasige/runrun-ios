@@ -190,67 +190,49 @@ struct ProfileView: View {
                 Section("Highlights") {
                     // 年のハイライト
                     if let best = bestYearByDistance {
-                        NavigationLink {
-                            YearDetailView(user: user, initialYear: best.year)
-                        } label: {
+                        NavigationLink(value: ScreenType.yearDetail(user: user, initialYear: best.year)) {
                             LabeledContent("Best Distance Year", value: "\(best.formattedYear) (\(best.formattedTotalDistance))")
                         }
                     }
                     if let best = bestYearByDuration {
-                        NavigationLink {
-                            YearDetailView(user: user, initialYear: best.year)
-                        } label: {
+                        NavigationLink(value: ScreenType.yearDetail(user: user, initialYear: best.year)) {
                             LabeledContent("Best Duration Year", value: "\(best.formattedYear) (\(best.formattedTotalDuration))")
                         }
                     }
                     if let best = mostRunsYear {
-                        NavigationLink {
-                            YearDetailView(user: user, initialYear: best.year)
-                        } label: {
+                        NavigationLink(value: ScreenType.yearDetail(user: user, initialYear: best.year)) {
                             LabeledContent("Most Runs Year", value: "\(best.formattedYear) (\(String(format: String(localized: "%d runs", comment: "Run count"), best.runCount)))")
                         }
                     }
                     // 月のハイライト
                     if let best = bestMonthByDistance {
-                        NavigationLink {
-                            MonthDetailView(user: user, year: best.year, month: best.month)
-                        } label: {
+                        NavigationLink(value: ScreenType.monthDetail(user: user, year: best.year, month: best.month)) {
                             LabeledContent("Best Distance Month", value: "\(best.formattedMonth) (\(best.formattedTotalDistance))")
                         }
                     }
                     if let best = bestMonthByDuration {
-                        NavigationLink {
-                            MonthDetailView(user: user, year: best.year, month: best.month)
-                        } label: {
+                        NavigationLink(value: ScreenType.monthDetail(user: user, year: best.year, month: best.month)) {
                             LabeledContent("Best Duration Month", value: "\(best.formattedMonth) (\(best.formattedTotalDuration))")
                         }
                     }
                     if let best = mostRunsMonth {
-                        NavigationLink {
-                            MonthDetailView(user: user, year: best.year, month: best.month)
-                        } label: {
+                        NavigationLink(value: ScreenType.monthDetail(user: user, year: best.year, month: best.month)) {
                             LabeledContent("Most Runs Month", value: "\(best.formattedMonth) (\(String(format: String(localized: "%d runs", comment: "Run count"), best.runCount)))")
                         }
                     }
                     // 日のハイライト
                     if let best = bestDayByDistance {
-                        NavigationLink {
-                            RunDetailView(record: best, user: user)
-                        } label: {
+                        NavigationLink(value: ScreenType.runDetail(record: best, user: user)) {
                             LabeledContent("Best Distance Day", value: "\(yearMonthDayString(from: best.date)) (\(best.formattedDistance))")
                         }
                     }
                     if let best = bestDayByDuration {
-                        NavigationLink {
-                            RunDetailView(record: best, user: user)
-                        } label: {
+                        NavigationLink(value: ScreenType.runDetail(record: best, user: user)) {
                             LabeledContent("Best Duration Day", value: "\(yearMonthDayString(from: best.date)) (\(best.formattedDuration))")
                         }
                     }
                     if let fastest = fastestDay {
-                        NavigationLink {
-                            RunDetailView(record: fastest, user: user)
-                        } label: {
+                        NavigationLink(value: ScreenType.runDetail(record: fastest, user: user)) {
                             LabeledContent("Fastest Day", value: "\(yearMonthDayString(from: fastest.date)) (\(fastest.formattedPace))")
                         }
                     }
@@ -262,9 +244,7 @@ struct ProfileView: View {
                 Section("Personal Records") {
                     ForEach(personalRecords) { pr in
                         if let record = pr.record {
-                            NavigationLink {
-                                RunDetailView(record: record, user: user)
-                            } label: {
+                            NavigationLink(value: ScreenType.runDetail(record: record, user: user)) {
                                 LabeledContent {
                                     VStack(alignment: .trailing) {
                                         Text(record.formattedDuration)
@@ -287,9 +267,7 @@ struct ProfileView: View {
 
             // 週間推移
             Section("Weekly Trends") {
-                NavigationLink {
-                    WeeklyStatsView(user: user)
-                } label: {
+                NavigationLink(value: ScreenType.weeklyStats(user: user)) {
                     Label("Last 12 Weeks", systemImage: "chart.line.uptrend.xyaxis")
                 }
             }
@@ -298,9 +276,7 @@ struct ProfileView: View {
             if !yearlyStats.isEmpty {
                 Section("Yearly Records") {
                     ForEach(yearlyStats.filter { $0.runCount > 0 }.sorted { $0.year > $1.year }) { stats in
-                        NavigationLink {
-                            YearDetailView(user: user, initialYear: stats.year)
-                        } label: {
+                        NavigationLink(value: ScreenType.yearDetail(user: user, initialYear: stats.year)) {
                             YearlyStatsRow(stats: stats)
                         }
                     }

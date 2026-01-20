@@ -6,7 +6,6 @@ struct MonthDetailView: View {
     @StateObject private var viewModel: MonthDetailViewModel
     @EnvironmentObject private var syncService: SyncService
     let userProfile: UserProfile
-    @State private var selectedCalendarRecord: RunningRecord?
     @State private var currentYear: Int
     @State private var currentMonth: Int
     @State private var hasLoadedOnce = false
@@ -119,9 +118,7 @@ struct MonthDetailView: View {
                             Image(systemName: "square.and.arrow.up")
                         }
                     }
-                    NavigationLink {
-                        ProfileView(user: userProfile)
-                    } label: {
+                    NavigationLink(value: ScreenType.profile(userProfile)) {
                         ProfileAvatarView(user: userProfile, size: 28)
                     }
                 }
@@ -175,7 +172,7 @@ struct MonthDetailView: View {
                     year: viewModel.year,
                     month: viewModel.month,
                     records: viewModel.records,
-                    selectedRecord: $selectedCalendarRecord
+                    userProfile: userProfile
                 )
             }
 
@@ -213,23 +210,17 @@ struct MonthDetailView: View {
             if viewModel.bestDayByDistance != nil || viewModel.bestDayByDuration != nil || viewModel.fastestDay != nil {
                 Section("Highlights") {
                     if let best = viewModel.bestDayByDistance {
-                        NavigationLink {
-                            RunDetailView(record: best, user: userProfile)
-                        } label: {
+                        NavigationLink(value: ScreenType.runDetail(record: best, user: userProfile)) {
                             LabeledContent("Best Distance Day", value: "\(dayString(from: best.date)) (\(best.formattedDistance))")
                         }
                     }
                     if let best = viewModel.bestDayByDuration {
-                        NavigationLink {
-                            RunDetailView(record: best, user: userProfile)
-                        } label: {
+                        NavigationLink(value: ScreenType.runDetail(record: best, user: userProfile)) {
                             LabeledContent("Best Duration Day", value: "\(dayString(from: best.date)) (\(best.formattedDuration))")
                         }
                     }
                     if let fastest = viewModel.fastestDay {
-                        NavigationLink {
-                            RunDetailView(record: fastest, user: userProfile)
-                        } label: {
+                        NavigationLink(value: ScreenType.runDetail(record: fastest, user: userProfile)) {
                             LabeledContent("Fastest Day", value: "\(dayString(from: fastest.date)) (\(fastest.formattedPace))")
                         }
                     }
@@ -238,9 +229,7 @@ struct MonthDetailView: View {
 
             Section("Running Records") {
                 ForEach(Array(viewModel.records.enumerated()), id: \.element.id) { index, record in
-                    NavigationLink {
-                        RunDetailView(record: record, user: userProfile)
-                    } label: {
+                    NavigationLink(value: ScreenType.runDetail(record: record, user: userProfile)) {
                         RunningRecordRow(record: record)
                     }
                     .accessibilityIdentifier(index == 0 ? "first_run_row" : "run_row_\(index)")
@@ -253,9 +242,6 @@ struct MonthDetailView: View {
                     .frame(height: 60)
                     .listRowBackground(Color.clear)
             }
-        }
-        .navigationDestination(item: $selectedCalendarRecord) { record in
-            RunDetailView(record: record, user: userProfile)
         }
     }
 

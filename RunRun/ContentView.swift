@@ -10,7 +10,13 @@ struct ContentView: View {
     @State private var userProfile: UserProfile?
     @State private var profileLoadError: Error?
     @State private var hasProcessedInitialPendingTab = false
+
+    // 各タブのNavigationPath
     @State private var homeNavigationPath = NavigationPath()
+    @State private var recordNavigationPath = NavigationPath()
+    @State private var leaderboardNavigationPath = NavigationPath()
+    @State private var friendsNavigationPath = NavigationPath()
+    @State private var settingsNavigationPath = NavigationPath()
 
     private let firestoreService = FirestoreService.shared
 
@@ -55,35 +61,60 @@ struct ContentView: View {
     /// スクリーンショット用のタブビュー（認証不要）
     private var screenshotTabView: some View {
         TabView(selection: $selectedTab) {
-            TimelineView(userId: MockDataProvider.currentUserId, userProfile: MockDataProvider.currentUser, navigationPath: $homeNavigationPath)
-                .tabItem {
-                    Label("Home", systemImage: "house")
-                }
-                .tag(AppTab.home)
+            NavigationStack(path: $homeNavigationPath) {
+                TimelineView(userId: MockDataProvider.currentUserId, userProfile: MockDataProvider.currentUser, navigationPath: $homeNavigationPath)
+                    .navigationDestination(for: ScreenType.self) { screen in
+                        destinationView(for: screen)
+                    }
+            }
+            .tabItem {
+                Label("Home", systemImage: "house")
+            }
+            .tag(AppTab.home)
 
-            YearDetailView(user: MockDataProvider.currentUser)
-                .tabItem {
-                    Label("Records", systemImage: "figure.run")
-                }
-                .tag(AppTab.record)
+            NavigationStack(path: $recordNavigationPath) {
+                YearDetailView(user: MockDataProvider.currentUser)
+                    .navigationDestination(for: ScreenType.self) { screen in
+                        destinationView(for: screen)
+                    }
+            }
+            .tabItem {
+                Label("Records", systemImage: "figure.run")
+            }
+            .tag(AppTab.record)
 
-            LeaderboardView()
-                .tabItem {
-                    Label("Leaderboard", systemImage: "trophy")
-                }
-                .tag(AppTab.leaderboard)
+            NavigationStack(path: $leaderboardNavigationPath) {
+                LeaderboardView()
+                    .navigationDestination(for: ScreenType.self) { screen in
+                        destinationView(for: screen)
+                    }
+            }
+            .tabItem {
+                Label("Leaderboard", systemImage: "trophy")
+            }
+            .tag(AppTab.leaderboard)
 
-            FriendsView()
-                .tabItem {
-                    Label("Friends", systemImage: "person.2")
-                }
-                .tag(AppTab.friends)
+            NavigationStack(path: $friendsNavigationPath) {
+                FriendsView()
+                    .navigationDestination(for: ScreenType.self) { screen in
+                        destinationView(for: screen)
+                    }
+            }
+            .tabItem {
+                Label("Friends", systemImage: "person.2")
+            }
+            .tag(AppTab.friends)
 
-            SettingsView()
-                .tabItem {
-                    Label("Settings", systemImage: "gear")
-                }
-                .tag(AppTab.settings)
+            NavigationStack(path: $settingsNavigationPath) {
+                SettingsView()
+                    .navigationDestination(for: ScreenType.self) { screen in
+                        destinationView(for: screen)
+                    }
+            }
+            .tabItem {
+                Label("Settings", systemImage: "gear")
+            }
+            .tag(AppTab.settings)
         }
         .tabViewStyle(.sidebarAdaptable)
         .environmentObject(syncService)
@@ -150,36 +181,61 @@ struct ContentView: View {
     private func mainTabView(userId: String, userProfile: UserProfile) -> some View {
         ZStack(alignment: .top) {
             TabView(selection: $selectedTab) {
-                TimelineView(userId: userId, userProfile: userProfile, navigationPath: $homeNavigationPath)
-                    .tabItem {
-                        Label("Home", systemImage: "house")
-                    }
-                    .tag(AppTab.home)
+                NavigationStack(path: $homeNavigationPath) {
+                    TimelineView(userId: userId, userProfile: userProfile, navigationPath: $homeNavigationPath)
+                        .navigationDestination(for: ScreenType.self) { screen in
+                            destinationView(for: screen)
+                        }
+                }
+                .tabItem {
+                    Label("Home", systemImage: "house")
+                }
+                .tag(AppTab.home)
 
-                YearDetailView(user: userProfile)
-                    .tabItem {
-                        Label("Records", systemImage: "figure.run")
-                    }
-                    .tag(AppTab.record)
+                NavigationStack(path: $recordNavigationPath) {
+                    YearDetailView(user: userProfile)
+                        .navigationDestination(for: ScreenType.self) { screen in
+                            destinationView(for: screen)
+                        }
+                }
+                .tabItem {
+                    Label("Records", systemImage: "figure.run")
+                }
+                .tag(AppTab.record)
 
-                LeaderboardView()
-                    .tabItem {
-                        Label("Leaderboard", systemImage: "trophy")
-                    }
-                    .tag(AppTab.leaderboard)
+                NavigationStack(path: $leaderboardNavigationPath) {
+                    LeaderboardView()
+                        .navigationDestination(for: ScreenType.self) { screen in
+                            destinationView(for: screen)
+                        }
+                }
+                .tabItem {
+                    Label("Leaderboard", systemImage: "trophy")
+                }
+                .tag(AppTab.leaderboard)
 
-                FriendsView()
-                    .tabItem {
-                        Label("Friends", systemImage: "person.2")
-                    }
-                    .badge(badgeService.totalBadgeCount)
-                    .tag(AppTab.friends)
+                NavigationStack(path: $friendsNavigationPath) {
+                    FriendsView()
+                        .navigationDestination(for: ScreenType.self) { screen in
+                            destinationView(for: screen)
+                        }
+                }
+                .tabItem {
+                    Label("Friends", systemImage: "person.2")
+                }
+                .badge(badgeService.totalBadgeCount)
+                .tag(AppTab.friends)
 
-                SettingsView()
-                    .tabItem {
-                        Label("Settings", systemImage: "gear")
-                    }
-                    .tag(AppTab.settings)
+                NavigationStack(path: $settingsNavigationPath) {
+                    SettingsView()
+                        .navigationDestination(for: ScreenType.self) { screen in
+                            destinationView(for: screen)
+                        }
+                }
+                .tabItem {
+                    Label("Settings", systemImage: "gear")
+                }
+                .tag(AppTab.settings)
             }
             .tabViewStyle(.sidebarAdaptable)
             .environmentObject(syncService)
@@ -204,8 +260,8 @@ struct ContentView: View {
             .onChange(of: notificationService.pendingRunInfo?.date) { _, newValue in
                 if newValue != nil {
                     selectedTab = .home
-                    // タブ切り替え後に少し待ってからリセット
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    // タブ切り替え後に少し待ってからNavigationPathをリセット
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                         homeNavigationPath = NavigationPath()
                     }
                 }
@@ -216,6 +272,25 @@ struct ContentView: View {
                 .padding(.top, 8)
         }
         .transition(.opacity)
+    }
+
+    /// ScreenTypeに応じた遷移先Viewを返す
+    @ViewBuilder
+    private func destinationView(for screen: ScreenType) -> some View {
+        switch screen {
+        case .profile(let user):
+            ProfileView(user: user)
+        case .yearDetail(let user, let initialYear):
+            YearDetailView(user: user, initialYear: initialYear)
+        case .monthDetail(let user, let year, let month):
+            MonthDetailView(user: user, year: year, month: month)
+        case .runDetail(let record, let user):
+            RunDetailView(record: record, user: user)
+        case .weeklyStats(let user):
+            WeeklyStatsView(user: user)
+        case .licenses:
+            LicensesView()
+        }
     }
 }
 

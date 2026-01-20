@@ -92,15 +92,7 @@ struct YearDetailView: View {
     }
 
     var body: some View {
-        Group {
-            if isOwnRecord {
-                NavigationStack {
-                    mainContent
-                }
-            } else {
-                mainContent
-            }
-        }
+        mainContent
     }
 
     @ViewBuilder
@@ -133,9 +125,7 @@ struct YearDetailView: View {
                             Image(systemName: "square.and.arrow.up")
                         }
                     }
-                    NavigationLink {
-                        ProfileView(user: userProfile)
-                    } label: {
+                    NavigationLink(value: ScreenType.profile(userProfile)) {
                         ProfileAvatarView(user: userProfile, size: 28)
                     }
                 }
@@ -250,45 +240,33 @@ struct YearDetailView: View {
                 Section("Highlights") {
                     // 月のハイライト
                     if let best = viewModel.bestMonthByDistance {
-                        NavigationLink {
-                            MonthDetailView(user: userProfile, year: best.year, month: best.month)
-                        } label: {
+                        NavigationLink(value: ScreenType.monthDetail(user: userProfile, year: best.year, month: best.month)) {
                             LabeledContent("Best Distance Month", value: "\(best.shortMonthName) (\(best.formattedTotalDistance))")
                         }
                     }
                     if let best = viewModel.bestMonthByDuration {
-                        NavigationLink {
-                            MonthDetailView(user: userProfile, year: best.year, month: best.month)
-                        } label: {
+                        NavigationLink(value: ScreenType.monthDetail(user: userProfile, year: best.year, month: best.month)) {
                             LabeledContent("Best Duration Month", value: "\(best.shortMonthName) (\(best.formattedTotalDuration))")
                         }
                     }
                     if let best = viewModel.mostRunsMonth {
-                        NavigationLink {
-                            MonthDetailView(user: userProfile, year: best.year, month: best.month)
-                        } label: {
+                        NavigationLink(value: ScreenType.monthDetail(user: userProfile, year: best.year, month: best.month)) {
                             LabeledContent("Most Runs Month", value: "\(best.shortMonthName) (\(String(format: String(localized: "%d runs", comment: "Run count"), best.runCount)))")
                         }
                     }
                     // 日のハイライト
                     if let best = viewModel.bestDayByDistance {
-                        NavigationLink {
-                            RunDetailView(record: best, user: userProfile)
-                        } label: {
+                        NavigationLink(value: ScreenType.runDetail(record: best, user: userProfile)) {
                             LabeledContent("Best Distance Day", value: "\(monthDayString(from: best.date)) (\(best.formattedDistance))")
                         }
                     }
                     if let best = viewModel.bestDayByDuration {
-                        NavigationLink {
-                            RunDetailView(record: best, user: userProfile)
-                        } label: {
+                        NavigationLink(value: ScreenType.runDetail(record: best, user: userProfile)) {
                             LabeledContent("Best Duration Day", value: "\(monthDayString(from: best.date)) (\(best.formattedDuration))")
                         }
                     }
                     if let fastest = viewModel.fastestDay {
-                        NavigationLink {
-                            RunDetailView(record: fastest, user: userProfile)
-                        } label: {
+                        NavigationLink(value: ScreenType.runDetail(record: fastest, user: userProfile)) {
                             LabeledContent("Fastest Day", value: "\(monthDayString(from: fastest.date)) (\(fastest.formattedPace))")
                         }
                     }
@@ -297,9 +275,7 @@ struct YearDetailView: View {
 
             Section("Monthly Records") {
                 ForEach(Array(filteredMonthlyStats.reversed().enumerated()), id: \.element.id) { index, stats in
-                    NavigationLink {
-                        MonthDetailView(user: userProfile, year: stats.year, month: stats.month)
-                    } label: {
+                    NavigationLink(value: ScreenType.monthDetail(user: userProfile, year: stats.year, month: stats.month)) {
                         MonthlyStatsRow(stats: stats)
                             .accessibilityIdentifier(index == 0 ? "first_month_row" : "month_row_\(index)")
                     }

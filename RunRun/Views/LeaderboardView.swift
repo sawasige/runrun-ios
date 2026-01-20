@@ -52,76 +52,72 @@ struct LeaderboardView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if isLoading {
-                    VStack {
+        Group {
+            if isLoading {
+                VStack {
+                    filterSection
+                    Spacer()
+                    ProgressView()
+                    Spacer()
+                }
+            } else if let error = errorMessage {
+                VStack {
+                    filterSection
+                    ContentUnavailableView(
+                        "Loading Error",
+                        systemImage: "exclamationmark.triangle",
+                        description: Text(error)
+                    )
+                }
+            } else if users.isEmpty {
+                VStack {
+                    filterSection
+                    ContentUnavailableView(
+                        "No Rankings",
+                        systemImage: "trophy",
+                        description: Text("No data for this month")
+                    )
+                }
+            } else {
+                List {
+                    Section {
                         filterSection
-                        Spacer()
-                        ProgressView()
-                        Spacer()
+                            .listRowInsets(EdgeInsets())
+                            .listRowBackground(Color.clear)
                     }
-                } else if let error = errorMessage {
-                    VStack {
-                        filterSection
-                        ContentUnavailableView(
-                            "Loading Error",
-                            systemImage: "exclamationmark.triangle",
-                            description: Text(error)
-                        )
-                    }
-                } else if users.isEmpty {
-                    VStack {
-                        filterSection
-                        ContentUnavailableView(
-                            "No Rankings",
-                            systemImage: "trophy",
-                            description: Text("No data for this month")
-                        )
-                    }
-                } else {
-                    List {
-                        Section {
-                            filterSection
-                                .listRowInsets(EdgeInsets())
-                                .listRowBackground(Color.clear)
-                        }
 
-                        Section {
-                            ForEach(Array(users.enumerated()), id: \.element.id) { index, user in
-                                NavigationLink {
-                                    ProfileView(user: user)
-                                } label: {
-                                    LeaderboardRow(
-                                        rank: index + 1,
-                                        user: user,
-                                        isCurrentUser: user.id == authService.user?.uid
-                                    )
-                                }
+                    Section {
+                        ForEach(Array(users.enumerated()), id: \.element.id) { index, user in
+                            NavigationLink(value: ScreenType.profile(user)) {
+                                LeaderboardRow(
+                                    rank: index + 1,
+                                    user: user,
+                                    isCurrentUser: user.id == authService.user?.uid
+                                )
                             }
                         }
                     }
                 }
             }
-            .navigationTitle("Leaderboard")
-            .refreshable {
-                await loadLeaderboard()
-            }
-            .task {
-                await loadLeaderboard()
-            }
-            .onAppear {
-                AnalyticsService.logScreenView("Leaderboard")
-            }
-            .onChange(of: selectedDate) {
-                Task { await loadLeaderboard() }
-            }
-            .onChange(of: selectedFilter) {
-                Task { await loadLeaderboard() }
-            }
-            .onChange(of: syncService.lastSyncedAt) { _, _ in
-                Task { await loadLeaderboard() }
-            }
+        }
+        .navigationTitle("Leaderboard")
+        .refreshable {
+            await loadLeaderboard()
+        }
+        .task {
+            await loadLeaderboard()
+        }
+        .onAppear {
+            AnalyticsService.logScreenView("Leaderboard")
+        }
+        .onChange(of: selectedDate) {
+            Task { await loadLeaderboard() }
+        }
+        .onChange(of: selectedFilter) {
+            Task { await loadLeaderboard() }
+        }
+        .onChange(of: syncService.lastSyncedAt) { _, _ in
+            Task { await loadLeaderboard() }
         }
     }
 

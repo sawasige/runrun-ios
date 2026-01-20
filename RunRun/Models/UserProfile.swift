@@ -1,6 +1,6 @@
 import Foundation
 
-struct UserProfile: Identifiable {
+struct UserProfile: Identifiable, Hashable {
     var id: String?
     let displayName: String
     let email: String?
