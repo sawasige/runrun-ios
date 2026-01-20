@@ -912,7 +912,6 @@
       }
     },
     "Friend notification scheduled" : {
-      "extractionState" : "stale",
       "localizations" : {
         "ja" : {
           "stringUnit" : {

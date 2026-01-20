@@ -75,7 +75,7 @@ final class WidgetService {
             year: currentYear,
             month: currentMonth,
             updatedAt: now,
-            useMetric: DistanceUnit.current == .kilometers
+            useMetric: UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
         )
 
         save(data)

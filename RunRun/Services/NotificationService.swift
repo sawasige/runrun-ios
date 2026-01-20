@@ -80,7 +80,8 @@ final class NotificationService: NSObject, ObservableObject {
 
         let content = UNMutableNotificationContent()
         content.title = String(localized: "New Run Synced")
-        content.body = String(localized: "\(UnitFormatter.formatDistance(latestRecord.distanceInKilometers)) run recorded")
+        let useMetric = UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
+        content.body = String(localized: "\(UnitFormatter.formatDistance(latestRecord.distanceInKilometers, useMetric: useMetric)) run recorded")
         content.sound = .default
         content.userInfo = [
             "type": "new_run",

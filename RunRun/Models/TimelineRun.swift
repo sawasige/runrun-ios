@@ -19,8 +19,8 @@ struct TimelineRun: Identifiable {
     var strideLength: Double?
     var stepCount: Int?
 
-    var formattedDistance: String {
-        UnitFormatter.formatDistance(distanceKm)
+    func formattedDistance(useMetric: Bool) -> String {
+        UnitFormatter.formatDistance(distanceKm, useMetric: useMetric)
     }
 
     var formattedDuration: String {
@@ -35,10 +35,10 @@ struct TimelineRun: Identifiable {
         }
     }
 
-    var formattedPace: String {
+    func formattedPace(useMetric: Bool) -> String {
         guard distanceKm > 0 else { return "--:--" }
         let pacePerKm = durationSeconds / distanceKm
-        return UnitFormatter.formatPace(secondsPerKm: pacePerKm)
+        return UnitFormatter.formatPace(secondsPerKm: pacePerKm, useMetric: useMetric)
     }
 
     var formattedTime: String {

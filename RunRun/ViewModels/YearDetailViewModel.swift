@@ -18,8 +18,8 @@ final class YearDetailViewModel: ObservableObject {
         monthlyStats.reduce(0) { $0 + $1.totalDistanceInKilometers }
     }
 
-    var formattedTotalYearlyDistance: String {
-        UnitFormatter.formatDistance(totalYearlyDistance)
+    func formattedTotalYearlyDistance(useMetric: Bool) -> String {
+        UnitFormatter.formatDistance(totalYearlyDistance, useMetric: useMetric)
     }
 
     var totalRunCount: Int {
@@ -39,8 +39,8 @@ final class YearDetailViewModel: ObservableObject {
         return totalYearlyDistance / Double(totalRunCount)
     }
 
-    var formattedAverageDistance: String {
-        UnitFormatter.formatDistance(averageDistancePerRun)
+    func formattedAverageDistance(useMetric: Bool) -> String {
+        UnitFormatter.formatDistance(averageDistancePerRun, useMetric: useMetric)
     }
 
     var averageDurationPerRun: TimeInterval {
@@ -74,8 +74,8 @@ final class YearDetailViewModel: ObservableObject {
         return totalDuration / totalYearlyDistance
     }
 
-    var formattedAveragePace: String {
-        UnitFormatter.formatPace(secondsPerKm: averagePace)
+    func formattedAveragePace(useMetric: Bool) -> String {
+        UnitFormatter.formatPace(secondsPerKm: averagePace, useMetric: useMetric)
     }
 
     var totalCalories: Double {

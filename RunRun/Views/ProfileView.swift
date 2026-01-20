@@ -6,6 +6,7 @@ struct ProfileView: View {
     @EnvironmentObject private var authService: AuthenticationService
     let user: UserProfile
 
+    @AppStorage("units.distance") private var useMetric = UnitFormatter.defaultUseMetric
     @State private var isFriend = false
     @State private var isLoading = true
     @State private var isProcessing = false
@@ -40,8 +41,8 @@ struct ProfileView: View {
         return totalDuration / totalDistance
     }
 
-    private var formattedAveragePace: String {
-        UnitFormatter.formatPace(secondsPerKm: averagePace)
+    private func formattedAveragePace() -> String {
+        UnitFormatter.formatPace(secondsPerKm: averagePace, useMetric: useMetric)
     }
 
     private var averageDistancePerRun: Double {
@@ -49,8 +50,8 @@ struct ProfileView: View {
         return totalDistance / Double(totalRuns)
     }
 
-    private var formattedAverageDistance: String {
-        UnitFormatter.formatDistance(averageDistancePerRun)
+    private func formattedAverageDistance() -> String {
+        UnitFormatter.formatDistance(averageDistancePerRun, useMetric: useMetric)
     }
 
     private var averageDurationPerRun: TimeInterval {
@@ -167,7 +168,7 @@ struct ProfileView: View {
             // 合計
             Section("Totals") {
                 LabeledContent("Distance") {
-                    Text(UnitFormatter.formatDistance(totalDistance, decimals: 1))
+                    Text(UnitFormatter.formatDistance(totalDistance, useMetric: useMetric, decimals: 1))
                         .fontWeight(.bold)
                         .foregroundStyle(.primary)
                 }
@@ -180,8 +181,8 @@ struct ProfileView: View {
 
             // 平均
             Section("Averages") {
-                LabeledContent("Pace", value: formattedAveragePace)
-                LabeledContent("Distance/Run", value: formattedAverageDistance)
+                LabeledContent("Pace", value: formattedAveragePace())
+                LabeledContent("Distance/Run", value: formattedAverageDistance())
                 LabeledContent("Time/Run", value: formattedAverageDuration)
             }
 
@@ -191,7 +192,7 @@ struct ProfileView: View {
                     // 年のハイライト
                     if let best = bestYearByDistance {
                         NavigationLink(value: ScreenType.yearDetail(user: user, initialYear: best.year)) {
-                            LabeledContent("Best Distance Year", value: "\(best.formattedYear) (\(best.formattedTotalDistance))")
+                            LabeledContent("Best Distance Year", value: "\(best.formattedYear) (\(best.formattedTotalDistance(useMetric: useMetric)))")
                         }
                     }
                     if let best = bestYearByDuration {
@@ -207,7 +208,7 @@ struct ProfileView: View {
                     // 月のハイライト
                     if let best = bestMonthByDistance {
                         NavigationLink(value: ScreenType.monthDetail(user: user, year: best.year, month: best.month)) {
-                            LabeledContent("Best Distance Month", value: "\(best.formattedMonth) (\(best.formattedTotalDistance))")
+                            LabeledContent("Best Distance Month", value: "\(best.formattedMonth) (\(best.formattedTotalDistance(useMetric: useMetric)))")
                         }
                     }
                     if let best = bestMonthByDuration {
@@ -223,7 +224,7 @@ struct ProfileView: View {
                     // 日のハイライト
                     if let best = bestDayByDistance {
                         NavigationLink(value: ScreenType.runDetail(record: best, user: user)) {
-                            LabeledContent("Best Distance Day", value: "\(yearMonthDayString(from: best.date)) (\(best.formattedDistance))")
+                            LabeledContent("Best Distance Day", value: "\(yearMonthDayString(from: best.date)) (\(best.formattedDistance(useMetric: useMetric)))")
                         }
                     }
                     if let best = bestDayByDuration {
@@ -233,7 +234,7 @@ struct ProfileView: View {
                     }
                     if let fastest = fastestDay {
                         NavigationLink(value: ScreenType.runDetail(record: fastest, user: user)) {
-                            LabeledContent("Fastest Day", value: "\(yearMonthDayString(from: fastest.date)) (\(fastest.formattedPace))")
+                            LabeledContent("Fastest Day", value: "\(yearMonthDayString(from: fastest.date)) (\(fastest.formattedPace(useMetric: useMetric)))")
                         }
                     }
                 }
@@ -249,7 +250,7 @@ struct ProfileView: View {
                                     VStack(alignment: .trailing) {
                                         Text(record.formattedDuration)
                                             .font(.body.monospacedDigit())
-                                        Text(record.formattedPace)
+                                        Text(record.formattedPace(useMetric: useMetric))
                                             .font(.caption)
                                             .foregroundStyle(.secondary)
                                     }
@@ -325,11 +326,11 @@ struct ProfileView: View {
             ProfileShareSettingsView(
                 shareData: ProfileShareData(
                     displayName: displayedProfile.displayName,
-                    totalDistance: UnitFormatter.formatDistance(totalDistance, decimals: 1),
+                    totalDistance: UnitFormatter.formatDistance(totalDistance, useMetric: useMetric, decimals: 1),
                     runCount: totalRuns,
                     totalDuration: formattedTotalDuration,
-                    averagePace: formattedAveragePace,
-                    averageDistance: formattedAverageDistance,
+                    averagePace: formattedAveragePace(),
+                    averageDistance: formattedAverageDistance(),
                     averageDuration: formattedAverageDuration,
                     totalCalories: formattedTotalCalories
                 ),
@@ -348,17 +349,17 @@ struct ProfileView: View {
         Chart(yearlyStats.suffix(12).sorted { $0.year < $1.year }) { stats in
             BarMark(
                 x: .value(String(localized: "Year"), stats.shortFormattedYear),
-                y: .value(String(localized: "Distance"), stats.chartDistance)
+                y: .value(String(localized: "Distance"), stats.chartDistance(useMetric: useMetric))
             )
             .foregroundStyle(Color.accentColor.gradient)
 
-            if let best = bestYearByDistance, stats.year == best.year, best.chartDistance > 0 {
-                RuleMark(y: .value(String(localized: "Best"), best.chartDistance))
+            if let best = bestYearByDistance, stats.year == best.year, best.chartDistance(useMetric: useMetric) > 0 {
+                RuleMark(y: .value(String(localized: "Best"), best.chartDistance(useMetric: useMetric)))
                     .foregroundStyle(.orange)
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 5]))
             }
         }
-        .chartYAxisLabel(UnitFormatter.distanceUnit)
+        .chartYAxisLabel(UnitFormatter.distanceUnit(useMetric: useMetric))
     }
 
     @ViewBuilder
@@ -612,6 +613,7 @@ struct ProfileView: View {
 
 private struct YearlyStatsRow: View {
     let stats: YearlyStats
+    @AppStorage("units.distance") private var useMetric = UnitFormatter.defaultUseMetric
 
     var body: some View {
         HStack {
@@ -625,7 +627,7 @@ private struct YearlyStatsRow: View {
 
             Spacer()
 
-            Text(stats.formattedTotalDistance)
+            Text(stats.formattedTotalDistance(useMetric: useMetric))
                 .font(.title3)
                 .fontWeight(.semibold)
                 .foregroundStyle(stats.totalDistanceInKilometers > 0 ? .primary : .secondary)

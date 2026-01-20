@@ -37,22 +37,21 @@ struct Split: Identifiable {
     }
 
     /// フォーマット済みペース（例: "5:30"）
-    var formattedPace: String {
-        UnitFormatter.formatPaceValue(secondsPerKm: pacePerKm)
+    func formattedPace(useMetric: Bool) -> String {
+        UnitFormatter.formatPaceValue(secondsPerKm: pacePerKm, useMetric: useMetric)
     }
 
     /// フォーマット済み区間表示（例: "1 km" or "1 mi"）
-    var formattedKilometer: String {
-        let unit = DistanceUnit.current
-        let expectedInterval: Double = unit == .miles ? 1609.34 : 1000.0
-        let tolerance: Double = unit == .miles ? 160.0 : 100.0
+    func formattedKilometer(useMetric: Bool) -> String {
+        let expectedInterval: Double = useMetric ? 1000.0 : 1609.34
+        let tolerance: Double = useMetric ? 100.0 : 160.0
 
         // 端数区間の場合は実距離を表示
         if abs(distanceMeters - expectedInterval) > tolerance {
             let km = distanceMeters / 1000
-            return UnitFormatter.formatDistance(km)
+            return UnitFormatter.formatDistance(km, useMetric: useMetric)
         } else {
-            return "\(kilometer) \(UnitFormatter.distanceUnit)"
+            return "\(kilometer) \(UnitFormatter.distanceUnit(useMetric: useMetric))"
         }
     }
 

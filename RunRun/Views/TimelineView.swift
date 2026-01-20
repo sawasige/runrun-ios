@@ -3,6 +3,7 @@ import SwiftUI
 struct TimelineView: View {
     @StateObject private var viewModel: TimelineViewModel
     @EnvironmentObject private var syncService: SyncService
+    @AppStorage("units.distance") private var useMetricUnits = UnitFormatter.defaultUseMetric
     @State private var showNavBarLogo = false
     @State private var monthlyDistance: Double = 0
     @State private var monthlyRunCount: Int = 0
@@ -155,11 +156,11 @@ struct TimelineView: View {
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                     HStack(alignment: .firstTextBaseline, spacing: 2) {
-                        Text(UnitFormatter.formatDistanceValue(monthlyDistance, decimals: 1))
+                        Text(UnitFormatter.formatDistanceValue(monthlyDistance, useMetric: useMetricUnits, decimals: 1))
                             .font(.title3)
                             .fontWeight(.bold)
                             .foregroundStyle(.primary)
-                        Text(UnitFormatter.distanceUnit)
+                        Text(UnitFormatter.distanceUnit(useMetric: useMetricUnits))
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
@@ -312,6 +313,7 @@ struct TimelineView: View {
 
 private struct TimelineRunRow: View {
     let run: TimelineRun
+    @AppStorage("units.distance") private var useMetricUnits = UnitFormatter.defaultUseMetric
 
     private var paceSecondsPerKm: Double? {
         guard run.distanceKm > 0 else { return nil }
@@ -332,8 +334,8 @@ private struct TimelineRunRow: View {
                 HStack(spacing: 6) {
                     Text(run.formattedDuration)
                     Text("·")
-                    Text(UnitFormatter.formatPaceValue(secondsPerKm: paceSecondsPerKm))
-                    Text(UnitFormatter.paceUnit)
+                    Text(UnitFormatter.formatPaceValue(secondsPerKm: paceSecondsPerKm, useMetric: useMetricUnits))
+                    Text(UnitFormatter.paceUnit(useMetric: useMetricUnits))
                         .foregroundStyle(.tertiary)
                 }
                 .font(.caption)
@@ -344,11 +346,11 @@ private struct TimelineRunRow: View {
 
             // 右側: 距離（ヒーロー表示）
             HStack(alignment: .firstTextBaseline, spacing: 2) {
-                Text(UnitFormatter.formatDistanceValue(run.distanceKm, decimals: 2))
+                Text(UnitFormatter.formatDistanceValue(run.distanceKm, useMetric: useMetricUnits, decimals: 2))
                     .font(.headline)
                     .fontWeight(.bold)
                     .monospacedDigit()
-                Text(UnitFormatter.distanceUnit)
+                Text(UnitFormatter.distanceUnit(useMetric: useMetricUnits))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

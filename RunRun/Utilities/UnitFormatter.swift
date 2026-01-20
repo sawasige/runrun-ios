@@ -5,15 +5,8 @@ enum DistanceUnit: String {
     case kilometers
     case miles
 
-    static var current: DistanceUnit {
-        let useMetric = UserDefaults.standard.object(forKey: "units.distance") as? Bool
-            ?? defaultUseMetric
-        return useMetric ? .kilometers : .miles
-    }
-
-    /// ロケールに基づくデフォルト値
-    private static var defaultUseMetric: Bool {
-        Locale.current.measurementSystem == .metric
+    static func current(useMetric: Bool) -> DistanceUnit {
+        useMetric ? .kilometers : .miles
     }
 }
 
@@ -22,21 +15,18 @@ struct UnitFormatter {
     static let kmToMiles = 0.621371
     static let milesToKm = 1.60934
 
-    // MARK: - Default Value
-
-    /// ロケールに基づくデフォルト値（@AppStorage用）
+    /// ロケールに基づくデフォルト値
     static var defaultUseMetric: Bool {
         Locale.current.measurementSystem == .metric
     }
 
     // MARK: - Distance Conversion
 
-    /// キロメートルを現在の単位に変換（数値のみ）
-    static func convertDistance(_ kilometers: Double) -> Double {
-        switch DistanceUnit.current {
-        case .kilometers:
+    /// キロメートルを指定単位に変換（数値のみ）
+    static func convertDistance(_ kilometers: Double, useMetric: Bool) -> Double {
+        if useMetric {
             return kilometers
-        case .miles:
+        } else {
             return kilometers * kmToMiles
         }
     }
@@ -44,24 +34,20 @@ struct UnitFormatter {
     // MARK: - Distance Formatting
 
     /// 距離をフォーマット（例: "5.23 km" or "3.25 mi"）
-    static func formatDistance(_ kilometers: Double, decimals: Int = 2) -> String {
-        let unit = DistanceUnit.current
-        switch unit {
-        case .kilometers:
+    static func formatDistance(_ kilometers: Double, useMetric: Bool, decimals: Int = 2) -> String {
+        if useMetric {
             return String(format: "%.\(decimals)f km", kilometers)
-        case .miles:
+        } else {
             let miles = kilometers * kmToMiles
             return String(format: "%.\(decimals)f mi", miles)
         }
     }
 
     /// 距離の数値のみをフォーマット（単位なし）
-    static func formatDistanceValue(_ kilometers: Double, decimals: Int = 2) -> String {
-        let unit = DistanceUnit.current
-        switch unit {
-        case .kilometers:
+    static func formatDistanceValue(_ kilometers: Double, useMetric: Bool, decimals: Int = 2) -> String {
+        if useMetric {
             return String(format: "%.\(decimals)f", kilometers)
-        case .miles:
+        } else {
             let miles = kilometers * kmToMiles
             return String(format: "%.\(decimals)f", miles)
         }
@@ -70,20 +56,18 @@ struct UnitFormatter {
     // MARK: - Pace Formatting
 
     /// ペースをフォーマット（例: "5:30 /km" or "8:51 /mi"）
-    static func formatPace(secondsPerKm: Double?) -> String {
+    static func formatPace(secondsPerKm: Double?, useMetric: Bool) -> String {
         guard let pace = secondsPerKm, pace > 0, pace.isFinite else {
             return "--:--"
         }
 
-        let unit = DistanceUnit.current
         let adjustedPace: Double
         let unitLabel: String
 
-        switch unit {
-        case .kilometers:
+        if useMetric {
             adjustedPace = pace
             unitLabel = "/km"
-        case .miles:
+        } else {
             adjustedPace = pace * milesToKm
             unitLabel = "/mi"
         }
@@ -94,18 +78,16 @@ struct UnitFormatter {
     }
 
     /// ペースをフォーマット（単位なし、例: "5:30"）
-    static func formatPaceValue(secondsPerKm: Double?) -> String {
+    static func formatPaceValue(secondsPerKm: Double?, useMetric: Bool) -> String {
         guard let pace = secondsPerKm, pace > 0, pace.isFinite else {
             return "--:--"
         }
 
-        let unit = DistanceUnit.current
         let adjustedPace: Double
 
-        switch unit {
-        case .kilometers:
+        if useMetric {
             adjustedPace = pace
-        case .miles:
+        } else {
             adjustedPace = pace * milesToKm
         }
 
@@ -137,18 +119,12 @@ struct UnitFormatter {
     // MARK: - Unit Labels
 
     /// 距離単位ラベル（"km" or "mi"）
-    static var distanceUnit: String {
-        switch DistanceUnit.current {
-        case .kilometers: return "km"
-        case .miles: return "mi"
-        }
+    static func distanceUnit(useMetric: Bool) -> String {
+        useMetric ? "km" : "mi"
     }
 
     /// ペース単位ラベル（"/km" or "/mi"）
-    static var paceUnit: String {
-        switch DistanceUnit.current {
-        case .kilometers: return "/km"
-        case .miles: return "/mi"
-        }
+    static func paceUnit(useMetric: Bool) -> String {
+        useMetric ? "/km" : "/mi"
     }
 }

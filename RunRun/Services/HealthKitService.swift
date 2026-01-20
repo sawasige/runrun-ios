@@ -438,8 +438,9 @@ final class HealthKitService: Sendable {
         guard locations.count >= 2 else { return [] }
 
         // 単位に応じてスプリット間隔を決定（1km or 1mi）
-        let splitInterval: Double = DistanceUnit.current == .miles ? 1609.34 : 1000.0
-        let minFraction: Double = DistanceUnit.current == .miles ? 160.0 : 100.0
+        let useMetric = UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
+        let splitInterval: Double = useMetric ? 1000.0 : 1609.34
+        let minFraction: Double = useMetric ? 100.0 : 160.0
 
         var splits: [Split] = []
         var currentSegment = 1
