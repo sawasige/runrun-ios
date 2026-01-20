@@ -10,6 +10,7 @@ struct ContentView: View {
     @State private var userProfile: UserProfile?
     @State private var profileLoadError: Error?
     @State private var hasProcessedInitialPendingTab = false
+    @State private var homeNavigationPath = NavigationPath()
 
     private let firestoreService = FirestoreService.shared
 
@@ -54,7 +55,7 @@ struct ContentView: View {
     /// スクリーンショット用のタブビュー（認証不要）
     private var screenshotTabView: some View {
         TabView(selection: $selectedTab) {
-            TimelineView(userId: MockDataProvider.currentUserId, userProfile: MockDataProvider.currentUser)
+            TimelineView(userId: MockDataProvider.currentUserId, userProfile: MockDataProvider.currentUser, navigationPath: $homeNavigationPath)
                 .tabItem {
                     Label("Home", systemImage: "house")
                 }
@@ -149,7 +150,7 @@ struct ContentView: View {
     private func mainTabView(userId: String, userProfile: UserProfile) -> some View {
         ZStack(alignment: .top) {
             TabView(selection: $selectedTab) {
-                TimelineView(userId: userId, userProfile: userProfile)
+                TimelineView(userId: userId, userProfile: userProfile, navigationPath: $homeNavigationPath)
                     .tabItem {
                         Label("Home", systemImage: "house")
                     }
@@ -198,6 +199,15 @@ struct ContentView: View {
                 if let tab = newTab {
                     selectedTab = tab
                     notificationService.pendingTab = nil
+                }
+            }
+            .onChange(of: notificationService.pendingRunInfo?.date) { _, newValue in
+                if newValue != nil {
+                    selectedTab = .home
+                    // タブ切り替え後に少し待ってからリセット
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                        homeNavigationPath = NavigationPath()
+                    }
                 }
             }
 

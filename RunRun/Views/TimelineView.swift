@@ -9,6 +9,7 @@ struct TimelineView: View {
     @State private var monthlyRunCount: Int = 0
     @State private var monthlyRecords: [RunningRecord] = []
     @State private var navigateToRunDetail: RunningRecord?
+    @Binding var navigationPath: NavigationPath
 
     let userProfile: UserProfile
 
@@ -22,9 +23,10 @@ struct TimelineView: View {
         return formatter.string(from: now)
     }
 
-    init(userId: String, userProfile: UserProfile) {
+    init(userId: String, userProfile: UserProfile, navigationPath: Binding<NavigationPath>) {
         _viewModel = StateObject(wrappedValue: TimelineViewModel(userId: userId))
         self.userProfile = userProfile
+        _navigationPath = navigationPath
     }
 
     private var contentState: Int {
@@ -35,7 +37,7 @@ struct TimelineView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             ZStack {
                 if viewModel.isLoading && viewModel.runs.isEmpty {
                     loadingView
@@ -83,6 +85,8 @@ struct TimelineView: View {
             }
             .onAppear {
                 AnalyticsService.logScreenView("Timeline")
+                // 他のタブから戻ってきた時にpendingRunInfoが設定されていたら処理
+                handlePendingRunInfo()
             }
             .onChange(of: syncService.lastSyncedAt) { _, _ in
                 Task {
@@ -93,33 +97,29 @@ struct TimelineView: View {
             .navigationDestination(item: $navigateToRunDetail) { record in
                 RunDetailView(record: record, user: userProfile)
             }
-            .onReceive(notificationService.$pendingRunInfo) { info in
-                print("[RunRun] pendingRunInfo received: \(String(describing: info))")
-                guard let info = info else {
-                    print("[RunRun] pendingRunInfo is nil, returning")
-                    return
+            .onReceive(notificationService.$pendingRunInfo) { _ in
+                handlePendingRunInfo()
+            }
+        }
+    }
+
+    /// 通知からのナビゲーション処理
+    private func handlePendingRunInfo() {
+        guard let info = notificationService.pendingRunInfo else { return }
+        notificationService.pendingRunInfo = nil  // 先にクリアして二重実行を防ぐ
+
+        // まずナビゲーションスタックをルートに戻す
+        navigationPath = NavigationPath()
+
+        // 遅延させてからナビゲーション
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            Task { @MainActor in
+                // データが読み込まれていない場合はリフレッシュ
+                if viewModel.runs.isEmpty {
+                    await viewModel.refresh()
                 }
-                print("[RunRun] Processing pendingRunInfo: date=\(info.date), distanceKm=\(info.distanceKm)")
-                // MainActorのブロックを避けるため少し遅延させる
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    print("[RunRun] Delayed handler started")
-                    Task { @MainActor in
-                        print("[RunRun] Task started, runs count: \(viewModel.runs.count)")
-                        // データが読み込まれていない場合はリフレッシュ
-                        if viewModel.runs.isEmpty {
-                            print("[RunRun] runs is empty, refreshing")
-                            await viewModel.refresh()
-                        }
-                        print("[RunRun] Searching for record in \(viewModel.runs.count) runs")
-                        if let record = findRecord(date: info.date, distanceKm: info.distanceKm) {
-                            print("[RunRun] Found record: \(record.distanceInKilometers) km")
-                            navigateToRunDetail = record
-                        } else {
-                            print("[RunRun] Record not found")
-                        }
-                        notificationService.pendingRunInfo = nil
-                        print("[RunRun] Cleared pendingRunInfo")
-                    }
+                if let record = findRecord(date: info.date, distanceKm: info.distanceKm) {
+                    navigateToRunDetail = record
                 }
             }
         }
@@ -553,5 +553,6 @@ private struct MiniCalendarView: View {
 }
 
 #Preview {
-    TimelineView(userId: "preview", userProfile: UserProfile(id: "preview", displayName: "Preview User", email: nil, iconName: "figure.run"))
+    @Previewable @State var path = NavigationPath()
+    TimelineView(userId: "preview", userProfile: UserProfile(id: "preview", displayName: "Preview User", email: nil, iconName: "figure.run"), navigationPath: $path)
 }

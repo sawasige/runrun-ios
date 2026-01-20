@@ -166,6 +166,10 @@ struct SettingsView: View {
                         Task { await sendTestNotification() }
                     }
 
+                    Button("Send Local Run Notification") {
+                        Task { await sendLocalRunNotification() }
+                    }
+
                     Button("Create Dummy Users") {
                         Task { await createDummyData() }
                     }
@@ -313,6 +317,40 @@ struct SettingsView: View {
             } else {
                 debugMessage = "Notification sent"
             }
+        } catch {
+            debugMessage = "Error: \(error.localizedDescription)"
+        }
+    }
+
+    private func sendLocalRunNotification() async {
+        guard let userId = authService.user?.uid else {
+            debugMessage = "Not logged in"
+            return
+        }
+
+        debugMessage = "Fetching latest run..."
+
+        do {
+            // 最新のランを取得
+            let calendar = Calendar.current
+            let now = Date()
+            let year = calendar.component(.year, from: now)
+            let month = calendar.component(.month, from: now)
+
+            let runs = try await firestoreService.getUserMonthlyRuns(
+                userId: userId,
+                year: year,
+                month: month
+            )
+
+            guard let latestRun = runs.max(by: { $0.date < $1.date }) else {
+                debugMessage = "No runs found this month"
+                return
+            }
+
+            // 実際のランで通知を送信
+            await NotificationService.shared.sendNewRunNotification(records: [latestRun])
+            debugMessage = "Notification sent for \(latestRun.formattedDistance) run"
         } catch {
             debugMessage = "Error: \(error.localizedDescription)"
         }
