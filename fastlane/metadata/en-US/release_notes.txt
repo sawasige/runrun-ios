@@ -1,12 +1,9 @@
 Thank you for using RunRun!
 
-【New Features】
-・Added "Force Sync" feature in settings (syncs deleted HealthKit data)
+[New Features]
+- Route map now displayed in run detail share images
+- Notifications when background sync completes
 
-【Improvements】
-・Improved share image design
-・Improved sync stability
-
-【Bug Fixes】
-・Fixed multiple runs on the same day not syncing correctly
-・Fixed widget run count display
+[Improvements]
+- Improved share image design
+- Stability improvements
