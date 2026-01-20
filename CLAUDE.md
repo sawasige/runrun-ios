@@ -78,7 +78,8 @@ RunRun/
 │   ├── SyncedRunRecord.swift        # Firestoreに同期した記録
 │   ├── HeartRateSample.swift        # 心拍データ
 │   ├── RouteSegment.swift           # ルートセグメント
-│   └── Split.swift                  # スプリットデータ
+│   ├── Split.swift                  # スプリットデータ
+│   └── ScreenType.swift             # 画面遷移タイプ（NavigationPath用）
 ├── Services/
 │   ├── HealthKitService.swift       # HealthKit連携
 │   ├── AuthenticationService.swift  # Apple Sign In + Firebase Auth
@@ -94,7 +95,8 @@ RunRun/
 │   ├── MockDataProvider.swift       # スクリーンショット用モックデータ
 │   └── ScreenshotMode.swift         # スクリーンショットモード
 └── Utilities/
-    └── UnitFormatter.swift          # 距離・時間のフォーマット
+    ├── UnitFormatter.swift          # 距離・時間のフォーマット
+    └── NavigationAction.swift       # プログラム的ナビゲーション用環境値
 
 RunRunWidget/
 ├── RunRunWidgetBundle.swift     # ウィジェットバンドル
