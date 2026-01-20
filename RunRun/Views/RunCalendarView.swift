@@ -4,7 +4,7 @@ struct RunCalendarView: View {
     let year: Int
     let month: Int
     let records: [RunningRecord]
-    let userProfile: UserProfile
+    var onSelectRecord: ((RunningRecord) -> Void)?
 
     @ScaledMetric(relativeTo: .caption) private var cellHeight: CGFloat = 44
 
@@ -104,15 +104,15 @@ struct RunCalendarView: View {
         let hasRun = !dayRecords.isEmpty
         let totalDistance = dayRecords.reduce(0) { $0 + $1.distanceInKilometers }
 
-        Group {
-            if let record = dayRecords.first {
-                NavigationLink(value: ScreenType.runDetail(record: record, user: userProfile)) {
-                    dayCellContent(day: day, weekday: weekday, isToday: isToday, hasRun: hasRun, totalDistance: totalDistance)
-                }
-                .buttonStyle(.plain)
-            } else {
+        if let record = dayRecords.first {
+            Button {
+                onSelectRecord?(record)
+            } label: {
                 dayCellContent(day: day, weekday: weekday, isToday: isToday, hasRun: hasRun, totalDistance: totalDistance)
             }
+            .buttonStyle(.plain)
+        } else {
+            dayCellContent(day: day, weekday: weekday, isToday: isToday, hasRun: hasRun, totalDistance: totalDistance)
         }
     }
 
@@ -173,13 +173,11 @@ struct RunCalendarView: View {
                     records: [
                         RunningRecord(date: Date(), distanceKm: 5.2, durationSeconds: 1800),
                         RunningRecord(date: Calendar.current.date(byAdding: .day, value: -2, to: Date())!, distanceKm: 3.5, durationSeconds: 1200)
-                    ],
-                    userProfile: UserProfile(id: "preview", displayName: "Preview User", email: nil)
-                )
+                    ]
+                ) { record in
+                    print("Selected: \(record)")
+                }
             }
-        }
-        .navigationDestination(for: ScreenType.self) { _ in
-            EmptyView()
         }
     }
 }

@@ -5,6 +5,7 @@ import FirebaseAuth
 struct MonthDetailView: View {
     @StateObject private var viewModel: MonthDetailViewModel
     @EnvironmentObject private var syncService: SyncService
+    @Environment(\.navigationAction) private var navigationAction
     let userProfile: UserProfile
     @State private var currentYear: Int
     @State private var currentMonth: Int
@@ -171,9 +172,10 @@ struct MonthDetailView: View {
                 RunCalendarView(
                     year: viewModel.year,
                     month: viewModel.month,
-                    records: viewModel.records,
-                    userProfile: userProfile
-                )
+                    records: viewModel.records
+                ) { record in
+                    navigationAction?.append(.runDetail(record: record, user: userProfile))
+                }
             }
 
             // 日別グラフ

@@ -67,6 +67,7 @@ struct ContentView: View {
                         destinationView(for: screen)
                     }
             }
+            .environment(\.navigationAction, NavigationAction { homeNavigationPath.append($0) })
             .tabItem {
                 Label("Home", systemImage: "house")
             }
@@ -78,6 +79,7 @@ struct ContentView: View {
                         destinationView(for: screen)
                     }
             }
+            .environment(\.navigationAction, NavigationAction { recordNavigationPath.append($0) })
             .tabItem {
                 Label("Records", systemImage: "figure.run")
             }
@@ -89,6 +91,7 @@ struct ContentView: View {
                         destinationView(for: screen)
                     }
             }
+            .environment(\.navigationAction, NavigationAction { leaderboardNavigationPath.append($0) })
             .tabItem {
                 Label("Leaderboard", systemImage: "trophy")
             }
@@ -100,6 +103,7 @@ struct ContentView: View {
                         destinationView(for: screen)
                     }
             }
+            .environment(\.navigationAction, NavigationAction { friendsNavigationPath.append($0) })
             .tabItem {
                 Label("Friends", systemImage: "person.2")
             }
@@ -111,6 +115,7 @@ struct ContentView: View {
                         destinationView(for: screen)
                     }
             }
+            .environment(\.navigationAction, NavigationAction { settingsNavigationPath.append($0) })
             .tabItem {
                 Label("Settings", systemImage: "gear")
             }
@@ -187,6 +192,7 @@ struct ContentView: View {
                             destinationView(for: screen)
                         }
                 }
+                .environment(\.navigationAction, NavigationAction { homeNavigationPath.append($0) })
                 .tabItem {
                     Label("Home", systemImage: "house")
                 }
@@ -198,6 +204,7 @@ struct ContentView: View {
                             destinationView(for: screen)
                         }
                 }
+                .environment(\.navigationAction, NavigationAction { recordNavigationPath.append($0) })
                 .tabItem {
                     Label("Records", systemImage: "figure.run")
                 }
@@ -209,6 +216,7 @@ struct ContentView: View {
                             destinationView(for: screen)
                         }
                 }
+                .environment(\.navigationAction, NavigationAction { leaderboardNavigationPath.append($0) })
                 .tabItem {
                     Label("Leaderboard", systemImage: "trophy")
                 }
@@ -220,6 +228,7 @@ struct ContentView: View {
                             destinationView(for: screen)
                         }
                 }
+                .environment(\.navigationAction, NavigationAction { friendsNavigationPath.append($0) })
                 .tabItem {
                     Label("Friends", systemImage: "person.2")
                 }
@@ -232,6 +241,7 @@ struct ContentView: View {
                             destinationView(for: screen)
                         }
                 }
+                .environment(\.navigationAction, NavigationAction { settingsNavigationPath.append($0) })
                 .tabItem {
                     Label("Settings", systemImage: "gear")
                 }
