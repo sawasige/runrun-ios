@@ -5,6 +5,7 @@ import FirebaseAuth
 struct YearDetailView: View {
     @StateObject private var viewModel: YearDetailViewModel
     @EnvironmentObject private var syncService: SyncService
+    @AppStorage("units.distance") private var useMetric = UnitFormatter.defaultUseMetric
 
     let userProfile: UserProfile
     @State private var showShareSettings = false
@@ -135,11 +136,11 @@ struct YearDetailView: View {
             YearShareSettingsView(
                 shareData: YearlyShareData(
                     year: String(viewModel.selectedYear),
-                    totalDistance: viewModel.formattedTotalYearlyDistance,
+                    totalDistance: viewModel.formattedTotalYearlyDistance(useMetric: useMetric),
                     runCount: viewModel.totalRunCount,
                     totalDuration: viewModel.formattedTotalDuration,
-                    averagePace: viewModel.formattedAveragePace,
-                    averageDistance: viewModel.formattedAverageDistance,
+                    averagePace: viewModel.formattedAveragePace(useMetric: useMetric),
+                    averageDistance: viewModel.formattedAverageDistance(useMetric: useMetric),
                     averageDuration: viewModel.formattedAverageDuration,
                     totalCalories: viewModel.formattedTotalCalories
                 ),
@@ -219,7 +220,7 @@ struct YearDetailView: View {
 
             Section("Totals") {
                 LabeledContent("Distance") {
-                    Text(viewModel.formattedTotalYearlyDistance)
+                    Text(viewModel.formattedTotalYearlyDistance(useMetric: useMetric))
                         .fontWeight(.bold)
                         .foregroundStyle(.primary)
                 }
@@ -231,8 +232,8 @@ struct YearDetailView: View {
             }
 
             Section("Averages") {
-                LabeledContent("Pace", value: viewModel.formattedAveragePace)
-                LabeledContent("Distance/Run", value: viewModel.formattedAverageDistance)
+                LabeledContent("Pace", value: viewModel.formattedAveragePace(useMetric: useMetric))
+                LabeledContent("Distance/Run", value: viewModel.formattedAverageDistance(useMetric: useMetric))
                 LabeledContent("Time/Run", value: viewModel.formattedAverageDuration)
             }
 
@@ -241,7 +242,7 @@ struct YearDetailView: View {
                     // 月のハイライト
                     if let best = viewModel.bestMonthByDistance {
                         NavigationLink(value: ScreenType.monthDetail(user: userProfile, year: best.year, month: best.month)) {
-                            LabeledContent("Best Distance Month", value: "\(best.shortMonthName) (\(best.formattedTotalDistance))")
+                            LabeledContent("Best Distance Month", value: "\(best.shortMonthName) (\(best.formattedTotalDistance(useMetric: useMetric)))")
                         }
                     }
                     if let best = viewModel.bestMonthByDuration {
@@ -257,7 +258,7 @@ struct YearDetailView: View {
                     // 日のハイライト
                     if let best = viewModel.bestDayByDistance {
                         NavigationLink(value: ScreenType.runDetail(record: best, user: userProfile)) {
-                            LabeledContent("Best Distance Day", value: "\(monthDayString(from: best.date)) (\(best.formattedDistance))")
+                            LabeledContent("Best Distance Day", value: "\(monthDayString(from: best.date)) (\(best.formattedDistance(useMetric: useMetric)))")
                         }
                     }
                     if let best = viewModel.bestDayByDuration {
@@ -267,7 +268,7 @@ struct YearDetailView: View {
                     }
                     if let fastest = viewModel.fastestDay {
                         NavigationLink(value: ScreenType.runDetail(record: fastest, user: userProfile)) {
-                            LabeledContent("Fastest Day", value: "\(monthDayString(from: fastest.date)) (\(fastest.formattedPace))")
+                            LabeledContent("Fastest Day", value: "\(monthDayString(from: fastest.date)) (\(fastest.formattedPace(useMetric: useMetric)))")
                         }
                     }
                 }
@@ -296,17 +297,17 @@ struct YearDetailView: View {
         Chart(viewModel.monthlyStats) { stats in
             BarMark(
                 x: .value(String(localized: "Month"), stats.shortMonthName),
-                y: .value(String(localized: "Distance"), stats.chartDistance)
+                y: .value(String(localized: "Distance"), stats.chartDistance(useMetric: useMetric))
             )
             .foregroundStyle(Color.accentColor.gradient)
 
             if let best = viewModel.bestMonthByDistance, stats.month == best.month, best.totalDistanceInKilometers > 0 {
-                RuleMark(y: .value(String(localized: "Best"), best.chartDistance))
+                RuleMark(y: .value(String(localized: "Best"), best.chartDistance(useMetric: useMetric)))
                     .foregroundStyle(.orange)
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 5]))
             }
         }
-        .chartYAxisLabel(UnitFormatter.distanceUnit)
+        .chartYAxisLabel(UnitFormatter.distanceUnit(useMetric: useMetric))
     }
 
     private var cumulativeChart: some View {
@@ -315,7 +316,7 @@ struct YearDetailView: View {
             ForEach(viewModel.cumulativeDistanceData, id: \.dayOfYear) { data in
                 LineMark(
                     x: .value(String(localized: "Day"), data.dayOfYear),
-                    y: .value(String(localized: "Distance"), UnitFormatter.convertDistance(data.distance)),
+                    y: .value(String(localized: "Distance"), UnitFormatter.convertDistance(data.distance, useMetric: useMetric)),
                     series: .value("Series", "current")
                 )
                 .foregroundStyle(Color.accentColor)
@@ -323,7 +324,7 @@ struct YearDetailView: View {
 
                 AreaMark(
                     x: .value(String(localized: "Day"), data.dayOfYear),
-                    y: .value(String(localized: "Distance"), UnitFormatter.convertDistance(data.distance))
+                    y: .value(String(localized: "Distance"), UnitFormatter.convertDistance(data.distance, useMetric: useMetric))
                 )
                 .foregroundStyle(Color.accentColor.opacity(0.1))
             }
@@ -332,7 +333,7 @@ struct YearDetailView: View {
             ForEach(viewModel.previousYearCumulativeData, id: \.dayOfYear) { data in
                 LineMark(
                     x: .value(String(localized: "Day"), data.dayOfYear),
-                    y: .value(String(localized: "Distance"), UnitFormatter.convertDistance(data.distance)),
+                    y: .value(String(localized: "Distance"), UnitFormatter.convertDistance(data.distance, useMetric: useMetric)),
                     series: .value("Series", "previous")
                 )
                 .foregroundStyle(Color.secondary)
@@ -353,7 +354,7 @@ struct YearDetailView: View {
                 }
             }
         }
-        .chartYAxisLabel(UnitFormatter.distanceUnit)
+        .chartYAxisLabel(UnitFormatter.distanceUnit(useMetric: useMetric))
         .chartLegend(Visibility.hidden)
     }
 
@@ -371,6 +372,7 @@ struct YearDetailView: View {
 
 struct MonthlyStatsRow: View {
     let stats: MonthlyRunningStats
+    @AppStorage("units.distance") private var useMetric = UnitFormatter.defaultUseMetric
 
     var body: some View {
         HStack {
@@ -384,7 +386,7 @@ struct MonthlyStatsRow: View {
 
             Spacer()
 
-            Text(stats.formattedTotalDistance)
+            Text(stats.formattedTotalDistance(useMetric: useMetric))
                 .font(.title3)
                 .fontWeight(.semibold)
                 .foregroundStyle(stats.totalDistanceInKilometers > 0 ? .primary : .secondary)

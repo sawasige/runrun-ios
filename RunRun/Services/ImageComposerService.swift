@@ -182,6 +182,7 @@ enum ImageComposer {
 
     /// テキストオーバーレイを描画（ヒーローレイアウト）
     private static func drawTextOverlay(width: CGFloat, height: CGFloat, record: RunningRecord, options: ExportOptions, routeCoordinates: [CLLocationCoordinate2D] = [], routeAreaBrightness: CGFloat? = nil) {
+        let useMetric = UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
         let overlayHeight = height / 3.0
         let baseFontSize = overlayHeight / 10.0
         let padding = baseFontSize * 0.8
@@ -286,7 +287,7 @@ enum ImageComposer {
                 subItems.append(record.formattedDuration)
             }
             if options.showPace {
-                subItems.append(record.formattedPace)
+                subItems.append(record.formattedPace(useMetric: useMetric))
             }
             let subText = subItems.joined(separator: "  ")
             yOffset -= baseFontSize * 1.5
@@ -297,10 +298,10 @@ enum ImageComposer {
         if options.showDistance {
             // 単位
             yOffset -= baseFontSize * 1.0
-            drawOutlinedText(UnitFormatter.distanceUnit, at: CGPoint(x: x, y: yOffset), font: unitFont)
+            drawOutlinedText(UnitFormatter.distanceUnit(useMetric: useMetric), at: CGPoint(x: x, y: yOffset), font: unitFont)
 
             // 数値（大きく）
-            let distanceValue = UnitFormatter.formatDistanceValue(record.distanceInKilometers, decimals: 2)
+            let distanceValue = UnitFormatter.formatDistanceValue(record.distanceInKilometers, useMetric: useMetric, decimals: 2)
             yOffset -= baseFontSize * 1.6
             drawOutlinedText(distanceValue, at: CGPoint(x: x, y: yOffset), font: heroFont)
         }
@@ -478,6 +479,7 @@ enum ImageComposer {
     }
 
     private static func drawMonthlyTextOverlay(width: CGFloat, height: CGFloat, shareData: MonthlyShareData, options: MonthExportOptions) {
+        let useMetric = UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
         let overlayHeight = height / 3.0
         let baseFontSize = overlayHeight / 10.0
         let padding = baseFontSize * 0.8
@@ -573,11 +575,11 @@ enum ImageComposer {
         if options.showDistance {
             // 単位
             yOffset -= baseFontSize * 1.0
-            drawOutlinedText(UnitFormatter.distanceUnit, at: CGPoint(x: x, y: yOffset), font: unitFont)
+            drawOutlinedText(UnitFormatter.distanceUnit(useMetric: useMetric), at: CGPoint(x: x, y: yOffset), font: unitFont)
 
             // 数値（大きく）- shareData.totalDistanceから数値部分を抽出
             let distanceValue = shareData.totalDistance
-                .replacingOccurrences(of: UnitFormatter.distanceUnit, with: "")
+                .replacingOccurrences(of: UnitFormatter.distanceUnit(useMetric: useMetric), with: "")
                 .trimmingCharacters(in: .whitespaces)
             yOffset -= baseFontSize * 1.6
             drawOutlinedText(distanceValue, at: CGPoint(x: x, y: yOffset), font: heroFont)
@@ -641,6 +643,7 @@ enum ImageComposer {
     }
 
     private static func drawYearlyTextOverlay(width: CGFloat, height: CGFloat, shareData: YearlyShareData, options: YearExportOptions) {
+        let useMetric = UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
         let overlayHeight = height / 3.0
         let baseFontSize = overlayHeight / 10.0
         let padding = baseFontSize * 0.8
@@ -736,11 +739,11 @@ enum ImageComposer {
         if options.showDistance {
             // 単位
             yOffset -= baseFontSize * 1.0
-            drawOutlinedText(UnitFormatter.distanceUnit, at: CGPoint(x: x, y: yOffset), font: unitFont)
+            drawOutlinedText(UnitFormatter.distanceUnit(useMetric: useMetric), at: CGPoint(x: x, y: yOffset), font: unitFont)
 
             // 数値（大きく）
             let distanceValue = shareData.totalDistance
-                .replacingOccurrences(of: UnitFormatter.distanceUnit, with: "")
+                .replacingOccurrences(of: UnitFormatter.distanceUnit(useMetric: useMetric), with: "")
                 .trimmingCharacters(in: .whitespaces)
             yOffset -= baseFontSize * 1.6
             drawOutlinedText(distanceValue, at: CGPoint(x: x, y: yOffset), font: heroFont)
@@ -805,6 +808,7 @@ enum ImageComposer {
     }
 
     private static func drawProfileTextOverlay(width: CGFloat, height: CGFloat, shareData: ProfileShareData, options: ProfileExportOptions) {
+        let useMetric = UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
         let overlayHeight = height / 3.0
         let baseFontSize = overlayHeight / 10.0
         let padding = baseFontSize * 0.8
@@ -900,11 +904,11 @@ enum ImageComposer {
         if options.showDistance {
             // 単位
             yOffset -= baseFontSize * 1.0
-            drawOutlinedText(UnitFormatter.distanceUnit, at: CGPoint(x: x, y: yOffset), font: unitFont)
+            drawOutlinedText(UnitFormatter.distanceUnit(useMetric: useMetric), at: CGPoint(x: x, y: yOffset), font: unitFont)
 
             // 数値（大きく）
             let distanceValue = shareData.totalDistance
-                .replacingOccurrences(of: UnitFormatter.distanceUnit, with: "")
+                .replacingOccurrences(of: UnitFormatter.distanceUnit(useMetric: useMetric), with: "")
                 .trimmingCharacters(in: .whitespaces)
             yOffset -= baseFontSize * 1.6
             drawOutlinedText(distanceValue, at: CGPoint(x: x, y: yOffset), font: heroFont)

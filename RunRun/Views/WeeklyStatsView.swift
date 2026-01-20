@@ -4,6 +4,7 @@ import Charts
 struct WeeklyStatsView: View {
     let userProfile: UserProfile
 
+    @AppStorage("units.distance") private var useMetric = UnitFormatter.defaultUseMetric
     @State private var weeklyStats: [WeeklyRunningStats] = []
     @State private var isLoading = false
     @State private var error: Error?
@@ -52,7 +53,7 @@ struct WeeklyStatsView: View {
 
             Section("Weekly Data") {
                 ForEach(weeklyStats.reversed()) { stat in
-                    WeeklyStatRow(stat: stat)
+                    WeeklyStatRow(stat: stat, useMetric: useMetric)
                 }
             }
         }
@@ -62,18 +63,18 @@ struct WeeklyStatsView: View {
         Chart(weeklyStats) { stat in
             LineMark(
                 x: .value("Week", stat.weekStartDate, unit: .weekOfYear),
-                y: .value("Distance", stat.chartDistance)
+                y: .value("Distance", stat.chartDistance(useMetric: useMetric))
             )
             .foregroundStyle(Color.accentColor)
             .symbol(.circle)
 
             AreaMark(
                 x: .value("Week", stat.weekStartDate, unit: .weekOfYear),
-                y: .value("Distance", stat.chartDistance)
+                y: .value("Distance", stat.chartDistance(useMetric: useMetric))
             )
             .foregroundStyle(Color.accentColor.opacity(0.1))
         }
-        .chartYAxisLabel(UnitFormatter.distanceUnit)
+        .chartYAxisLabel(UnitFormatter.distanceUnit(useMetric: useMetric))
         .chartXAxis {
             AxisMarks(values: .stride(by: .weekOfYear, count: 2)) { value in
                 AxisGridLine()
@@ -126,6 +127,7 @@ struct WeeklyStatsView: View {
 
 private struct WeeklyStatRow: View {
     let stat: WeeklyRunningStats
+    let useMetric: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -134,14 +136,14 @@ private struct WeeklyStatRow: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Spacer()
-                Text(stat.formattedTotalDistance)
+                Text(stat.formattedTotalDistance(useMetric: useMetric))
                     .font(.headline)
             }
 
             if stat.runCount > 0 {
                 HStack(spacing: 16) {
                     Label(String(format: String(localized: "%d runs", comment: "Run count"), stat.runCount), systemImage: "figure.run")
-                    Label(stat.formattedAveragePace, systemImage: "speedometer")
+                    Label(stat.formattedAveragePace(useMetric: useMetric), systemImage: "speedometer")
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)

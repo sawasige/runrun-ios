@@ -12,17 +12,16 @@ struct YearlyStats: Identifiable, Equatable {
     }
 
     /// チャート用距離（ユーザー設定の単位で）
-    var chartDistance: Double {
-        switch DistanceUnit.current {
-        case .kilometers:
+    func chartDistance(useMetric: Bool) -> Double {
+        if useMetric {
             return totalDistanceInKilometers
-        case .miles:
+        } else {
             return totalDistanceInKilometers * UnitFormatter.kmToMiles
         }
     }
 
-    var formattedTotalDistance: String {
-        UnitFormatter.formatDistance(totalDistanceInKilometers, decimals: 1)
+    func formattedTotalDistance(useMetric: Bool) -> String {
+        UnitFormatter.formatDistance(totalDistanceInKilometers, useMetric: useMetric, decimals: 1)
     }
 
     var formattedTotalDuration: String {

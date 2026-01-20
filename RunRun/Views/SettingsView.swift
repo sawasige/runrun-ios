@@ -350,7 +350,8 @@ struct SettingsView: View {
 
             // 実際のランで通知を送信
             await NotificationService.shared.sendNewRunNotification(records: [latestRun])
-            debugMessage = "Notification sent for \(latestRun.formattedDistance) run"
+            let useMetric = UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
+            debugMessage = "Notification sent for \(latestRun.formattedDistance(useMetric: useMetric)) run"
         } catch {
             debugMessage = "Error: \(error.localizedDescription)"
         }
@@ -373,7 +374,7 @@ struct SettingsView: View {
 
         do {
             try await UNUserNotificationCenter.current().add(request)
-            debugMessage = "Friend notification scheduled"
+            debugMessage = String(localized: "Friend notification scheduled")
         } catch {
             debugMessage = "Error: \(error.localizedDescription)"
         }

@@ -12,6 +12,7 @@ struct RunDetailView: View {
     @State private var previousRecord: RunningRecord?
     @State private var nextRecord: RunningRecord?
     @State private var isLoadingAdjacent = false
+    @AppStorage("units.distance") private var useMetric = UnitFormatter.defaultUseMetric
 
     private let firestoreService = FirestoreService.shared
 
@@ -161,9 +162,9 @@ struct RunDetailView: View {
                         }
 
                         HStack(spacing: 32) {
-                            StatItem(value: record.formattedDistance, label: String(localized: "Distance"))
+                            StatItem(value: record.formattedDistance(useMetric: useMetric), label: String(localized: "Distance"))
                             StatItem(value: record.formattedDuration, label: String(localized: "Duration"))
-                            StatItem(value: record.formattedPace, label: String(localized: "Pace"))
+                            StatItem(value: record.formattedPace(useMetric: useMetric), label: String(localized: "Pace"))
                         }
                     }
                     .frame(maxWidth: .infinity)
@@ -212,12 +213,12 @@ struct RunDetailView: View {
                         ForEach(splits) { split in
                             VStack(alignment: .leading, spacing: 4) {
                                 HStack {
-                                    Text(split.formattedKilometer)
+                                    Text(split.formattedKilometer(useMetric: useMetric))
                                     Spacer()
-                                    Text(split.formattedPace)
+                                    Text(split.formattedPace(useMetric: useMetric))
                                         .fontWeight(.medium)
                                         .monospacedDigit()
-                                    Text(UnitFormatter.paceUnit)
+                                    Text(UnitFormatter.paceUnit(useMetric: useMetric))
                                         .foregroundStyle(.secondary)
                                 }
 
@@ -397,7 +398,7 @@ struct RunDetailView: View {
 
                 // 1kmごとのマーカー
                 ForEach(calculateKilometerPoints()) { point in
-                    Annotation("\(point.kilometer)\(UnitFormatter.distanceUnit)", coordinate: point.coordinate) {
+                    Annotation("\(point.kilometer)\(UnitFormatter.distanceUnit(useMetric: useMetric))", coordinate: point.coordinate) {
                         ZStack {
                             Circle()
                                 .fill(.orange)
@@ -473,7 +474,7 @@ struct RunDetailView: View {
     private func calculateKilometerPoints() -> [KilometerPoint] {
         guard routeLocations.count >= 2 else { return [] }
 
-        let interval: Double = DistanceUnit.current == .miles ? 1609.34 : 1000.0
+        let interval: Double = useMetric ? 1000.0 : 1609.34
 
         var points: [KilometerPoint] = []
         var currentSegment = 1

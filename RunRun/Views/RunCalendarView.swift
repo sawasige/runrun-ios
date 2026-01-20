@@ -6,6 +6,7 @@ struct RunCalendarView: View {
     let records: [RunningRecord]
     var onSelectRecord: ((RunningRecord) -> Void)?
 
+    @AppStorage("units.distance") private var useMetric = UnitFormatter.defaultUseMetric
     @ScaledMetric(relativeTo: .caption) private var cellHeight: CGFloat = 44
 
     private let calendar = Calendar.current
@@ -125,7 +126,7 @@ struct RunCalendarView: View {
                 .foregroundStyle(dayTextColor(weekday: weekday, hasRun: hasRun, isToday: isToday))
 
             if hasRun {
-                Text(UnitFormatter.formatDistanceValue(totalDistance, decimals: 1))
+                Text(UnitFormatter.formatDistanceValue(totalDistance, useMetric: useMetric, decimals: 1))
                     .font(.caption2.weight(.medium))
                     .foregroundStyle(.white)
                     .lineLimit(1)

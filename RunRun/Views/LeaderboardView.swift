@@ -175,6 +175,7 @@ struct LeaderboardRow: View {
     let rank: Int
     let user: UserProfile
     let isCurrentUser: Bool
+    @AppStorage("units.distance") private var useMetric = UnitFormatter.defaultUseMetric
 
     var body: some View {
         HStack(spacing: 12) {
@@ -195,7 +196,7 @@ struct LeaderboardRow: View {
             Spacer()
 
             VStack(alignment: .trailing) {
-                Text(UnitFormatter.formatDistance(user.totalDistanceKm, decimals: 1))
+                Text(UnitFormatter.formatDistance(user.totalDistanceKm, useMetric: useMetric, decimals: 1))
                     .font(.title3)
                     .fontWeight(.semibold)
             }

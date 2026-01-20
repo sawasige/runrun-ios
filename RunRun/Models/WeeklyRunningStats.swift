@@ -26,17 +26,16 @@ struct WeeklyRunningStats: Identifiable {
     }
 
     /// チャート用距離（ユーザー設定の単位で）
-    var chartDistance: Double {
-        switch DistanceUnit.current {
-        case .kilometers:
+    func chartDistance(useMetric: Bool) -> Double {
+        if useMetric {
             return totalDistanceInKilometers
-        case .miles:
+        } else {
             return totalDistanceInKilometers * UnitFormatter.kmToMiles
         }
     }
 
-    var formattedTotalDistance: String {
-        UnitFormatter.formatDistance(totalDistanceInKilometers)
+    func formattedTotalDistance(useMetric: Bool) -> String {
+        UnitFormatter.formatDistance(totalDistanceInKilometers, useMetric: useMetric)
     }
 
     /// 週の期間を表示（例: "12/23 - 12/29"）
@@ -59,7 +58,7 @@ struct WeeklyRunningStats: Identifiable {
         return totalDurationInSeconds / totalDistanceInKilometers
     }
 
-    var formattedAveragePace: String {
-        UnitFormatter.formatPace(secondsPerKm: averagePacePerKm)
+    func formattedAveragePace(useMetric: Bool) -> String {
+        UnitFormatter.formatPace(secondsPerKm: averagePacePerKm, useMetric: useMetric)
     }
 }

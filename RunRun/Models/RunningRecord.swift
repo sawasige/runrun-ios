@@ -75,17 +75,16 @@ struct RunningRecord: Identifiable, Equatable, Hashable {
     }
 
     /// チャート用距離（ユーザー設定の単位で）
-    var chartDistance: Double {
-        switch DistanceUnit.current {
-        case .kilometers:
+    func chartDistance(useMetric: Bool) -> Double {
+        if useMetric {
             return distanceInKilometers
-        case .miles:
+        } else {
             return distanceInKilometers * UnitFormatter.kmToMiles
         }
     }
 
-    var formattedDistance: String {
-        UnitFormatter.formatDistance(distanceInKilometers)
+    func formattedDistance(useMetric: Bool) -> String {
+        UnitFormatter.formatDistance(distanceInKilometers, useMetric: useMetric)
     }
 
     var formattedDuration: String {
@@ -105,8 +104,8 @@ struct RunningRecord: Identifiable, Equatable, Hashable {
         return durationInSeconds / distanceInKilometers
     }
 
-    var formattedPace: String {
-        UnitFormatter.formatPace(secondsPerKm: averagePacePerKilometer)
+    func formattedPace(useMetric: Bool) -> String {
+        UnitFormatter.formatPace(secondsPerKm: averagePacePerKilometer, useMetric: useMetric)
     }
 
     var formattedShortDate: String {
