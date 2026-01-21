@@ -363,24 +363,78 @@ struct MockDataProvider {
         // 今月の様々な日にデータを配置（10件）- 20日まで
         let daysWithRuns = [20, 18, 15, 12, 10, 8, 5, 3, 2, 1]
 
+        // 固定のシード値でランダムな距離を生成（スクショの一貫性のため）
+        let distances = [8500.0, 5200.0, 10300.0, 6800.0, 7500.0, 4200.0, 9100.0, 5800.0, 6500.0, 7200.0]
+
         return daysWithRuns.enumerated().map { index, day in
             var dateComponents = DateComponents()
             dateComponents.year = currentYear
             dateComponents.month = currentMonth
             dateComponents.day = day
-            dateComponents.hour = Int.random(in: 6...9) // 朝ラン
+            dateComponents.hour = 7
             let date = calendar.date(from: dateComponents) ?? baseDate
 
-            let distance = Double.random(in: 3000...12000)
+            let distance = distances[index]
             return RunningRecord(
                 id: UUID(),
                 date: date,
                 distanceInMeters: distance,
-                durationInSeconds: distance / 1000 * Double.random(in: 300...400),
+                durationInSeconds: distance / 1000 * 330,
                 caloriesBurned: distance / 15,
-                averageHeartRate: Double.random(in: 140...160),
-                maxHeartRate: Double.random(in: 165...180),
-                minHeartRate: Double.random(in: 120...140)
+                averageHeartRate: 148,
+                maxHeartRate: 165,
+                minHeartRate: 130
+            )
+        }
+    }
+
+    /// 前月の月詳細用
+    /// - 20日時点での累積: 約67.5km（今月の71.1kmより約5%遅れ）
+    /// - 月末までの合計: 約89.5km（今月20日時点より多い）
+    static var previousMonthDetailRecords: [RunningRecord] {
+        let calendar = Calendar.current
+        let now = Date()
+        var currentYear = calendar.component(.year, from: now)
+        var currentMonth = calendar.component(.month, from: now)
+
+        // 前月を計算
+        if currentMonth == 1 {
+            currentMonth = 12
+            currentYear -= 1
+        } else {
+            currentMonth -= 1
+        }
+
+        var components = DateComponents()
+        components.year = currentYear
+        components.month = currentMonth
+        let baseDate = calendar.date(from: components)!
+
+        // 前月のデータ（12件）
+        // 1〜20日: 9件で合計67.5km（今月20日時点の71.1kmより約5%遅れ）
+        // 21〜28日: 3件で追加22km → 月末合計89.5km
+        // 今月と同様に起伏をつける（4km台〜10km台）
+        let daysWithRuns = [1, 3, 6, 9, 11, 14, 16, 18, 20, 22, 25, 28]
+        let distances = [10200.0, 4500.0, 8800.0, 5200.0, 9500.0, 4000.0, 8300.0, 6500.0, 10500.0, 8500.0, 4500.0, 9000.0]
+
+        return daysWithRuns.enumerated().map { index, day in
+            var dateComponents = DateComponents()
+            dateComponents.year = currentYear
+            dateComponents.month = currentMonth
+            dateComponents.day = day
+            dateComponents.hour = 7
+            let date = calendar.date(from: dateComponents) ?? baseDate
+
+            let distance = distances[index]
+            return RunningRecord(
+                id: UUID(),
+                date: date,
+                distanceInMeters: distance,
+                durationInSeconds: distance / 1000 * 340,
+                caloriesBurned: distance / 15,
+                averageHeartRate: 150,
+                maxHeartRate: 168,
+                minHeartRate: 132
             )
         }
     }
