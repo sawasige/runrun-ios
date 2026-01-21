@@ -88,7 +88,7 @@ struct LeaderboardView: View {
 
                     Section {
                         ForEach(Array(users.enumerated()), id: \.element.id) { index, user in
-                            NavigationLink(value: ScreenType.profile(user)) {
+                            NavigationLink(value: ScreenType.monthDetail(user: user, year: selectedYear, month: selectedMonth)) {
                                 LeaderboardRow(
                                     rank: index + 1,
                                     user: user,
