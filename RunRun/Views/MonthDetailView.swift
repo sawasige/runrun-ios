@@ -57,6 +57,40 @@ struct MonthDetailView: View {
         }
     }
 
+    /// 現在の月の日曜日の日付（Date）を返す
+    private var sundayDatesInMonth: [Date] {
+        let calendar = Calendar.current
+        var sundays: [Date] = []
+        guard let startOfMonth = calendar.date(from: DateComponents(year: currentYear, month: currentMonth, day: 1)),
+              let range = calendar.range(of: .day, in: .month, for: startOfMonth) else {
+            return []
+        }
+        for day in range {
+            if let date = calendar.date(from: DateComponents(year: currentYear, month: currentMonth, day: day)),
+               calendar.component(.weekday, from: date) == 1 { // 1 = 日曜日
+                sundays.append(date)
+            }
+        }
+        return sundays
+    }
+
+    /// 現在の月の日曜日の日（Int）を返す
+    private var sundayDaysInMonth: [Int] {
+        let calendar = Calendar.current
+        var sundays: [Int] = []
+        guard let startOfMonth = calendar.date(from: DateComponents(year: currentYear, month: currentMonth, day: 1)),
+              let range = calendar.range(of: .day, in: .month, for: startOfMonth) else {
+            return []
+        }
+        for day in range {
+            if let date = calendar.date(from: DateComponents(year: currentYear, month: currentMonth, day: day)),
+               calendar.component(.weekday, from: date) == 1 { // 1 = 日曜日
+                sundays.append(day)
+            }
+        }
+        return sundays
+    }
+
     private var monthNavigationButtons: some View {
         HStack(spacing: 0) {
             Button {
@@ -268,7 +302,7 @@ struct MonthDetailView: View {
         }
         .chartXScale(domain: startOfMonth...endOfMonth)
         .chartXAxis {
-            AxisMarks(values: .stride(by: .day, count: 7)) { _ in
+            AxisMarks(values: sundayDatesInMonth) { _ in
                 AxisGridLine()
                 AxisValueLabel(format: .dateTime.day())
             }
@@ -308,9 +342,14 @@ struct MonthDetailView: View {
         }
         .chartXScale(domain: 1...31)
         .chartXAxis {
-            AxisMarks(values: .stride(by: 7)) { _ in
+            AxisMarks(values: sundayDaysInMonth) { value in
                 AxisGridLine()
-                AxisValueLabel()
+                AxisValueLabel {
+                    if let day = value.as(Int.self),
+                       let date = Calendar.current.date(from: DateComponents(year: currentYear, month: currentMonth, day: day)) {
+                        Text(date, format: .dateTime.day())
+                    }
+                }
             }
         }
         .chartYAxisLabel(UnitFormatter.distanceUnit(useMetric: useMetric))

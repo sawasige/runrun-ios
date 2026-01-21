@@ -61,9 +61,19 @@ final class WidgetService {
             totalDuration += record.durationInSeconds
         }
 
+        // 前月の年月を計算
+        let (prevYear, prevMonth): (Int, Int)
+        if currentMonth == 1 {
+            prevYear = currentYear - 1
+            prevMonth = 12
+        } else {
+            prevYear = currentYear
+            prevMonth = currentMonth - 1
+        }
+
         // 累積距離を計算
-        let cumulativeDistances = buildCumulativeData(from: thisMonthRecords)
-        let previousMonthCumulativeDistances = buildCumulativeData(from: previousMonthRecords)
+        let cumulativeDistances = buildCumulativeData(from: thisMonthRecords, year: currentYear, month: currentMonth)
+        let previousMonthCumulativeDistances = buildCumulativeData(from: previousMonthRecords, year: prevYear, month: prevMonth)
 
         let data = WidgetData(
             runDays: runDays,
@@ -82,7 +92,7 @@ final class WidgetService {
         reloadWidgets()
     }
 
-    private func buildCumulativeData(from records: [RunningRecord]) -> [CumulativeDataPoint] {
+    private func buildCumulativeData(from records: [RunningRecord], year: Int, month: Int) -> [CumulativeDataPoint] {
         let calendar = Calendar.current
         var result: [CumulativeDataPoint] = []
 
@@ -93,17 +103,33 @@ final class WidgetService {
             dailyDistances[day, default: 0] += record.distanceInKilometers
         }
 
-        // 日付順にソート
-        let sortedDays = dailyDistances.keys.sorted()
+        // 対象月の最終日を決定
+        let now = Date()
+        let currentYear = calendar.component(.year, from: now)
+        let currentMonth = calendar.component(.month, from: now)
+        let currentDay = calendar.component(.day, from: now)
 
-        // 最初の記録が1日でなければ、1日の0kmから開始
-        if let firstDay = sortedDays.first, firstDay > 1 {
-            result.append(CumulativeDataPoint(day: 1, distance: 0))
+        let maxDay: Int
+        if year == currentYear && month == currentMonth {
+            // 当月の場合は今日まで
+            maxDay = currentDay
+        } else {
+            // 過去月の場合は月末まで
+            var components = DateComponents()
+            components.year = year
+            components.month = month
+            components.day = 1
+            if let firstDayOfMonth = calendar.date(from: components),
+               let range = calendar.range(of: .day, in: .month, for: firstDayOfMonth) {
+                maxDay = range.count
+            } else {
+                maxDay = 31
+            }
         }
 
-        // 累積距離を計算
+        // 累積距離を計算（全ての日を含める）
         var cumulative: Double = 0
-        for day in sortedDays {
+        for day in 1...maxDay {
             cumulative += dailyDistances[day] ?? 0
             result.append(CumulativeDataPoint(day: day, distance: cumulative))
         }
