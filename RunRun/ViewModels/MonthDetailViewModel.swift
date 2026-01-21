@@ -121,7 +121,7 @@ final class MonthDetailViewModel: ObservableObject {
         // スクリーンショットモードならモックデータを使用
         if ScreenshotMode.isEnabled {
             records = MockDataProvider.monthDetailRecords
-            previousMonthRecords = []
+            previousMonthRecords = MockDataProvider.previousMonthDetailRecords
             isLoading = false
             return
         }
