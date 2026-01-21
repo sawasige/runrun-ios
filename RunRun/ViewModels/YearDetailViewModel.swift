@@ -145,17 +145,11 @@ final class YearDetailViewModel: ObservableObject {
             }
         }
 
-        // 累積距離を計算
+        // 累積距離を計算（全ての日を含める）
         var result: [(dayOfYear: Int, distance: Double)] = []
         var cumulative: Double = 0
 
-        // 最初の記録が1日目でなければ、1日目の0kmから開始
-        let sortedDays = dailyDistances.keys.sorted()
-        if let firstDay = sortedDays.first, firstDay > 1 {
-            result.append((1, 0))
-        }
-
-        for day in sortedDays where day <= maxDay {
+        for day in 1...maxDay {
             cumulative += dailyDistances[day] ?? 0
             result.append((day, cumulative))
         }

@@ -88,6 +88,25 @@ struct ProgressWidgetEntryView: View {
         !entry.cumulativeDistances.isEmpty
     }
 
+    /// 現在の月の日曜日の日（Int）を返す
+    private var sundayDaysInMonth: [Int] {
+        let calendar = Calendar.current
+        let year = calendar.component(.year, from: entry.date)
+        let month = calendar.component(.month, from: entry.date)
+        var sundays: [Int] = []
+        guard let startOfMonth = calendar.date(from: DateComponents(year: year, month: month, day: 1)),
+              let range = calendar.range(of: .day, in: .month, for: startOfMonth) else {
+            return []
+        }
+        for day in range {
+            if let date = calendar.date(from: DateComponents(year: year, month: month, day: day)),
+               calendar.component(.weekday, from: date) == 1 { // 1 = 日曜日
+                sundays.append(day)
+            }
+        }
+        return sundays
+    }
+
     private static let runColor = Color("RunColor")
     private static let kmToMiles = 0.621371
 
@@ -207,9 +226,18 @@ struct ProgressWidgetEntryView: View {
         }
         .chartXScale(domain: 1...31)
         .chartXAxis {
-            AxisMarks(values: [1, 15, 31]) { _ in
+            AxisMarks(values: sundayDaysInMonth) { value in
                 AxisGridLine()
-                AxisValueLabel()
+                AxisValueLabel {
+                    if let day = value.as(Int.self) {
+                        let calendar = Calendar.current
+                        let year = calendar.component(.year, from: entry.date)
+                        let month = calendar.component(.month, from: entry.date)
+                        if let date = calendar.date(from: DateComponents(year: year, month: month, day: day)) {
+                            Text(date, format: .dateTime.day())
+                        }
+                    }
+                }
             }
         }
         .chartYAxis {
