@@ -1,9 +1,4 @@
 Thank you for using RunRun!
 
-[New Features]
-- Route map now displayed in run detail share images
-- Notifications when background sync completes
-
 [Improvements]
-- Improved share image design
-- Stability improvements
+- Minor improvements and stability enhancements
