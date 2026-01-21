@@ -590,6 +590,7 @@ struct FullScreenMapView: View {
                             .frame(width: 36, height: 36)
                             .background(.ultraThinMaterial, in: Circle())
                     }
+                    .accessibilityIdentifier("close_full_screen_map")
 
                     // ペース凡例
                     if !routeSegments.isEmpty {

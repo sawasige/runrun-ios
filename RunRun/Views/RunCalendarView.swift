@@ -112,6 +112,7 @@ struct RunCalendarView: View {
                 dayCellContent(day: day, weekday: weekday, isToday: isToday, hasRun: hasRun, totalDistance: totalDistance)
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier("calendar_day_\(day)")
         } else {
             dayCellContent(day: day, weekday: weekday, isToday: isToday, hasRun: hasRun, totalDistance: totalDistance)
         }
