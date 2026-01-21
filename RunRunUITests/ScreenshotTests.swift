@@ -28,7 +28,7 @@ final class ScreenshotTests: XCTestCase {
         XCUIDevice.shared.orientation = .portrait
 
         // 起動待機
-        sleep(1)
+//        sleep(1)
 
         // システムダイアログを閉じる（Apple Account確認、通知パーミッションなど）
         dismissSystemDialogs()
@@ -45,22 +45,13 @@ final class ScreenshotTests: XCTestCase {
         sleep(1)
         snapshot("02_Records")
 
-        // 3. ランキング
-        let leaderboardTab = try XCTUnwrap(
-            findTabOrSidebarItem("ランキング", "Leaderboard"),
-            "ランキングタブが見つかりません"
-        )
-        leaderboardTab.tap()
-        sleep(1)
-        snapshot("03_Leaderboard")
-
-        // 4. 月詳細画面（タイムラインのヘッダーから遷移）
+        // 3. 月詳細画面（タイムラインのヘッダーから遷移）
         let homeTab = try XCTUnwrap(
             findTabOrSidebarItem("ホーム", "Home"),
             "ホームタブが見つかりません"
         )
         homeTab.tap()
-        sleep(1)
+//        sleep(1)
 
         let monthSummary = try XCTUnwrap(
             findElement(identifier: "timeline_month_summary"),
@@ -68,25 +59,42 @@ final class ScreenshotTests: XCTestCase {
         )
         monthSummary.tap()
         sleep(1)
-        snapshot("04_MonthDetail")
+        snapshot("03_MonthDetail")
 
-        // 5. ラン詳細画面
-        let firstRunRow = try XCTUnwrap(
-            findElement(identifier: "first_run_row"),
-            "first_run_row が見つかりません"
+        // 4. ラン詳細画面（カレンダーの日付をタップ）
+        let calendarDay = try XCTUnwrap(
+            findElement(identifier: "calendar_day_10"),
+            "calendar_day_10 が見つかりません"
         )
-        firstRunRow.tap()
+        calendarDay.tap()
         sleep(1) // 地図読み込み待機
-        snapshot("05_RunDetail")
+        snapshot("04_RunDetail")
 
-        // 6. 地図拡大画面
+        // 5. 地図拡大画面
         let expandMapButton = try XCTUnwrap(
             findElement(identifier: "expand_map_button"),
             "expand_map_button が見つかりません"
         )
         expandMapButton.tap()
         sleep(1)
-        snapshot("06_FullMap")
+        snapshot("05_FullMap")
+
+        // 6. ランキング
+        // フルスクリーン地図を閉じる
+        let closeMapButton = try XCTUnwrap(
+            findElement(identifier: "close_full_screen_map"),
+            "close_full_screen_map が見つかりません"
+        )
+        closeMapButton.tap()
+//        sleep(1)
+
+        let leaderboardTab = try XCTUnwrap(
+            findTabOrSidebarItem("ランキング", "Leaderboard"),
+            "ランキングタブが見つかりません"
+        )
+        leaderboardTab.tap()
+        sleep(1)
+        snapshot("06_Leaderboard")
     }
 
     /// タブバーまたはサイドバーから指定されたラベルを持つ要素を探す（iPad対応・多言語対応）

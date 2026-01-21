@@ -1,6 +1,6 @@
 "01_Timeline" = "Auto Sync";
 "02_Records" = "Year Summary";
-"03_Leaderboard" = "Leaderboard";
-"04_MonthDetail" = "Calendar";
-"05_RunDetail" = "All Stats";
-"06_FullMap" = "Route Map";
+"03_MonthDetail" = "Calendar";
+"04_RunDetail" = "All Stats";
+"05_FullMap" = "Route Map";
+"06_Leaderboard" = "Leaderboard";

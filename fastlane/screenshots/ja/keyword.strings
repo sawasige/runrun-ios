@@ -1,6 +1,6 @@
 "01_Timeline" = "自動で同期";
 "02_Records" = "年間サマリー";
-"03_Leaderboard" = "ランキング";
-"04_MonthDetail" = "カレンダー";
-"05_RunDetail" = "詳細データ";
-"06_FullMap" = "ルートマップ";
+"03_MonthDetail" = "カレンダー";
+"04_RunDetail" = "ランニング詳細";
+"05_FullMap" = "ルートマップ";
+"06_Leaderboard" = "ランキング";

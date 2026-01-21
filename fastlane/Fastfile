@@ -71,6 +71,12 @@ platform :ios do
     screenshots
     add_frames
   end
+
+  desc "フレーム付きスクリーンショットのプレビューHTMLを生成"
+  lane :generate_preview do
+    screenshots_path = File.expand_path("../screenshots", __FILE__)
+    generate_preview_html(screenshots_path)
+  end
 end
 
 def setup_api_key
@@ -95,7 +101,10 @@ def setup_api_key
 end
 
 def generate_preview_html(screenshots_path)
-  languages = Dir.glob("#{screenshots_path}/*/").map { |d| File.basename(d) }.sort
+  # フレーム付きスクリーンショットがあるディレクトリのみを対象（fontsなど除外）
+  languages = Dir.glob("#{screenshots_path}/*/").select { |d|
+    Dir.glob("#{d}*_framed.png").any?
+  }.map { |d| File.basename(d) }.sort
 
   html = <<~HTML
     <!DOCTYPE html>
