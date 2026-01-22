@@ -98,7 +98,7 @@ struct MonthShareSettingsView: View {
     private var dataOptionsSection: some View {
         ShareOptionsSection {
             if !shareData.cumulativeData.isEmpty {
-                ShareOptionRow(title: String(localized: "Progress Chart"), isOn: $showProgressChart)
+                ShareOptionRow(title: String(localized: "Distance Progress"), isOn: $showProgressChart)
                 Divider()
             }
             ShareOptionRow(title: String(localized: "Month"), isOn: $showPeriod)
