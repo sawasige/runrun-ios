@@ -9,6 +9,8 @@ final class MonthDetailViewModel: ObservableObject {
     @Published private(set) var error: Error?
     @Published private(set) var year: Int
     @Published private(set) var month: Int
+    @Published private(set) var oldestYear: Int?
+    @Published private(set) var oldestMonth: Int?
 
     let userId: String
 
@@ -146,9 +148,17 @@ final class MonthDetailViewModel: ObservableObject {
                 year: prevYear,
                 month: prevMonth
             )
+            async let oldestRunTask = firestoreService.getOldestRun(userId: userId)
 
             records = try await currentRecords
             previousMonthRecords = try await prevRecords
+
+            // 最古の年月を設定
+            if let oldestRun = try await oldestRunTask {
+                let calendar = Calendar.current
+                oldestYear = calendar.component(.year, from: oldestRun.date)
+                oldestMonth = calendar.component(.month, from: oldestRun.date)
+            }
         } catch {
             self.error = error
         }

@@ -10,6 +10,7 @@ final class YearDetailViewModel: ObservableObject {
     @Published private(set) var isLoading = false
     @Published private(set) var error: Error?
     @Published var selectedYear: Int
+    @Published private(set) var oldestYear: Int?
 
     let userId: String
     private let firestoreService = FirestoreService.shared
@@ -192,12 +193,18 @@ final class YearDetailViewModel: ObservableObject {
             async let runsTask = firestoreService.getUserRuns(userId: userId)
             async let yearlyRunsTask = firestoreService.getUserYearlyRuns(userId: userId, year: selectedYear)
             async let prevYearRunsTask = firestoreService.getUserYearlyRuns(userId: userId, year: selectedYear - 1)
+            async let oldestRunTask = firestoreService.getOldestRun(userId: userId)
 
             let runs = try await runsTask
             monthlyStats = aggregateToMonthlyStats(runs: runs, for: selectedYear)
             previousYearMonthlyStats = aggregateToMonthlyStats(runs: runs, for: selectedYear - 1)
             yearlyRuns = try await yearlyRunsTask
             previousYearRuns = try await prevYearRunsTask
+
+            // 最古の年を設定
+            if let oldestRun = try await oldestRunTask {
+                oldestYear = Calendar.current.component(.year, from: oldestRun.date)
+            }
         } catch {
             self.error = error
         }

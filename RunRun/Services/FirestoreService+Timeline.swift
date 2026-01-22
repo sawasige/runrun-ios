@@ -130,6 +130,68 @@ extension FirestoreService {
             stepCount: data["stepCount"] as? Int
         )
     }
+
+    /// 最古のランを取得
+    func getOldestRun(userId: String) async throws -> RunningRecord? {
+        let query = runsCollection
+            .whereField("userId", isEqualTo: userId)
+            .order(by: "date", descending: false)
+            .limit(to: 1)
+
+        let snapshot = try await query.getDocuments()
+        guard let doc = snapshot.documents.first else { return nil }
+        let data = doc.data()
+
+        guard let timestamp = data["date"] as? Timestamp,
+              let distance = data["distanceKm"] as? Double,
+              let duration = data["durationSeconds"] as? TimeInterval else {
+            return nil
+        }
+
+        return RunningRecord(
+            date: timestamp.dateValue(),
+            distanceKm: distance,
+            durationSeconds: duration,
+            caloriesBurned: data["caloriesBurned"] as? Double,
+            averageHeartRate: data["averageHeartRate"] as? Double,
+            maxHeartRate: data["maxHeartRate"] as? Double,
+            minHeartRate: data["minHeartRate"] as? Double,
+            cadence: data["cadence"] as? Double,
+            strideLength: data["strideLength"] as? Double,
+            stepCount: data["stepCount"] as? Int
+        )
+    }
+
+    /// 最新のランを取得
+    func getLatestRun(userId: String) async throws -> RunningRecord? {
+        let query = runsCollection
+            .whereField("userId", isEqualTo: userId)
+            .order(by: "date", descending: true)
+            .limit(to: 1)
+
+        let snapshot = try await query.getDocuments()
+        guard let doc = snapshot.documents.first else { return nil }
+        let data = doc.data()
+
+        guard let timestamp = data["date"] as? Timestamp,
+              let distance = data["distanceKm"] as? Double,
+              let duration = data["durationSeconds"] as? TimeInterval else {
+            return nil
+        }
+
+        return RunningRecord(
+            date: timestamp.dateValue(),
+            distanceKm: distance,
+            durationSeconds: duration,
+            caloriesBurned: data["caloriesBurned"] as? Double,
+            averageHeartRate: data["averageHeartRate"] as? Double,
+            maxHeartRate: data["maxHeartRate"] as? Double,
+            minHeartRate: data["minHeartRate"] as? Double,
+            cadence: data["cadence"] as? Double,
+            strideLength: data["strideLength"] as? Double,
+            stepCount: data["stepCount"] as? Int
+        )
+    }
 }
 
 // MARK: - Weekly Stats

@@ -11,6 +11,8 @@ struct RunDetailView: View {
     let userProfile: UserProfile
     @State private var previousRecord: RunningRecord?
     @State private var nextRecord: RunningRecord?
+    @State private var oldestRecord: RunningRecord?
+    @State private var latestRecord: RunningRecord?
     @State private var isLoadingAdjacent = false
     @AppStorage("units.distance") private var useMetric = UnitFormatter.defaultUseMetric
 
@@ -61,12 +63,34 @@ struct RunDetailView: View {
         return formatter.string(from: record.date)
     }
 
-    private var canGoToPrevious: Bool {
-        previousRecord != nil
+    private var canGoToOldest: Bool {
+        guard let oldest = oldestRecord else { return false }
+        return record.date > oldest.date
     }
 
-    private var canGoToNext: Bool {
-        nextRecord != nil
+    private var canGoPrevious: Bool {
+        guard let oldest = oldestRecord else { return false }
+        return record.date > oldest.date
+    }
+
+    private var canGoNext: Bool {
+        guard let latest = latestRecord else { return false }
+        return record.date < latest.date
+    }
+
+    private var canGoToLatest: Bool {
+        guard let latest = latestRecord else { return false }
+        return record.date < latest.date
+    }
+
+    private func goToOldest() {
+        guard let oldest = oldestRecord else { return }
+        record = oldest
+        resetAllData()
+        Task {
+            await loadRouteData()
+            await loadAdjacentRecords()
+        }
     }
 
     private func goToPrevious() {
@@ -82,6 +106,16 @@ struct RunDetailView: View {
     private func goToNext() {
         guard let next = nextRecord else { return }
         record = next
+        resetAllData()
+        Task {
+            await loadRouteData()
+            await loadAdjacentRecords()
+        }
+    }
+
+    private func goToLatest() {
+        guard let latest = latestRecord else { return }
+        record = latest
         resetAllData()
         Task {
             await loadRouteData()
@@ -109,40 +143,27 @@ struct RunDetailView: View {
 
         async let prevTask = firestoreService.getAdjacentRun(userId: userId, currentDate: record.date, direction: .previous)
         async let nextTask = firestoreService.getAdjacentRun(userId: userId, currentDate: record.date, direction: .next)
+        async let oldestTask = firestoreService.getOldestRun(userId: userId)
+        async let latestTask = firestoreService.getLatestRun(userId: userId)
 
         previousRecord = try? await prevTask
         nextRecord = try? await nextTask
+        oldestRecord = try? await oldestTask
+        latestRecord = try? await latestTask
         isLoadingAdjacent = false
     }
 
     private var runNavigationButtons: some View {
-        HStack(spacing: 0) {
-            Button {
-                goToPrevious()
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                    .frame(width: 50, height: 50)
-            }
-            .disabled(!canGoToPrevious)
-            .opacity(canGoToPrevious ? 1 : 0.3)
-
-            Divider()
-                .frame(height: 30)
-
-            Button {
-                goToNext()
-            } label: {
-                Image(systemName: "chevron.right")
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                    .frame(width: 50, height: 50)
-            }
-            .disabled(!canGoToNext)
-            .opacity(canGoToNext ? 1 : 0.3)
-        }
-        .liquidGlassCapsule()
+        ExpandableNavigationButtons(
+            canGoToOldest: canGoToOldest,
+            canGoPrevious: canGoPrevious,
+            canGoNext: canGoNext,
+            canGoToLatest: canGoToLatest,
+            onOldest: goToOldest,
+            onPrevious: goToPrevious,
+            onNext: goToNext,
+            onLatest: goToLatest
+        )
     }
 
     var body: some View {
