@@ -65,19 +65,27 @@ struct YearDetailView: View {
 
     private func goToOldestYear() {
         guard let oldest = viewModel.oldestYear else { return }
-        viewModel.selectedYear = oldest
+        Task {
+            await viewModel.updateYear(to: oldest)
+        }
     }
 
     private func goToPreviousYear() {
-        viewModel.selectedYear -= 1
+        Task {
+            await viewModel.updateYear(to: viewModel.selectedYear - 1)
+        }
     }
 
     private func goToNextYear() {
-        viewModel.selectedYear += 1
+        Task {
+            await viewModel.updateYear(to: viewModel.selectedYear + 1)
+        }
     }
 
     private func goToLatestYear() {
-        viewModel.selectedYear = currentYear
+        Task {
+            await viewModel.updateYear(to: currentYear)
+        }
     }
 
     private var yearNavigationButtons: some View {
@@ -157,11 +165,6 @@ struct YearDetailView: View {
         }
         .refreshable {
             await viewModel.refresh()
-        }
-        .onChange(of: viewModel.selectedYear) {
-            Task {
-                await viewModel.loadMonthlyStats()
-            }
         }
         .onChange(of: syncService.lastSyncedAt) { _, _ in
             // 自分のデータの場合のみリロード
