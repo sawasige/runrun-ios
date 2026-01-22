@@ -114,30 +114,22 @@ final class MonthDetailViewModel: ObservableObject {
     }
 
     func updateMonth(year: Int, month: Int) async {
-        self.year = year
-        self.month = month
-        await loadRecords()
-    }
-
-    func loadRecords() async {
         // スクリーンショットモードならモックデータを使用
         if ScreenshotMode.isEnabled {
+            self.year = year
+            self.month = month
             records = MockDataProvider.monthDetailRecords
             previousMonthRecords = MockDataProvider.previousMonthDetailRecords
             isLoading = false
             return
         }
 
-        // データがない場合のみローディング表示（チラつき防止）
-        if records.isEmpty {
-            isLoading = true
-        }
-        error = nil
-
         // 前月の年月を計算
-        let (prevYear, prevMonth) = previousYearMonth
+        let prevYear = month == 1 ? year - 1 : year
+        let prevMonth = month == 1 ? 12 : month - 1
 
         do {
+            // 先にデータを取得
             async let currentRecords = firestoreService.getUserMonthlyRuns(
                 userId: userId,
                 year: year,
@@ -150,11 +142,17 @@ final class MonthDetailViewModel: ObservableObject {
             )
             async let oldestRunTask = firestoreService.getOldestRun(userId: userId)
 
-            records = try await currentRecords
-            previousMonthRecords = try await prevRecords
+            let newRecords = try await currentRecords
+            let newPrevRecords = try await prevRecords
+            let oldestRun = try await oldestRunTask
 
-            // 最古の年月を設定
-            if let oldestRun = try await oldestRunTask {
+            // 全て取得してから一気に更新
+            self.year = year
+            self.month = month
+            records = newRecords
+            previousMonthRecords = newPrevRecords
+
+            if let oldestRun = oldestRun {
                 let calendar = Calendar.current
                 oldestYear = calendar.component(.year, from: oldestRun.date)
                 oldestMonth = calendar.component(.month, from: oldestRun.date)
@@ -164,6 +162,10 @@ final class MonthDetailViewModel: ObservableObject {
         }
 
         isLoading = false
+    }
+
+    func loadRecords() async {
+        await updateMonth(year: year, month: month)
     }
 
     private var previousYearMonth: (year: Int, month: Int) {

@@ -181,12 +181,7 @@ struct MonthDetailView: View {
             await viewModel.onAppear()
             hasLoadedOnce = true
         }
-        .onChange(of: currentYear) { _, _ in
-            Task {
-                await viewModel.updateMonth(year: currentYear, month: currentMonth)
-            }
-        }
-        .onChange(of: currentMonth) { _, _ in
+        .onChange(of: [currentYear, currentMonth]) { _, _ in
             Task {
                 await viewModel.updateMonth(year: currentYear, month: currentMonth)
             }
