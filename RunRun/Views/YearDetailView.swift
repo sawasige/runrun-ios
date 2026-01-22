@@ -87,9 +87,7 @@ struct YearDetailView: View {
             .disabled(isCurrentYear)
             .opacity(isCurrentYear ? 0.3 : 1)
         }
-        .background(.regularMaterial)
-        .clipShape(Capsule())
-        .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
+        .liquidGlassCapsule()
     }
 
     var body: some View {
