@@ -171,7 +171,8 @@ struct MonthDetailView: View {
                     averagePace: viewModel.formattedAveragePace(useMetric: useMetric),
                     averageDistance: viewModel.formattedAverageDistance(useMetric: useMetric),
                     averageDuration: viewModel.formattedAverageDuration,
-                    totalCalories: viewModel.formattedTotalCalories
+                    totalCalories: viewModel.formattedTotalCalories,
+                    cumulativeData: viewModel.cumulativeDistanceData
                 ),
                 isOwnData: isOwnRecord,
                 isPresented: $showShareSettings

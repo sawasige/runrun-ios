@@ -10,6 +10,7 @@ struct MonthExportOptions: Equatable, Hashable {
     var showPace = true
     var showAvgDistance = true
     var showAvgDuration = true
+    var showProgressChart = true
 }
 
 /// 月間統計の共有データ
@@ -22,6 +23,7 @@ struct MonthlyShareData {
     let averageDistance: String
     let averageDuration: String
     let totalCalories: String?
+    let cumulativeData: [(day: Int, distance: Double)]
 }
 
 struct MonthShareSettingsView: View {
@@ -38,6 +40,7 @@ struct MonthShareSettingsView: View {
     @AppStorage("monthShare.showPace") private var showPace = true
     @AppStorage("monthShare.showAvgDistance") private var showAvgDistance = true
     @AppStorage("monthShare.showAvgDuration") private var showAvgDuration = true
+    @AppStorage("monthShare.showProgressChart") private var showProgressChart = true
 
     private var options: MonthExportOptions {
         MonthExportOptions(
@@ -48,7 +51,8 @@ struct MonthShareSettingsView: View {
             showCalories: showCalories,
             showPace: showPace,
             showAvgDistance: showAvgDistance,
-            showAvgDuration: showAvgDuration
+            showAvgDuration: showAvgDuration,
+            showProgressChart: showProgressChart && !shareData.cumulativeData.isEmpty
         )
     }
 
@@ -69,7 +73,8 @@ struct MonthShareSettingsView: View {
                     "show_pace": options.showPace,
                     "show_avg_distance": options.showAvgDistance,
                     "show_avg_duration": options.showAvgDuration,
-                    "show_calories": options.showCalories
+                    "show_calories": options.showCalories,
+                    "show_progress_chart": options.showProgressChart
                 ])
             },
             logShareEvent: {
@@ -81,7 +86,8 @@ struct MonthShareSettingsView: View {
                     "show_pace": options.showPace,
                     "show_avg_distance": options.showAvgDistance,
                     "show_avg_duration": options.showAvgDuration,
-                    "show_calories": options.showCalories
+                    "show_calories": options.showCalories,
+                    "show_progress_chart": options.showProgressChart
                 ])
             }
         ) {
@@ -91,6 +97,10 @@ struct MonthShareSettingsView: View {
 
     private var dataOptionsSection: some View {
         ShareOptionsSection {
+            if !shareData.cumulativeData.isEmpty {
+                ShareOptionRow(title: String(localized: "Progress Chart"), isOn: $showProgressChart)
+                Divider()
+            }
             ShareOptionRow(title: String(localized: "Month"), isOn: $showPeriod)
             Divider()
             ShareOptionRow(title: String(localized: "Total Distance"), isOn: $showDistance)

@@ -393,6 +393,89 @@ enum ImageComposer {
         path.stroke()
     }
 
+    /// 累積距離グラフを描画
+    private static func drawCumulativeChart(data: [(day: Int, distance: Double)], in rect: CGRect, backgroundBrightness: CGFloat) {
+        guard data.count >= 2 else { return }
+
+        // データの範囲を計算
+        let maxDay = data.map { $0.day }.max() ?? 31
+        let maxDistance = data.map { $0.distance }.max() ?? 1.0
+
+        guard maxDistance > 0 else { return }
+
+        // パディングを追加
+        let padding = rect.height * 0.08
+        let chartRect = rect.insetBy(dx: padding, dy: padding)
+
+        // 線の太さ
+        let lineWidth = rect.height * 0.03
+
+        // 座標変換関数
+        func toPoint(_ day: Int, _ distance: Double) -> CGPoint {
+            let x = chartRect.minX + (CGFloat(day - 1) / CGFloat(maxDay - 1)) * chartRect.width
+            // Y軸は上下反転（画像座標系は上が0）
+            let y = chartRect.maxY - (CGFloat(distance) / CGFloat(maxDistance)) * chartRect.height
+            return CGPoint(x: x, y: y)
+        }
+
+        // エリアパスを作成（塗りつぶし用）- 線の太さ分左右・下に広げる
+        let areaPath = UIBezierPath()
+        let firstPoint = toPoint(data[0].day, data[0].distance)
+        let lineOffset = lineWidth * 0.7  // アウトライン分も考慮
+        let bottomY = chartRect.maxY + lineOffset
+
+        // 左端を線の太さ分広げる
+        areaPath.move(to: CGPoint(x: firstPoint.x - lineOffset, y: bottomY))
+        areaPath.addLine(to: CGPoint(x: firstPoint.x - lineOffset, y: firstPoint.y))
+        areaPath.addLine(to: firstPoint)
+
+        for datum in data.dropFirst() {
+            areaPath.addLine(to: toPoint(datum.day, datum.distance))
+        }
+
+        // 右端を線の太さ分広げる
+        let lastPoint = toPoint(data.last!.day, data.last!.distance)
+        areaPath.addLine(to: CGPoint(x: lastPoint.x + lineOffset, y: lastPoint.y))
+        areaPath.addLine(to: CGPoint(x: lastPoint.x + lineOffset, y: bottomY))
+        areaPath.close()
+
+        // ラインパスを作成
+        let linePath = UIBezierPath()
+        linePath.move(to: firstPoint)
+        for datum in data.dropFirst() {
+            linePath.addLine(to: toPoint(datum.day, datum.distance))
+        }
+
+        let colorSpace = CGColorSpace(name: CGColorSpace.extendedLinearDisplayP3)!
+
+        // エリアを半透明で塗りつぶし
+        let fillColor = CGColor(colorSpace: colorSpace, components: [1.67, 0.14, 0.12, 0.3])!
+        UIColor(cgColor: fillColor).setFill()
+        areaPath.fill()
+
+        // 背景の明るさに応じてアウトライン色を決定
+        let outlineColor: UIColor
+        if backgroundBrightness > 0.5 {
+            let hdrWhite = CGColor(colorSpace: colorSpace, components: [2.0, 2.0, 2.0, 1.0])!
+            outlineColor = UIColor(cgColor: hdrWhite)
+        } else {
+            outlineColor = UIColor.black
+        }
+
+        // アウトラインを描画
+        linePath.lineCapStyle = .round
+        linePath.lineJoinStyle = .round
+        outlineColor.setStroke()
+        linePath.lineWidth = lineWidth * 1.4
+        linePath.stroke()
+
+        // メインの線を描画（HDRアクセントカラー）
+        let hdrAccent = CGColor(colorSpace: colorSpace, components: [1.67, 0.14, 0.12, 1.0])!
+        UIColor(cgColor: hdrAccent).setStroke()
+        linePath.lineWidth = lineWidth
+        linePath.stroke()
+    }
+
     private static func drawOutlinedText(_ text: String, at point: CGPoint, font: UIFont) {
         let strokeAttributes: [NSAttributedString.Key: Any] = [
             .font: font,
@@ -470,15 +553,18 @@ enum ImageComposer {
         format.scale = 1.0
         format.opaque = false
 
+        // グラフ描画領域の明るさを計算（今回は固定で0.5を使用 - 背景画像に依存しないため）
+        let chartAreaBrightness: CGFloat = 0.5
+
         let renderer = UIGraphicsImageRenderer(size: size, format: format)
         let textUIImage = renderer.image { _ in
-            drawMonthlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+            drawMonthlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options, chartAreaBrightness: chartAreaBrightness)
         }
 
         return CIImage(image: textUIImage)
     }
 
-    private static func drawMonthlyTextOverlay(width: CGFloat, height: CGFloat, shareData: MonthlyShareData, options: MonthExportOptions) {
+    private static func drawMonthlyTextOverlay(width: CGFloat, height: CGFloat, shareData: MonthlyShareData, options: MonthExportOptions, chartAreaBrightness: CGFloat = 0.5) {
         let useMetric = UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
         let overlayHeight = height / 3.0
         let baseFontSize = overlayHeight / 10.0
@@ -589,6 +675,15 @@ enum ImageComposer {
         if options.showPeriod {
             yOffset -= baseFontSize * 1.2
             drawOutlinedText(shareData.period, at: CGPoint(x: x, y: yOffset), font: subFont)
+        }
+
+        // 7. 累積距離グラフ（テキストの上に描画）
+        if options.showProgressChart && !shareData.cumulativeData.isEmpty {
+            yOffset -= baseFontSize * 0.5  // スペース
+            let chartHeight = baseFontSize * 3.6  // ルートと同じサイズ
+            let chartWidth = chartHeight * 1.5  // 横長のアスペクト比
+            let chartRect = CGRect(x: x - chartWidth, y: yOffset - chartHeight, width: chartWidth, height: chartHeight)
+            drawCumulativeChart(data: shareData.cumulativeData, in: chartRect, backgroundBrightness: chartAreaBrightness)
         }
     }
 
