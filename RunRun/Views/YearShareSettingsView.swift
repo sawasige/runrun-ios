@@ -10,6 +10,7 @@ struct YearExportOptions: Equatable, Hashable {
     var showPace = true
     var showAvgDistance = true
     var showAvgDuration = true
+    var showMonthlyChart = true
 }
 
 /// 年間統計の共有データ
@@ -22,6 +23,7 @@ struct YearlyShareData {
     let averageDistance: String
     let averageDuration: String
     let totalCalories: String?
+    let monthlyDistanceData: [(month: Int, distance: Double)]
 }
 
 struct YearShareSettingsView: View {
@@ -38,6 +40,7 @@ struct YearShareSettingsView: View {
     @AppStorage("yearShare.showPace") private var showPace = true
     @AppStorage("yearShare.showAvgDistance") private var showAvgDistance = true
     @AppStorage("yearShare.showAvgDuration") private var showAvgDuration = true
+    @AppStorage("yearShare.showMonthlyChart") private var showMonthlyChart = true
 
     private var options: YearExportOptions {
         YearExportOptions(
@@ -48,7 +51,8 @@ struct YearShareSettingsView: View {
             showCalories: showCalories,
             showPace: showPace,
             showAvgDistance: showAvgDistance,
-            showAvgDuration: showAvgDuration
+            showAvgDuration: showAvgDuration,
+            showMonthlyChart: showMonthlyChart && !shareData.monthlyDistanceData.isEmpty
         )
     }
 
@@ -69,7 +73,8 @@ struct YearShareSettingsView: View {
                     "show_pace": options.showPace,
                     "show_avg_distance": options.showAvgDistance,
                     "show_avg_duration": options.showAvgDuration,
-                    "show_calories": options.showCalories
+                    "show_calories": options.showCalories,
+                    "show_monthly_chart": options.showMonthlyChart
                 ])
             },
             logShareEvent: {
@@ -81,7 +86,8 @@ struct YearShareSettingsView: View {
                     "show_pace": options.showPace,
                     "show_avg_distance": options.showAvgDistance,
                     "show_avg_duration": options.showAvgDuration,
-                    "show_calories": options.showCalories
+                    "show_calories": options.showCalories,
+                    "show_monthly_chart": options.showMonthlyChart
                 ])
             }
         ) {
@@ -91,6 +97,10 @@ struct YearShareSettingsView: View {
 
     private var dataOptionsSection: some View {
         ShareOptionsSection {
+            if !shareData.monthlyDistanceData.isEmpty {
+                ShareOptionRow(title: String(localized: "Monthly Distance"), isOn: $showMonthlyChart)
+                Divider()
+            }
             ShareOptionRow(title: String(localized: "Year"), isOn: $showYear)
             Divider()
             ShareOptionRow(title: String(localized: "Total Distance"), isOn: $showDistance)

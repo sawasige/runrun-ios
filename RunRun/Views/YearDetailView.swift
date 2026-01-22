@@ -151,7 +151,8 @@ struct YearDetailView: View {
                     averagePace: viewModel.formattedAveragePace(useMetric: useMetric),
                     averageDistance: viewModel.formattedAverageDistance(useMetric: useMetric),
                     averageDuration: viewModel.formattedAverageDuration,
-                    totalCalories: viewModel.formattedTotalCalories
+                    totalCalories: viewModel.formattedTotalCalories,
+                    monthlyDistanceData: viewModel.monthlyStats.map { (month: $0.month, distance: $0.totalDistanceInKilometers) }
                 ),
                 isOwnData: isOwnRecord,
                 isPresented: $showShareSettings

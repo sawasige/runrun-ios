@@ -394,7 +394,7 @@ enum ImageComposer {
     }
 
     /// 累積距離グラフを描画
-    private static func drawCumulativeChart(data: [(day: Int, distance: Double)], in rect: CGRect, backgroundBrightness: CGFloat) {
+    private static func drawCumulativeChart(data: [(day: Int, distance: Double)], in rect: CGRect) {
         guard data.count >= 2 else { return }
 
         // データの範囲を計算
@@ -453,19 +453,10 @@ enum ImageComposer {
         UIColor(cgColor: fillColor).setFill()
         areaPath.fill()
 
-        // 背景の明るさに応じてアウトライン色を決定
-        let outlineColor: UIColor
-        if backgroundBrightness > 0.5 {
-            let hdrWhite = CGColor(colorSpace: colorSpace, components: [2.0, 2.0, 2.0, 1.0])!
-            outlineColor = UIColor(cgColor: hdrWhite)
-        } else {
-            outlineColor = UIColor.black
-        }
-
-        // アウトラインを描画
+        // アウトラインを描画（黒）
         linePath.lineCapStyle = .round
         linePath.lineJoinStyle = .round
-        outlineColor.setStroke()
+        UIColor.black.setStroke()
         linePath.lineWidth = lineWidth * 1.4
         linePath.stroke()
 
@@ -474,6 +465,53 @@ enum ImageComposer {
         UIColor(cgColor: hdrAccent).setStroke()
         linePath.lineWidth = lineWidth
         linePath.stroke()
+    }
+
+    /// 月別距離バーグラフを描画
+    private static func drawMonthlyBarChart(data: [(month: Int, distance: Double)], in rect: CGRect) {
+        guard !data.isEmpty else { return }
+
+        let maxDistance = data.map { $0.distance }.max() ?? 1.0
+        guard maxDistance > 0 else { return }
+
+        // パディングを追加
+        let padding = rect.height * 0.08
+        let chartRect = rect.insetBy(dx: padding, dy: padding)
+
+        // 12本のバーを描画（線幅:線間 = 8:2）
+        let barCount = 12
+        let unitWidth = chartRect.width / CGFloat(barCount * 8 + (barCount - 1) * 2)
+        let barWidth = unitWidth * 8
+        let barSpacing = unitWidth * 2
+
+        let colorSpace = CGColorSpace(name: CGColorSpace.extendedLinearDisplayP3)!
+        let borderWidth = barWidth * 0.08
+
+        // バーを描画
+        for month in 1...barCount {
+            let distance = data.first { $0.month == month }?.distance ?? 0
+            let barHeight = CGFloat(distance / maxDistance) * chartRect.height
+            let minBarHeight = barWidth * 0.3  // 最小高さ（データが0でも少し表示）
+
+            let x = chartRect.minX + CGFloat(month - 1) * (barWidth + barSpacing)
+            let actualHeight = max(barHeight, distance > 0 ? minBarHeight : 0)
+            let y = chartRect.maxY - actualHeight
+
+            if actualHeight > 0 {
+                let barRect = CGRect(x: x, y: y, width: barWidth, height: actualHeight)
+                let barPath = UIBezierPath(rect: barRect)
+
+                // ボーダーを描画（黒）
+                UIColor.black.setStroke()
+                barPath.lineWidth = borderWidth
+                barPath.stroke()
+
+                // HDRアクセントカラーで塗りつぶし
+                let hdrAccent = CGColor(colorSpace: colorSpace, components: [1.67, 0.14, 0.12, 1.0])!
+                UIColor(cgColor: hdrAccent).setFill()
+                barPath.fill()
+            }
+        }
     }
 
     private static func drawOutlinedText(_ text: String, at point: CGPoint, font: UIFont) {
@@ -553,18 +591,15 @@ enum ImageComposer {
         format.scale = 1.0
         format.opaque = false
 
-        // グラフ描画領域の明るさを計算（今回は固定で0.5を使用 - 背景画像に依存しないため）
-        let chartAreaBrightness: CGFloat = 0.5
-
         let renderer = UIGraphicsImageRenderer(size: size, format: format)
         let textUIImage = renderer.image { _ in
-            drawMonthlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options, chartAreaBrightness: chartAreaBrightness)
+            drawMonthlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
         }
 
         return CIImage(image: textUIImage)
     }
 
-    private static func drawMonthlyTextOverlay(width: CGFloat, height: CGFloat, shareData: MonthlyShareData, options: MonthExportOptions, chartAreaBrightness: CGFloat = 0.5) {
+    private static func drawMonthlyTextOverlay(width: CGFloat, height: CGFloat, shareData: MonthlyShareData, options: MonthExportOptions) {
         let useMetric = UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
         let overlayHeight = height / 3.0
         let baseFontSize = overlayHeight / 10.0
@@ -683,7 +718,7 @@ enum ImageComposer {
             let chartHeight = baseFontSize * 3.6  // ルートと同じサイズ
             let chartWidth = chartHeight * 1.5  // 横長のアスペクト比
             let chartRect = CGRect(x: x - chartWidth, y: yOffset - chartHeight, width: chartWidth, height: chartHeight)
-            drawCumulativeChart(data: shareData.cumulativeData, in: chartRect, backgroundBrightness: chartAreaBrightness)
+            drawCumulativeChart(data: shareData.cumulativeData, in: chartRect)
         }
     }
 
@@ -849,6 +884,15 @@ enum ImageComposer {
             let yearText = String(format: String(localized: "%@ Records", comment: "Year records label for share"), shareData.year)
             yOffset -= baseFontSize * 1.2
             drawOutlinedText(yearText, at: CGPoint(x: x, y: yOffset), font: subFont)
+        }
+
+        // 7. 月別距離グラフ（テキストの上に描画）
+        if options.showMonthlyChart && !shareData.monthlyDistanceData.isEmpty {
+            yOffset -= baseFontSize * 0.5  // スペース
+            let chartHeight = baseFontSize * 3.6  // ルートと同じサイズ
+            let chartWidth = chartHeight * 1.5  // 横長のアスペクト比
+            let chartRect = CGRect(x: x - chartWidth, y: yOffset - chartHeight, width: chartWidth, height: chartHeight)
+            drawMonthlyBarChart(data: shareData.monthlyDistanceData, in: chartRect)
         }
     }
 
