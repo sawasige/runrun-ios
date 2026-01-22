@@ -54,6 +54,20 @@ struct YearDetailView: View {
         return viewModel.selectedYear == currentYear
     }
 
+    private var currentYear: Int {
+        Calendar.current.component(.year, from: Date())
+    }
+
+    private var canGoToOldest: Bool {
+        guard let oldest = viewModel.oldestYear else { return false }
+        return viewModel.selectedYear > oldest
+    }
+
+    private func goToOldestYear() {
+        guard let oldest = viewModel.oldestYear else { return }
+        viewModel.selectedYear = oldest
+    }
+
     private func goToPreviousYear() {
         viewModel.selectedYear -= 1
     }
@@ -62,32 +76,21 @@ struct YearDetailView: View {
         viewModel.selectedYear += 1
     }
 
+    private func goToLatestYear() {
+        viewModel.selectedYear = currentYear
+    }
+
     private var yearNavigationButtons: some View {
-        HStack(spacing: 0) {
-            Button {
-                goToPreviousYear()
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                    .frame(width: 50, height: 50)
-            }
-
-            Divider()
-                .frame(height: 30)
-
-            Button {
-                goToNextYear()
-            } label: {
-                Image(systemName: "chevron.right")
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                    .frame(width: 50, height: 50)
-            }
-            .disabled(isCurrentYear)
-            .opacity(isCurrentYear ? 0.3 : 1)
-        }
-        .liquidGlassCapsule()
+        ExpandableNavigationButtons(
+            canGoToOldest: canGoToOldest,
+            canGoPrevious: canGoToOldest,
+            canGoNext: !isCurrentYear,
+            canGoToLatest: !isCurrentYear,
+            onOldest: goToOldestYear,
+            onPrevious: goToPreviousYear,
+            onNext: goToNextYear,
+            onLatest: goToLatestYear
+        )
     }
 
     var body: some View {

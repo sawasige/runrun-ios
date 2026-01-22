@@ -39,6 +39,17 @@ struct MonthDetailView: View {
         return String(format: String(localized: "%d day_suffix", comment: "Day format e.g. 15日"), day)
     }
 
+    private var canGoToOldest: Bool {
+        guard let oldestYear = viewModel.oldestYear, let oldestMonth = viewModel.oldestMonth else { return false }
+        return currentYear > oldestYear || (currentYear == oldestYear && currentMonth > oldestMonth)
+    }
+
+    private func goToOldestMonth() {
+        guard let oldestYear = viewModel.oldestYear, let oldestMonth = viewModel.oldestMonth else { return }
+        currentYear = oldestYear
+        currentMonth = oldestMonth
+    }
+
     private func goToPreviousMonth() {
         if currentMonth == 1 {
             currentMonth = 12
@@ -55,6 +66,13 @@ struct MonthDetailView: View {
         } else {
             currentMonth += 1
         }
+    }
+
+    private func goToLatestMonth() {
+        let now = Date()
+        let calendar = Calendar.current
+        currentYear = calendar.component(.year, from: now)
+        currentMonth = calendar.component(.month, from: now)
     }
 
     /// 現在の月の日曜日の日付（Date）を返す
@@ -92,31 +110,16 @@ struct MonthDetailView: View {
     }
 
     private var monthNavigationButtons: some View {
-        HStack(spacing: 0) {
-            Button {
-                goToPreviousMonth()
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                    .frame(width: 50, height: 50)
-            }
-
-            Divider()
-                .frame(height: 30)
-
-            Button {
-                goToNextMonth()
-            } label: {
-                Image(systemName: "chevron.right")
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                    .frame(width: 50, height: 50)
-            }
-            .disabled(isCurrentMonth)
-            .opacity(isCurrentMonth ? 0.3 : 1)
-        }
-        .liquidGlassCapsule()
+        ExpandableNavigationButtons(
+            canGoToOldest: canGoToOldest,
+            canGoPrevious: canGoToOldest,
+            canGoNext: !isCurrentMonth,
+            canGoToLatest: !isCurrentMonth,
+            onOldest: goToOldestMonth,
+            onPrevious: goToPreviousMonth,
+            onNext: goToNextMonth,
+            onLatest: goToLatestMonth
+        )
     }
 
     var body: some View {
