@@ -169,14 +169,15 @@ final class YearDetailViewModel: ObservableObject {
     }
 
     func onAppear() async {
-        await loadMonthlyStats()
+        await updateYear(to: selectedYear)
     }
 
-    func loadMonthlyStats() async {
+    func updateYear(to year: Int) async {
         // スクリーンショットモードではモックデータを使用
         if ScreenshotMode.isEnabled {
-            monthlyStats = MockDataProvider.monthlyStats.filter { $0.year == selectedYear }
-            previousYearMonthlyStats = MockDataProvider.monthlyStats.filter { $0.year == selectedYear - 1 }
+            selectedYear = year
+            monthlyStats = MockDataProvider.monthlyStats.filter { $0.year == year }
+            previousYearMonthlyStats = MockDataProvider.monthlyStats.filter { $0.year == year - 1 }
             yearlyRuns = MockDataProvider.yearDetailRecords
             previousYearRuns = MockDataProvider.previousYearDetailRecords
             isLoading = false
@@ -190,19 +191,27 @@ final class YearDetailViewModel: ObservableObject {
         error = nil
 
         do {
+            // 先にデータを取得
             async let runsTask = firestoreService.getUserRuns(userId: userId)
-            async let yearlyRunsTask = firestoreService.getUserYearlyRuns(userId: userId, year: selectedYear)
-            async let prevYearRunsTask = firestoreService.getUserYearlyRuns(userId: userId, year: selectedYear - 1)
+            async let yearlyRunsTask = firestoreService.getUserYearlyRuns(userId: userId, year: year)
+            async let prevYearRunsTask = firestoreService.getUserYearlyRuns(userId: userId, year: year - 1)
             async let oldestRunTask = firestoreService.getOldestRun(userId: userId)
 
             let runs = try await runsTask
-            monthlyStats = aggregateToMonthlyStats(runs: runs, for: selectedYear)
-            previousYearMonthlyStats = aggregateToMonthlyStats(runs: runs, for: selectedYear - 1)
-            yearlyRuns = try await yearlyRunsTask
-            previousYearRuns = try await prevYearRunsTask
+            let newMonthlyStats = aggregateToMonthlyStats(runs: runs, for: year)
+            let newPrevYearStats = aggregateToMonthlyStats(runs: runs, for: year - 1)
+            let newYearlyRuns = try await yearlyRunsTask
+            let newPrevYearRuns = try await prevYearRunsTask
+            let oldestRun = try await oldestRunTask
 
-            // 最古の年を設定
-            if let oldestRun = try await oldestRunTask {
+            // 全て取得してから一括更新
+            selectedYear = year
+            monthlyStats = newMonthlyStats
+            previousYearMonthlyStats = newPrevYearStats
+            yearlyRuns = newYearlyRuns
+            previousYearRuns = newPrevYearRuns
+
+            if let oldestRun = oldestRun {
                 oldestYear = Calendar.current.component(.year, from: oldestRun.date)
             }
         } catch {
@@ -213,7 +222,7 @@ final class YearDetailViewModel: ObservableObject {
     }
 
     func refresh() async {
-        await loadMonthlyStats()
+        await updateYear(to: selectedYear)
     }
 
     private func aggregateToMonthlyStats(
