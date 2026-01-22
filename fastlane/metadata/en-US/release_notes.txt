@@ -1,4 +1,8 @@
 Thank you for using RunRun!
 
-[Improvements]
-- Minor improvements and stability enhancements
+【New Features】
+・Added charts to share images (Month: cumulative distance, Year: monthly distance)
+・Navigate to oldest/latest from navigation buttons
+
+【Improvements】
+・Design improvements and stability enhancements
