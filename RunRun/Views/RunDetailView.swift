@@ -142,9 +142,7 @@ struct RunDetailView: View {
             .disabled(!canGoToNext)
             .opacity(canGoToNext ? 1 : 0.3)
         }
-        .background(.regularMaterial)
-        .clipShape(Capsule())
-        .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
+        .liquidGlassCapsule()
     }
 
     var body: some View {
