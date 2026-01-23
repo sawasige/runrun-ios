@@ -1,13 +1,17 @@
-RunRun is not a recording app.
+RunRun helps you keep track of your running journey.
 
-Just run with your favorite app—Apple Watch, Strava, Nike Run Club, Garmin, and more. Your runs sync automatically via Apple Health, and RunRun visualizes them beautifully.
+It automatically syncs your runs from Apple Watch, Strava, Nike Run Club, and other apps via Apple Health. Review your progress on a simple, clean interface and share it easily.
+
+Completely free with no annoying ads.
 
 【Features】
 • View monthly and yearly distance with graphs
+• Share to Instagram and other social media easily
 • See your running days at a glance on the calendar
 • Visualize routes with pace-based gradient colors
 • Track daily progress with home screen widgets
 • Share activities with friends on the timeline
+• Compete with friends on monthly rankings
 
 【Compatible Apps】
 • Apple Watch Workouts
@@ -21,4 +25,4 @@ Just run with your favorite app—Apple Watch, Strava, Nike Run Club, Garmin, an
 • Reviewing your monthly and yearly progress
 • Keeping your favorite recording app
 
-Run with your favorite app. Review with RunRun.
+Let's run!
