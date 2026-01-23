@@ -17,8 +17,8 @@ struct ShareSettingsContainer<OptionsView: View>: View {
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var photoData: Data?
 
-    // アスペクト比（写真未選択時のみ使用）
-    @State private var selectedAspectRatio: ImageAspectRatio = .square
+    // アスペクト比（写真未選択時のみ使用、保存される）
+    @AppStorage("share.aspectRatio") private var selectedAspectRatio: ImageAspectRatio = .square
     @State private var displayedAspectRatio: ImageAspectRatio = .square  // 表示用（画像生成完了後に更新）
 
     // プレビュー・保存・シェア
