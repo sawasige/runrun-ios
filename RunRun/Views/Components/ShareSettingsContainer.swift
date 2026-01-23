@@ -8,7 +8,7 @@ struct ShareSettingsContainer<OptionsView: View>: View {
     @Binding var isPresented: Bool
     let analyticsScreenName: String
     let optionsChangeId: AnyHashable
-    let composeImage: (Data) async -> Data?
+    let composeImage: (Data, Bool) async -> Data?  // (imageData, centered)
     let logSaveEvent: () -> Void
     let logShareEvent: () -> Void
     @ViewBuilder let optionsSection: () -> OptionsView
@@ -236,17 +236,20 @@ struct ShareSettingsContainer<OptionsView: View>: View {
     func updatePreview() async {
         let data: Data
         let newAspectRatio = selectedAspectRatio
+        let centered: Bool
         if let photoData = photoData {
             data = photoData
+            centered = false
         } else {
-            // 写真未選択時はグラデーション背景を使用
+            // 写真未選択時はグラデーション背景を使用（中央レイアウト）
             guard let gradientData = ImageComposer.createGradientImageData(aspectRatio: newAspectRatio) else {
                 previewImageData = nil
                 return
             }
             data = gradientData
+            centered = true
         }
-        let newPreview = await composeImage(data)
+        let newPreview = await composeImage(data, centered)
         // 画像とアスペクト比を同時に更新（1回の再描画で完了）
         previewImageData = newPreview
         displayedAspectRatio = newAspectRatio
