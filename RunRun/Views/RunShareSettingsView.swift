@@ -49,8 +49,8 @@ struct RunShareSettingsView: View {
             isPresented: $isPresented,
             analyticsScreenName: "ShareSettings",
             optionsChangeId: AnyHashable(options),
-            composeImage: { data in
-                await ImageComposer.composeAsHEIF(imageData: data, record: record, options: options, routeCoordinates: routeCoordinates)
+            composeImage: { data, centered in
+                await ImageComposer.composeAsHEIF(imageData: data, record: record, options: options, routeCoordinates: routeCoordinates, centered: centered)
             },
             logSaveEvent: {
                 AnalyticsService.logEvent("share_image_saved", parameters: [

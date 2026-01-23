@@ -99,7 +99,8 @@ enum ImageComposer {
     /// - SDRとHDRの両方に同じテキストを描画
     /// - 両者の対応関係を維持してGain Mapを再計算
     /// - PHPhotoLibraryに直接渡すためにDataを返す
-    static func composeAsHEIF(imageData: Data, record: RunningRecord, options: ExportOptions, routeCoordinates: [CLLocationCoordinate2D] = []) async -> Data? {
+    /// - centered: グラデーション背景用の中央レイアウトを使用する場合はtrue
+    static func composeAsHEIF(imageData: Data, record: RunningRecord, options: ExportOptions, routeCoordinates: [CLLocationCoordinate2D] = [], centered: Bool = false) async -> Data? {
         // 1. SDR画像を読み込み（向き自動適用）
         guard let sdrImage = CIImage(data: imageData, options: [
             .applyOrientationProperty: true
@@ -116,7 +117,7 @@ enum ImageComposer {
         }
 
         // 3. テキストオーバーレイ画像を作成（一度だけ）
-        let textOverlay = createTextOverlay(size: sdrImage.extent.size, record: record, options: options, routeCoordinates: routeCoordinates, routeAreaBrightness: routeAreaBrightness)
+        let textOverlay = createTextOverlay(size: sdrImage.extent.size, record: record, options: options, routeCoordinates: routeCoordinates, routeAreaBrightness: routeAreaBrightness, centered: centered)
 
         // 3. SDRにテキストを合成
         let sdrWithText: CIImage
@@ -146,7 +147,7 @@ enum ImageComposer {
     }
 
     /// テキストオーバーレイ画像を作成
-    private static func createTextOverlay(size: CGSize, record: RunningRecord, options: ExportOptions, routeCoordinates: [CLLocationCoordinate2D] = [], routeAreaBrightness: CGFloat? = nil) -> CIImage? {
+    private static func createTextOverlay(size: CGSize, record: RunningRecord, options: ExportOptions, routeCoordinates: [CLLocationCoordinate2D] = [], routeAreaBrightness: CGFloat? = nil, centered: Bool = false) -> CIImage? {
         let format = UIGraphicsImageRendererFormat()
         format.preferredRange = .extended
         format.scale = 1.0
@@ -154,7 +155,11 @@ enum ImageComposer {
 
         let renderer = UIGraphicsImageRenderer(size: size, format: format)
         let textUIImage = renderer.image { _ in
-            drawTextOverlay(width: size.width, height: size.height, record: record, options: options, routeCoordinates: routeCoordinates, routeAreaBrightness: routeAreaBrightness)
+            if centered {
+                drawCenteredTextOverlay(width: size.width, height: size.height, record: record, options: options, routeCoordinates: routeCoordinates)
+            } else {
+                drawTextOverlay(width: size.width, height: size.height, record: record, options: options, routeCoordinates: routeCoordinates, routeAreaBrightness: routeAreaBrightness)
+            }
         }
 
         // premultiplied alphaを正しく処理するためCGImageから作成
@@ -405,6 +410,223 @@ enum ImageComposer {
         }
     }
 
+    /// テキストオーバーレイを描画（中央レイアウト - グラデーション背景用）
+    private static func drawCenteredTextOverlay(width: CGFloat, height: CGFloat, record: RunningRecord, options: ExportOptions, routeCoordinates: [CLLocationCoordinate2D] = []) {
+        let useMetric = UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
+        let centerX = width / 2
+        let padding = min(width, height) * 0.05  // 上下の余白
+
+        // 利用可能な高さ
+        let availableHeight = height - padding * 2
+
+        // 基本サイズ（後でスケール調整）
+        let initialBaseSize = min(width, height) / 8.0
+
+        // ルート表示フラグ
+        let showRoute = options.showRoute && routeCoordinates.count >= 2
+
+        // コンテンツの相対的なサイズ比率を定義
+        struct ContentRatios {
+            let routeHeight: CGFloat      // 3.0
+            let routeSpacing: CGFloat     // 0.5
+            let heroFontSize: CGFloat     // 1.8
+            let unitFontSize: CGFloat     // 0.5
+            let unitSpacing: CGFloat      // 0.1
+            let subFontSize: CGFloat      // 0.45
+            let subSpacing: CGFloat       // 0.5
+            let metaFontSize: CGFloat     // 0.35
+            let metaSpacing: CGFloat      // 0.3
+            let logoHeight: CGFloat       // 0.8
+            let logoSpacing: CGFloat      // 0.6
+        }
+        let ratios = ContentRatios(
+            routeHeight: 3.0, routeSpacing: 0.5,
+            heroFontSize: 1.8, unitFontSize: 0.5, unitSpacing: 0.1,
+            subFontSize: 0.45, subSpacing: 0.5,
+            metaFontSize: 0.35, metaSpacing: 0.3,
+            logoHeight: 0.8, logoSpacing: 0.6
+        )
+
+        // 描画するテキスト要素を収集（相対比率で）
+        var textElements: [(text: String, fontRatio: CGFloat, spacingRatio: CGFloat)] = []
+
+        // 距離（ヒーロー表示）
+        if options.showDistance {
+            let distanceValue = UnitFormatter.formatDistanceValue(record.distanceInKilometers, useMetric: useMetric, decimals: 2)
+            textElements.append((distanceValue, ratios.heroFontSize, 0))
+            textElements.append((UnitFormatter.distanceUnit(useMetric: useMetric), ratios.unitFontSize, ratios.unitSpacing))
+        }
+
+        // 時間・ペース
+        var subItems: [String] = []
+        if options.showDuration { subItems.append(record.formattedDuration) }
+        if options.showPace { subItems.append(record.formattedPace(useMetric: useMetric)) }
+        if !subItems.isEmpty {
+            textElements.append((subItems.joined(separator: "  "), ratios.subFontSize, ratios.subSpacing))
+        }
+
+        // 日付と時間
+        var dateTimeItems: [String] = []
+        if options.showDate {
+            let formatter = DateFormatter()
+            formatter.locale = Locale.current
+            formatter.dateStyle = .long
+            formatter.timeStyle = .none
+            dateTimeItems.append(formatter.string(from: record.date))
+        }
+        if options.showStartTime {
+            let formatter = DateFormatter()
+            formatter.locale = Locale.current
+            formatter.dateStyle = .none
+            formatter.timeStyle = .short
+            dateTimeItems.append(formatter.string(from: record.date))
+        }
+        if !dateTimeItems.isEmpty {
+            textElements.append((dateTimeItems.joined(separator: " · "), ratios.metaFontSize, ratios.metaSpacing))
+        }
+
+        // 追加情報（カロリー、心拍、歩数）
+        var metaItems: [String] = []
+        if options.showCalories, let cal = record.formattedCalories { metaItems.append(cal) }
+        if options.showHeartRate, let hr = record.formattedAverageHeartRate { metaItems.append(hr) }
+        if options.showSteps, let steps = record.formattedStepCount { metaItems.append(steps) }
+        if !metaItems.isEmpty {
+            textElements.append((metaItems.joined(separator: "  "), ratios.metaFontSize, ratios.metaSpacing * 0.7))
+        }
+
+        // 全体の高さを計算（initialBaseSizeベース）
+        func calculateTotalHeight(baseSize: CGFloat) -> CGFloat {
+            var total: CGFloat = 0
+
+            // ルート
+            if showRoute {
+                total += baseSize * ratios.routeHeight + baseSize * ratios.routeSpacing
+            }
+
+            // テキスト要素
+            for (i, element) in textElements.enumerated() {
+                let font = UIFont.rounded(ofSize: baseSize * element.fontRatio, weight: .bold)
+                let textSize = (element.text as NSString).size(withAttributes: [.font: font])
+                total += textSize.height
+                if i > 0 {
+                    total += baseSize * element.spacingRatio
+                }
+            }
+
+            // ロゴ
+            total += baseSize * ratios.logoSpacing + baseSize * ratios.logoHeight
+
+            return total
+        }
+
+        // スケール係数を計算
+        let initialTotal = calculateTotalHeight(baseSize: initialBaseSize)
+        let scale = min(1.0, availableHeight / initialTotal)
+        let baseSize = initialBaseSize * scale
+
+        // 最終的な高さ
+        let totalHeight = calculateTotalHeight(baseSize: baseSize)
+
+        // 開始Y座標（中央揃え）
+        var yOffset = (height - totalHeight) / 2
+
+        // ルートを描画
+        if showRoute {
+            let routeH = baseSize * ratios.routeHeight
+            let routeW = routeH * 1.5
+            let routeRect = CGRect(x: centerX - routeW / 2, y: yOffset, width: routeW, height: routeH)
+            drawRoute(coordinates: routeCoordinates, in: routeRect, backgroundBrightness: 0.3)
+            yOffset += routeH + baseSize * ratios.routeSpacing
+        }
+
+        // テキスト要素を描画
+        for (i, element) in textElements.enumerated() {
+            if i > 0 {
+                yOffset += baseSize * element.spacingRatio
+            }
+            let font = UIFont.rounded(ofSize: baseSize * element.fontRatio, weight: i == 0 ? .bold : (i == 1 ? .medium : .semibold))
+            drawCenteredOutlinedText(element.text, centerX: centerX, y: yOffset, font: font)
+            let textSize = (element.text as NSString).size(withAttributes: [.font: font])
+            yOffset += textSize.height
+        }
+
+        // ロゴを描画
+        let logoH = baseSize * ratios.logoHeight
+        yOffset += baseSize * ratios.logoSpacing
+        if let logo = UIImage(named: "Logo") {
+            let logoAspect = logo.size.width / logo.size.height
+            let logoWidth = logoH * logoAspect
+            let logoRect = CGRect(x: centerX - logoWidth / 2, y: yOffset, width: logoWidth, height: logoH)
+
+            // 少し小さめの角丸にクリップ
+            let inset = logoH * 0.06
+            let clipRect = logoRect.insetBy(dx: inset, dy: inset)
+            let cornerRadius = clipRect.height * 0.22
+            if let ctx = UIGraphicsGetCurrentContext() {
+                ctx.saveGState()
+                UIBezierPath(roundedRect: clipRect, cornerRadius: cornerRadius).addClip()
+            }
+
+            // ロゴをコントラスト強調して描画
+            if let ciLogo = CIImage(image: logo),
+               let filter = CIFilter(name: "CIColorControls") {
+                filter.setValue(ciLogo, forKey: kCIInputImageKey)
+                filter.setValue(1.5, forKey: kCIInputContrastKey)
+                filter.setValue(0.1, forKey: kCIInputBrightnessKey)
+                filter.setValue(1.4, forKey: kCIInputSaturationKey)
+                if let output = filter.outputImage {
+                    let context = CIContext(options: [.workingColorSpace: CGColorSpace(name: CGColorSpace.extendedSRGB)!])
+                    if let cgImage = context.createCGImage(output, from: output.extent) {
+                        UIImage(cgImage: cgImage).draw(in: logoRect)
+                    } else {
+                        logo.draw(in: logoRect)
+                    }
+                } else {
+                    logo.draw(in: logoRect)
+                }
+            } else {
+                logo.draw(in: logoRect)
+            }
+
+            UIGraphicsGetCurrentContext()?.restoreGState()
+        }
+    }
+
+    /// 中央揃えでアウトライン付きテキストを描画
+    private static func drawCenteredOutlinedText(_ text: String, centerX: CGFloat, y: CGFloat, font: UIFont) {
+        let strokeAttributes: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: UIColor.black
+        ]
+        let colorSpace = CGColorSpace(name: CGColorSpace.extendedLinearDisplayP3)!
+        let hdrWhite = CGColor(colorSpace: colorSpace, components: [2.0, 2.0, 2.0, 1.0])!
+        let fillAttributes: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: UIColor(cgColor: hdrWhite)
+        ]
+
+        let textSize = (text as NSString).size(withAttributes: fillAttributes)
+        let drawPoint = CGPoint(x: centerX - textSize.width / 2, y: y)
+
+        let outlineWidth: CGFloat = max(2, font.pointSize * 0.05)
+        let offsets: [CGPoint] = [
+            CGPoint(x: -outlineWidth, y: -outlineWidth),
+            CGPoint(x: outlineWidth, y: -outlineWidth),
+            CGPoint(x: -outlineWidth, y: outlineWidth),
+            CGPoint(x: outlineWidth, y: outlineWidth),
+            CGPoint(x: -outlineWidth, y: 0),
+            CGPoint(x: outlineWidth, y: 0),
+            CGPoint(x: 0, y: -outlineWidth),
+            CGPoint(x: 0, y: outlineWidth)
+        ]
+
+        for offset in offsets {
+            let offsetPoint = CGPoint(x: drawPoint.x + offset.x, y: drawPoint.y + offset.y)
+            (text as NSString).draw(at: offsetPoint, withAttributes: strokeAttributes)
+        }
+        (text as NSString).draw(at: drawPoint, withAttributes: fillAttributes)
+    }
+
     /// ルートを描画（背景の明るさに応じてアウトライン色を調整）
     private static func drawRoute(coordinates: [CLLocationCoordinate2D], in rect: CGRect, backgroundBrightness: CGFloat) {
         guard coordinates.count >= 2 else { return }
@@ -641,14 +863,14 @@ enum ImageComposer {
     // MARK: - Monthly Stats Composition
 
     /// 月間統計画像を合成
-    static func composeMonthlyStats(imageData: Data, shareData: MonthlyShareData, options: MonthExportOptions) async -> Data? {
+    static func composeMonthlyStats(imageData: Data, shareData: MonthlyShareData, options: MonthExportOptions, centered: Bool = false) async -> Data? {
         guard let sdrImage = CIImage(data: imageData, options: [
             .applyOrientationProperty: true
         ]) else {
             return nil
         }
 
-        let textOverlay = createMonthlyTextOverlay(size: sdrImage.extent.size, shareData: shareData, options: options)
+        let textOverlay = createMonthlyTextOverlay(size: sdrImage.extent.size, shareData: shareData, options: options, centered: centered)
 
         let sdrWithText: CIImage
         if let overlay = textOverlay {
@@ -674,7 +896,7 @@ enum ImageComposer {
         return saveAsHEIFData(sdrImage: sdrWithText, hdrImage: hdrWithText)
     }
 
-    private static func createMonthlyTextOverlay(size: CGSize, shareData: MonthlyShareData, options: MonthExportOptions) -> CIImage? {
+    private static func createMonthlyTextOverlay(size: CGSize, shareData: MonthlyShareData, options: MonthExportOptions, centered: Bool = false) -> CIImage? {
         let format = UIGraphicsImageRendererFormat()
         format.preferredRange = .extended
         format.scale = 1.0
@@ -682,7 +904,11 @@ enum ImageComposer {
 
         let renderer = UIGraphicsImageRenderer(size: size, format: format)
         let textUIImage = renderer.image { _ in
-            drawMonthlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+            if centered {
+                drawCenteredMonthlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+            } else {
+                drawMonthlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+            }
         }
 
         return CIImage(image: textUIImage)
@@ -811,17 +1037,146 @@ enum ImageComposer {
         }
     }
 
+    /// 月間統計テキストオーバーレイを描画（中央レイアウト）
+    private static func drawCenteredMonthlyTextOverlay(width: CGFloat, height: CGFloat, shareData: MonthlyShareData, options: MonthExportOptions) {
+        let useMetric = UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
+        let centerX = width / 2
+        let padding = min(width, height) * 0.05
+
+        let availableHeight = height - padding * 2
+        let initialBaseSize = min(width, height) / 8.0
+
+        // グラフ表示フラグ
+        let showChart = options.showProgressChart && !shareData.cumulativeData.isEmpty
+
+        // コンテンツ比率
+        struct Ratios {
+            let chartHeight: CGFloat = 2.5
+            let chartSpacing: CGFloat = 0.5
+            let heroFontSize: CGFloat = 1.8
+            let unitFontSize: CGFloat = 0.5
+            let unitSpacing: CGFloat = 0.1
+            let subFontSize: CGFloat = 0.45
+            let subSpacing: CGFloat = 0.5
+            let metaFontSize: CGFloat = 0.35
+            let metaSpacing: CGFloat = 0.3
+            let logoHeight: CGFloat = 0.8
+            let logoSpacing: CGFloat = 0.6
+        }
+        let ratios = Ratios()
+
+        // テキスト要素を収集
+        var textElements: [(text: String, fontRatio: CGFloat, spacingRatio: CGFloat, weight: UIFont.Weight)] = []
+
+        // 期間
+        if options.showPeriod {
+            textElements.append((shareData.period, ratios.subFontSize, 0, .semibold))
+        }
+
+        // 距離
+        if options.showDistance {
+            let distanceValue = shareData.totalDistance
+                .replacingOccurrences(of: UnitFormatter.distanceUnit(useMetric: useMetric), with: "")
+                .trimmingCharacters(in: .whitespaces)
+            textElements.append((distanceValue, ratios.heroFontSize, ratios.subSpacing, .bold))
+            textElements.append((UnitFormatter.distanceUnit(useMetric: useMetric), ratios.unitFontSize, ratios.unitSpacing, .medium))
+        }
+
+        // 時間・回数
+        var subItems: [String] = []
+        if options.showDuration { subItems.append(shareData.totalDuration) }
+        if options.showRunCount { subItems.append(String(format: String(localized: "%d runs"), shareData.runCount)) }
+        if !subItems.isEmpty {
+            textElements.append((subItems.joined(separator: "  "), ratios.subFontSize, ratios.subSpacing, .semibold))
+        }
+
+        // カロリー
+        if options.showCalories, let cal = shareData.totalCalories {
+            textElements.append((cal, ratios.metaFontSize, ratios.metaSpacing, .regular))
+        }
+
+        // 平均値
+        var avgItems: [String] = []
+        if options.showPace { avgItems.append(shareData.averagePace) }
+        if options.showAvgDistance { avgItems.append(shareData.averageDistance) }
+        if options.showAvgDuration { avgItems.append(shareData.averageDuration) }
+        if !avgItems.isEmpty {
+            textElements.append((avgItems.joined(separator: "  "), ratios.metaFontSize, ratios.metaSpacing, .regular))
+        }
+
+        // 高さ計算
+        func calcHeight(baseSize: CGFloat) -> CGFloat {
+            var total: CGFloat = 0
+            if showChart { total += baseSize * ratios.chartHeight + baseSize * ratios.chartSpacing }
+            for (i, el) in textElements.enumerated() {
+                let font = UIFont.rounded(ofSize: baseSize * el.fontRatio, weight: el.weight)
+                let size = (el.text as NSString).size(withAttributes: [.font: font])
+                total += size.height
+                if i > 0 { total += baseSize * el.spacingRatio }
+            }
+            total += baseSize * ratios.logoSpacing + baseSize * ratios.logoHeight
+            return total
+        }
+
+        let scale = min(1.0, availableHeight / calcHeight(baseSize: initialBaseSize))
+        let baseSize = initialBaseSize * scale
+        let totalHeight = calcHeight(baseSize: baseSize)
+
+        var yOffset = (height - totalHeight) / 2
+
+        // グラフ描画
+        if showChart {
+            let chartH = baseSize * ratios.chartHeight
+            let chartW = chartH * 1.5
+            let chartRect = CGRect(x: centerX - chartW / 2, y: yOffset, width: chartW, height: chartH)
+            drawCumulativeChart(data: shareData.cumulativeData, in: chartRect)
+            yOffset += chartH + baseSize * ratios.chartSpacing
+        }
+
+        // テキスト描画
+        for (i, el) in textElements.enumerated() {
+            if i > 0 { yOffset += baseSize * el.spacingRatio }
+            let font = UIFont.rounded(ofSize: baseSize * el.fontRatio, weight: el.weight)
+            drawCenteredOutlinedText(el.text, centerX: centerX, y: yOffset, font: font)
+            let size = (el.text as NSString).size(withAttributes: [.font: font])
+            yOffset += size.height
+        }
+
+        // ロゴ描画
+        let logoH = baseSize * ratios.logoHeight
+        yOffset += baseSize * ratios.logoSpacing
+        if let logo = UIImage(named: "Logo") {
+            let logoW = logoH * (logo.size.width / logo.size.height)
+            let logoRect = CGRect(x: centerX - logoW / 2, y: yOffset, width: logoW, height: logoH)
+            let inset = logoH * 0.06
+            let clipRect = logoRect.insetBy(dx: inset, dy: inset)
+            UIGraphicsGetCurrentContext()?.saveGState()
+            UIBezierPath(roundedRect: clipRect, cornerRadius: clipRect.height * 0.22).addClip()
+            if let ciLogo = CIImage(image: logo), let filter = CIFilter(name: "CIColorControls") {
+                filter.setValue(ciLogo, forKey: kCIInputImageKey)
+                filter.setValue(1.5, forKey: kCIInputContrastKey)
+                filter.setValue(0.1, forKey: kCIInputBrightnessKey)
+                filter.setValue(1.4, forKey: kCIInputSaturationKey)
+                if let output = filter.outputImage,
+                   let cgImage = CIContext(options: [.workingColorSpace: CGColorSpace(name: CGColorSpace.extendedSRGB)!]).createCGImage(output, from: output.extent) {
+                    UIImage(cgImage: cgImage).draw(in: logoRect)
+                } else { logo.draw(in: logoRect) }
+            } else { logo.draw(in: logoRect) }
+            UIGraphicsGetCurrentContext()?.restoreGState()
+        }
+    }
+
     // MARK: - Yearly Stats Composition
 
     /// 年間統計画像を合成
-    static func composeYearlyStats(imageData: Data, shareData: YearlyShareData, options: YearExportOptions) async -> Data? {
+    static func composeYearlyStats(imageData: Data, shareData: YearlyShareData, options: YearExportOptions, centered: Bool = false) async -> Data? {
         guard let sdrImage = CIImage(data: imageData, options: [
             .applyOrientationProperty: true
         ]) else {
             return nil
         }
 
-        let textOverlay = createYearlyTextOverlay(size: sdrImage.extent.size, shareData: shareData, options: options)
+        let textOverlay = createYearlyTextOverlay(size: sdrImage.extent.size, shareData: shareData, options: options, centered: centered)
 
         let sdrWithText: CIImage
         if let overlay = textOverlay {
@@ -847,7 +1202,7 @@ enum ImageComposer {
         return saveAsHEIFData(sdrImage: sdrWithText, hdrImage: hdrWithText)
     }
 
-    private static func createYearlyTextOverlay(size: CGSize, shareData: YearlyShareData, options: YearExportOptions) -> CIImage? {
+    private static func createYearlyTextOverlay(size: CGSize, shareData: YearlyShareData, options: YearExportOptions, centered: Bool = false) -> CIImage? {
         let format = UIGraphicsImageRendererFormat()
         format.preferredRange = .extended
         format.scale = 1.0
@@ -855,7 +1210,11 @@ enum ImageComposer {
 
         let renderer = UIGraphicsImageRenderer(size: size, format: format)
         let textUIImage = renderer.image { _ in
-            drawYearlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+            if centered {
+                drawCenteredYearlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+            } else {
+                drawYearlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+            }
         }
 
         return CIImage(image: textUIImage)
@@ -985,17 +1344,143 @@ enum ImageComposer {
         }
     }
 
+    /// 年間統計テキストオーバーレイを描画（中央レイアウト）
+    private static func drawCenteredYearlyTextOverlay(width: CGFloat, height: CGFloat, shareData: YearlyShareData, options: YearExportOptions) {
+        let useMetric = UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
+        let centerX = width / 2
+        let padding = min(width, height) * 0.05
+
+        let availableHeight = height - padding * 2
+        let initialBaseSize = min(width, height) / 8.0
+
+        let showChart = options.showMonthlyChart && !shareData.monthlyDistanceData.isEmpty
+
+        struct Ratios {
+            let chartHeight: CGFloat = 2.5
+            let chartSpacing: CGFloat = 0.5
+            let heroFontSize: CGFloat = 1.8
+            let unitFontSize: CGFloat = 0.5
+            let unitSpacing: CGFloat = 0.1
+            let subFontSize: CGFloat = 0.45
+            let subSpacing: CGFloat = 0.5
+            let metaFontSize: CGFloat = 0.35
+            let metaSpacing: CGFloat = 0.3
+            let logoHeight: CGFloat = 0.8
+            let logoSpacing: CGFloat = 0.6
+        }
+        let ratios = Ratios()
+
+        var textElements: [(text: String, fontRatio: CGFloat, spacingRatio: CGFloat, weight: UIFont.Weight)] = []
+
+        // 年
+        if options.showYear {
+            let yearText = String(format: String(localized: "%@ Records", comment: "Year records label for share"), shareData.year)
+            textElements.append((yearText, ratios.subFontSize, 0, .semibold))
+        }
+
+        // 距離
+        if options.showDistance {
+            let distanceValue = shareData.totalDistance
+                .replacingOccurrences(of: UnitFormatter.distanceUnit(useMetric: useMetric), with: "")
+                .trimmingCharacters(in: .whitespaces)
+            textElements.append((distanceValue, ratios.heroFontSize, ratios.subSpacing, .bold))
+            textElements.append((UnitFormatter.distanceUnit(useMetric: useMetric), ratios.unitFontSize, ratios.unitSpacing, .medium))
+        }
+
+        // 時間・回数
+        var subItems: [String] = []
+        if options.showDuration { subItems.append(shareData.totalDuration) }
+        if options.showRunCount { subItems.append(String(format: String(localized: "%d runs"), shareData.runCount)) }
+        if !subItems.isEmpty {
+            textElements.append((subItems.joined(separator: "  "), ratios.subFontSize, ratios.subSpacing, .semibold))
+        }
+
+        // カロリー
+        if options.showCalories, let cal = shareData.totalCalories {
+            textElements.append((cal, ratios.metaFontSize, ratios.metaSpacing, .regular))
+        }
+
+        // 平均値
+        var avgItems: [String] = []
+        if options.showPace { avgItems.append(shareData.averagePace) }
+        if options.showAvgDistance { avgItems.append(shareData.averageDistance) }
+        if options.showAvgDuration { avgItems.append(shareData.averageDuration) }
+        if !avgItems.isEmpty {
+            textElements.append((avgItems.joined(separator: "  "), ratios.metaFontSize, ratios.metaSpacing, .regular))
+        }
+
+        func calcHeight(baseSize: CGFloat) -> CGFloat {
+            var total: CGFloat = 0
+            if showChart { total += baseSize * ratios.chartHeight + baseSize * ratios.chartSpacing }
+            for (i, el) in textElements.enumerated() {
+                let font = UIFont.rounded(ofSize: baseSize * el.fontRatio, weight: el.weight)
+                let size = (el.text as NSString).size(withAttributes: [.font: font])
+                total += size.height
+                if i > 0 { total += baseSize * el.spacingRatio }
+            }
+            total += baseSize * ratios.logoSpacing + baseSize * ratios.logoHeight
+            return total
+        }
+
+        let scale = min(1.0, availableHeight / calcHeight(baseSize: initialBaseSize))
+        let baseSize = initialBaseSize * scale
+        let totalHeight = calcHeight(baseSize: baseSize)
+
+        var yOffset = (height - totalHeight) / 2
+
+        // グラフ描画
+        if showChart {
+            let chartH = baseSize * ratios.chartHeight
+            let chartW = chartH * 1.5
+            let chartRect = CGRect(x: centerX - chartW / 2, y: yOffset, width: chartW, height: chartH)
+            drawMonthlyBarChart(data: shareData.monthlyDistanceData, in: chartRect)
+            yOffset += chartH + baseSize * ratios.chartSpacing
+        }
+
+        // テキスト描画
+        for (i, el) in textElements.enumerated() {
+            if i > 0 { yOffset += baseSize * el.spacingRatio }
+            let font = UIFont.rounded(ofSize: baseSize * el.fontRatio, weight: el.weight)
+            drawCenteredOutlinedText(el.text, centerX: centerX, y: yOffset, font: font)
+            let size = (el.text as NSString).size(withAttributes: [.font: font])
+            yOffset += size.height
+        }
+
+        // ロゴ描画
+        let logoH = baseSize * ratios.logoHeight
+        yOffset += baseSize * ratios.logoSpacing
+        if let logo = UIImage(named: "Logo") {
+            let logoW = logoH * (logo.size.width / logo.size.height)
+            let logoRect = CGRect(x: centerX - logoW / 2, y: yOffset, width: logoW, height: logoH)
+            let inset = logoH * 0.06
+            let clipRect = logoRect.insetBy(dx: inset, dy: inset)
+            UIGraphicsGetCurrentContext()?.saveGState()
+            UIBezierPath(roundedRect: clipRect, cornerRadius: clipRect.height * 0.22).addClip()
+            if let ciLogo = CIImage(image: logo), let filter = CIFilter(name: "CIColorControls") {
+                filter.setValue(ciLogo, forKey: kCIInputImageKey)
+                filter.setValue(1.5, forKey: kCIInputContrastKey)
+                filter.setValue(0.1, forKey: kCIInputBrightnessKey)
+                filter.setValue(1.4, forKey: kCIInputSaturationKey)
+                if let output = filter.outputImage,
+                   let cgImage = CIContext(options: [.workingColorSpace: CGColorSpace(name: CGColorSpace.extendedSRGB)!]).createCGImage(output, from: output.extent) {
+                    UIImage(cgImage: cgImage).draw(in: logoRect)
+                } else { logo.draw(in: logoRect) }
+            } else { logo.draw(in: logoRect) }
+            UIGraphicsGetCurrentContext()?.restoreGState()
+        }
+    }
+
     // MARK: - Profile Stats Composition
 
     /// プロフィール統計画像を合成
-    static func composeProfileStats(imageData: Data, shareData: ProfileShareData, options: ProfileExportOptions) async -> Data? {
+    static func composeProfileStats(imageData: Data, shareData: ProfileShareData, options: ProfileExportOptions, centered: Bool = false) async -> Data? {
         guard let sdrImage = CIImage(data: imageData, options: [
             .applyOrientationProperty: true
         ]) else {
             return nil
         }
 
-        let textOverlay = createProfileTextOverlay(size: sdrImage.extent.size, shareData: shareData, options: options)
+        let textOverlay = createProfileTextOverlay(size: sdrImage.extent.size, shareData: shareData, options: options, centered: centered)
 
         let sdrWithText: CIImage
         if let overlay = textOverlay {
@@ -1021,7 +1506,7 @@ enum ImageComposer {
         return saveAsHEIFData(sdrImage: sdrWithText, hdrImage: hdrWithText)
     }
 
-    private static func createProfileTextOverlay(size: CGSize, shareData: ProfileShareData, options: ProfileExportOptions) -> CIImage? {
+    private static func createProfileTextOverlay(size: CGSize, shareData: ProfileShareData, options: ProfileExportOptions, centered: Bool = false) -> CIImage? {
         let format = UIGraphicsImageRendererFormat()
         format.preferredRange = .extended
         format.scale = 1.0
@@ -1029,7 +1514,11 @@ enum ImageComposer {
 
         let renderer = UIGraphicsImageRenderer(size: size, format: format)
         let textUIImage = renderer.image { _ in
-            drawProfileTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+            if centered {
+                drawCenteredProfileTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+            } else {
+                drawProfileTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+            }
         }
 
         return CIImage(image: textUIImage)
@@ -1140,6 +1629,112 @@ enum ImageComposer {
                 .trimmingCharacters(in: .whitespaces)
             yOffset -= baseFontSize * 1.6
             drawOutlinedText(distanceValue, at: CGPoint(x: x, y: yOffset), font: heroFont)
+        }
+    }
+
+    /// プロフィール統計テキストオーバーレイを描画（中央レイアウト）
+    private static func drawCenteredProfileTextOverlay(width: CGFloat, height: CGFloat, shareData: ProfileShareData, options: ProfileExportOptions) {
+        let useMetric = UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
+        let centerX = width / 2
+        let padding = min(width, height) * 0.05
+
+        let availableHeight = height - padding * 2
+        let initialBaseSize = min(width, height) / 8.0
+
+        struct Ratios {
+            let heroFontSize: CGFloat = 1.8
+            let unitFontSize: CGFloat = 0.5
+            let unitSpacing: CGFloat = 0.1
+            let subFontSize: CGFloat = 0.45
+            let subSpacing: CGFloat = 0.5
+            let metaFontSize: CGFloat = 0.35
+            let metaSpacing: CGFloat = 0.3
+            let logoHeight: CGFloat = 0.8
+            let logoSpacing: CGFloat = 0.6
+        }
+        let ratios = Ratios()
+
+        var textElements: [(text: String, fontRatio: CGFloat, spacingRatio: CGFloat, weight: UIFont.Weight)] = []
+
+        // 距離
+        if options.showDistance {
+            let distanceValue = shareData.totalDistance
+                .replacingOccurrences(of: UnitFormatter.distanceUnit(useMetric: useMetric), with: "")
+                .trimmingCharacters(in: .whitespaces)
+            textElements.append((distanceValue, ratios.heroFontSize, 0, .bold))
+            textElements.append((UnitFormatter.distanceUnit(useMetric: useMetric), ratios.unitFontSize, ratios.unitSpacing, .medium))
+        }
+
+        // 時間・回数
+        var subItems: [String] = []
+        if options.showDuration { subItems.append(shareData.totalDuration) }
+        if options.showRunCount { subItems.append(String(format: String(localized: "%d runs"), shareData.runCount)) }
+        if !subItems.isEmpty {
+            textElements.append((subItems.joined(separator: "  "), ratios.subFontSize, ratios.subSpacing, .semibold))
+        }
+
+        // カロリー
+        if options.showCalories, let cal = shareData.totalCalories {
+            textElements.append((cal, ratios.metaFontSize, ratios.metaSpacing, .regular))
+        }
+
+        // 平均値
+        var avgItems: [String] = []
+        if options.showPace { avgItems.append(shareData.averagePace) }
+        if options.showAvgDistance { avgItems.append(shareData.averageDistance) }
+        if options.showAvgDuration { avgItems.append(shareData.averageDuration) }
+        if !avgItems.isEmpty {
+            textElements.append((avgItems.joined(separator: "  "), ratios.metaFontSize, ratios.metaSpacing, .regular))
+        }
+
+        func calcHeight(baseSize: CGFloat) -> CGFloat {
+            var total: CGFloat = 0
+            for (i, el) in textElements.enumerated() {
+                let font = UIFont.rounded(ofSize: baseSize * el.fontRatio, weight: el.weight)
+                let size = (el.text as NSString).size(withAttributes: [.font: font])
+                total += size.height
+                if i > 0 { total += baseSize * el.spacingRatio }
+            }
+            total += baseSize * ratios.logoSpacing + baseSize * ratios.logoHeight
+            return total
+        }
+
+        let scale = min(1.0, availableHeight / calcHeight(baseSize: initialBaseSize))
+        let baseSize = initialBaseSize * scale
+        let totalHeight = calcHeight(baseSize: baseSize)
+
+        var yOffset = (height - totalHeight) / 2
+
+        // テキスト描画
+        for (i, el) in textElements.enumerated() {
+            if i > 0 { yOffset += baseSize * el.spacingRatio }
+            let font = UIFont.rounded(ofSize: baseSize * el.fontRatio, weight: el.weight)
+            drawCenteredOutlinedText(el.text, centerX: centerX, y: yOffset, font: font)
+            let size = (el.text as NSString).size(withAttributes: [.font: font])
+            yOffset += size.height
+        }
+
+        // ロゴ描画
+        let logoH = baseSize * ratios.logoHeight
+        yOffset += baseSize * ratios.logoSpacing
+        if let logo = UIImage(named: "Logo") {
+            let logoW = logoH * (logo.size.width / logo.size.height)
+            let logoRect = CGRect(x: centerX - logoW / 2, y: yOffset, width: logoW, height: logoH)
+            let inset = logoH * 0.06
+            let clipRect = logoRect.insetBy(dx: inset, dy: inset)
+            UIGraphicsGetCurrentContext()?.saveGState()
+            UIBezierPath(roundedRect: clipRect, cornerRadius: clipRect.height * 0.22).addClip()
+            if let ciLogo = CIImage(image: logo), let filter = CIFilter(name: "CIColorControls") {
+                filter.setValue(ciLogo, forKey: kCIInputImageKey)
+                filter.setValue(1.5, forKey: kCIInputContrastKey)
+                filter.setValue(0.1, forKey: kCIInputBrightnessKey)
+                filter.setValue(1.4, forKey: kCIInputSaturationKey)
+                if let output = filter.outputImage,
+                   let cgImage = CIContext(options: [.workingColorSpace: CGColorSpace(name: CGColorSpace.extendedSRGB)!]).createCGImage(output, from: output.extent) {
+                    UIImage(cgImage: cgImage).draw(in: logoRect)
+                } else { logo.draw(in: logoRect) }
+            } else { logo.draw(in: logoRect) }
+            UIGraphicsGetCurrentContext()?.restoreGState()
         }
     }
 }

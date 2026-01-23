@@ -61,8 +61,8 @@ struct MonthShareSettingsView: View {
             isPresented: $isPresented,
             analyticsScreenName: "MonthShareSettings",
             optionsChangeId: AnyHashable(options),
-            composeImage: { data in
-                await ImageComposer.composeMonthlyStats(imageData: data, shareData: shareData, options: options)
+            composeImage: { data, centered in
+                await ImageComposer.composeMonthlyStats(imageData: data, shareData: shareData, options: options, centered: centered)
             },
             logSaveEvent: {
                 AnalyticsService.logEvent("month_share_image_saved", parameters: [

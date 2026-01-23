@@ -54,8 +54,8 @@ struct ProfileShareSettingsView: View {
             isPresented: $isPresented,
             analyticsScreenName: "ProfileShareSettings",
             optionsChangeId: AnyHashable(options),
-            composeImage: { data in
-                await ImageComposer.composeProfileStats(imageData: data, shareData: shareData, options: options)
+            composeImage: { data, centered in
+                await ImageComposer.composeProfileStats(imageData: data, shareData: shareData, options: options, centered: centered)
             },
             logSaveEvent: {
                 AnalyticsService.logEvent("profile_share_image_saved", parameters: [
