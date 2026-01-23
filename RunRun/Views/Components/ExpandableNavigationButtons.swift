@@ -13,6 +13,8 @@ struct ExpandableNavigationButtons: View {
 
     @State private var isExpanded = false
     @State private var autoCloseTask: Task<Void, Never>?
+    @State private var longPressTask: Task<Void, Never>?
+    @State private var didTriggerLongPress = false
     @Namespace private var namespace
 
     private let autoCloseDelay: TimeInterval = 3.0
@@ -83,13 +85,34 @@ struct ExpandableNavigationButtons: View {
                     .glassEffectUnion(id: "buttons", namespace: namespace)
                 } else {
                     Button {
-                        expand()
+                        if !didTriggerLongPress {
+                            expand()
+                        }
+                        didTriggerLongPress = false
                     } label: {
                         Image(systemName: "chevron.left.chevron.right")
                             .font(.title3)
-                                                        .frame(width: 28, height: 28)
+                            .frame(width: 28, height: 28)
                     }
                     .buttonStyle(.glass)
+                    .simultaneousGesture(
+                        DragGesture(minimumDistance: 0)
+                            .onChanged { _ in
+                                if longPressTask == nil {
+                                    longPressTask = Task { @MainActor in
+                                        try? await Task.sleep(for: .seconds(0.5))
+                                        if !Task.isCancelled {
+                                            didTriggerLongPress = true
+                                            expandAndStayOpen()
+                                        }
+                                    }
+                                }
+                            }
+                            .onEnded { _ in
+                                longPressTask?.cancel()
+                                longPressTask = nil
+                            }
+                    )
                 }
             }
         }
@@ -156,6 +179,15 @@ struct ExpandableNavigationButtons: View {
             isExpanded = true
         }
         scheduleAutoClose()
+    }
+
+    private func expandAndStayOpen() {
+        let generator = UIImpactFeedbackGenerator(style: .rigid)
+        generator.impactOccurred()
+        autoCloseTask?.cancel()
+        withAnimation(.bouncy) {
+            isExpanded = true
+        }
     }
 
     private func collapse() {
