@@ -3,9 +3,98 @@ import CoreImage
 import UIKit
 import CoreLocation
 
+// MARK: - Image Aspect Ratio
+
+enum ImageAspectRatio: String, CaseIterable {
+    case square = "1:1"      // 1080x1080
+    case portrait = "4:5"    // 1080x1350
+    case story = "9:16"      // 1080x1920
+
+    var size: CGSize {
+        switch self {
+        case .square: return CGSize(width: 1080, height: 1080)
+        case .portrait: return CGSize(width: 1080, height: 1350)
+        case .story: return CGSize(width: 1080, height: 1920)
+        }
+    }
+}
+
 // MARK: - Image Composer (WWDC 2024 Strategy B - HDR対応)
 
 enum ImageComposer {
+    /// グラデーション背景画像をHEIF Dataとして生成
+    /// - Parameter aspectRatio: 出力する画像のアスペクト比
+    /// - Returns: HEIF形式の画像Data
+    static func createGradientImageData(aspectRatio: ImageAspectRatio) -> Data? {
+        let size = aspectRatio.size
+
+        // Display P3 カラースペースでレンダリング
+        guard let colorSpace = CGColorSpace(name: CGColorSpace.displayP3) else {
+            return nil
+        }
+
+        let format = UIGraphicsImageRendererFormat()
+        format.preferredRange = .extended
+        format.scale = 1.0
+        format.opaque = true
+
+        let renderer = UIGraphicsImageRenderer(size: size, format: format)
+        let gradientImage = renderer.image { ctx in
+            let context = ctx.cgContext
+
+            // グラデーション色（Display P3）
+            // 開始色: アクセントカラーの暗い版 (0.55, 0.18, 0.16)
+            // 終了色: アクセントカラー (0.92, 0.30, 0.27)
+            let colors = [
+                CGColor(colorSpace: colorSpace, components: [0.55, 0.18, 0.16, 1.0])!,
+                CGColor(colorSpace: colorSpace, components: [0.92, 0.30, 0.27, 1.0])!
+            ]
+            let locations: [CGFloat] = [0.0, 1.0]
+
+            guard let gradient = CGGradient(
+                colorsSpace: colorSpace,
+                colors: colors as CFArray,
+                locations: locations
+            ) else { return }
+
+            // 上から下へグラデーション
+            context.drawLinearGradient(
+                gradient,
+                start: CGPoint(x: size.width / 2, y: 0),
+                end: CGPoint(x: size.width / 2, y: size.height),
+                options: []
+            )
+        }
+
+        // HEIF形式でエンコード
+        guard let cgImage = gradientImage.cgImage else { return nil }
+
+        let ciImage = CIImage(cgImage: cgImage)
+        let ciContext = CIContext()
+
+        let tempURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension("heic")
+
+        defer {
+            try? FileManager.default.removeItem(at: tempURL)
+        }
+
+        do {
+            try ciContext.writeHEIFRepresentation(
+                of: ciImage,
+                to: tempURL,
+                format: .RGB10,
+                colorSpace: colorSpace,
+                options: [:]
+            )
+            return try Data(contentsOf: tempURL)
+        } catch {
+            print("Failed to create gradient HEIF: \(error)")
+            return nil
+        }
+    }
+
     /// HDR Gainmapを保持したまま画像を合成してHEIF Dataを返す (WWDC 2024 Strategy A)
     /// - SDRとHDRの両方に同じテキストを描画
     /// - 両者の対応関係を維持してGain Mapを再計算

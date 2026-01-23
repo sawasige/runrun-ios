@@ -1500,16 +1500,6 @@
         }
       }
     },
-    "Please select a photo" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "写真を選択してください"
-          }
-        }
-      }
-    },
     "PR_5km" : {
       "comment" : "Personal record distance type",
       "localizations" : {
