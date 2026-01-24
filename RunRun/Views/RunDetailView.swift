@@ -330,9 +330,7 @@ struct RunDetailView: View {
                             Image(systemName: "square.and.arrow.up")
                         }
                     }
-                    NavigationLink {
-                        ProfileView(user: userProfile)
-                    } label: {
+                    NavigationLink(value: ScreenType.profile(userProfile)) {
                         ProfileAvatarView(user: userProfile, size: 28)
                     }
                 }
