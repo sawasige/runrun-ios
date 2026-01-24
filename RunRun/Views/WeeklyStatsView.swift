@@ -32,9 +32,7 @@ struct WeeklyStatsView: View {
         .analyticsScreen("WeeklyStats")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink {
-                    ProfileView(user: userProfile)
-                } label: {
+                NavigationLink(value: ScreenType.profile(userProfile)) {
                     ProfileAvatarView(user: userProfile, size: 28)
                 }
             }
