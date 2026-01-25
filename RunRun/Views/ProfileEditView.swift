@@ -1,6 +1,10 @@
 import SwiftUI
 import PhotosUI
 
+extension Notification.Name {
+    static let userProfileDidUpdate = Notification.Name("userProfileDidUpdate")
+}
+
 struct ProfileEditView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var displayName: String
@@ -173,6 +177,8 @@ struct ProfileEditView: View {
             AnalyticsService.logEvent("update_profile", parameters: [
                 "has_avatar": newAvatarURL != nil
             ])
+            // プロフィール更新を通知
+            NotificationCenter.default.post(name: .userProfileDidUpdate, object: nil)
             dismiss()
         } catch {
             errorMessage = error.localizedDescription

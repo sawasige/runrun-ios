@@ -86,6 +86,11 @@ struct TimelineView: View {
                 await loadMonthlySummary()
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .userProfileDidUpdate)) { _ in
+            Task {
+                await viewModel.refresh()
+            }
+        }
     }
 
     private var expandedHeaderView: some View {
