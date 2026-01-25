@@ -1,8 +1,9 @@
 Thank you for using RunRun!
 
 【New Features】
-・Share images with gradient background (no photo required)
-・Added charts to share images
+・Added breadcrumb navigation to run and month detail views
+　Quickly navigate by tapping year or month
 
 【Improvements】
-・Design improvements and stability enhancements
+・Long press navigation buttons to keep them expanded
+・Stability improvements
