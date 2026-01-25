@@ -56,6 +56,14 @@ struct ContentView: View {
                 hasProcessedInitialPendingTab = false
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .userProfileDidUpdate)) { _ in
+            // プロフィール更新時に再読み込み
+            if let userId = authService.user?.uid {
+                Task {
+                    await loadProfile(userId: userId)
+                }
+            }
+        }
     }
 
     /// スクリーンショット用のタブビュー（認証不要）
