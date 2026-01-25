@@ -80,6 +80,15 @@ final class SyncService: ObservableObject {
     /// プレビュー用。本番では`SyncService.shared`を使用
     init() {}
 
+    /// サインアウト時に状態をリセット
+    func reset() {
+        isSyncing = false
+        phase = .idle
+        syncedCount = 0
+        error = nil
+        lastSyncedAt = nil
+    }
+
     func syncHealthKitData(userId: String) async {
         // 同時実行を防止
         guard !isSyncing else { return }

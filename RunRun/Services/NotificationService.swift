@@ -27,6 +27,12 @@ final class NotificationService: NSObject, ObservableObject {
         super.init()
     }
 
+    /// サインアウト時に状態をリセット
+    func reset() {
+        pendingTab = nil
+        pendingRunInfo = nil
+    }
+
     func requestAuthorization() async -> Bool {
         do {
             let options: UNAuthorizationOptions = [.alert, .badge, .sound]
