@@ -10,7 +10,8 @@ final class StorageService {
     }
 
     func uploadAvatar(userId: String, image: UIImage) async throws -> URL {
-        guard let imageData = image.jpegData(compressionQuality: 0.7) else {
+        let resizedImage = resizeImage(image, maxSize: 512)
+        guard let imageData = resizedImage.jpegData(compressionQuality: 0.7) else {
             throw StorageError.invalidImage
         }
 
@@ -22,6 +23,35 @@ final class StorageService {
         let downloadURL = try await ref.downloadURL()
 
         return downloadURL
+    }
+
+    /// 画像を正方形にクロップしてリサイズ（中央切り抜き）
+    private func resizeImage(_ image: UIImage, maxSize: CGFloat) -> UIImage {
+        let size = image.size
+
+        // 1. 中央から正方形にクロップ
+        let minSide = min(size.width, size.height)
+        let cropRect = CGRect(
+            x: (size.width - minSide) / 2,
+            y: (size.height - minSide) / 2,
+            width: minSide,
+            height: minSide
+        )
+
+        guard let cgImage = image.cgImage?.cropping(to: cropRect) else {
+            return image
+        }
+
+        let croppedImage = UIImage(cgImage: cgImage, scale: image.scale, orientation: image.imageOrientation)
+
+        // 2. 指定サイズにリサイズ
+        let targetSize = min(minSide, maxSize)
+        let newSize = CGSize(width: targetSize, height: targetSize)
+
+        let renderer = UIGraphicsImageRenderer(size: newSize)
+        return renderer.image { _ in
+            croppedImage.draw(in: CGRect(origin: .zero, size: newSize))
+        }
     }
 
     func deleteAvatar(userId: String) async throws {
