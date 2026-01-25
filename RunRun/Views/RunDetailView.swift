@@ -42,8 +42,12 @@ struct RunDetailView: View {
     @State private var mapCameraPosition: MapCameraPosition = .automatic
     @State private var showFullScreenMap = false
     @State private var showShareSettings = false
+    @State private var showNavBarTitle = false
+
+    @Environment(\.navigationAction) private var navigationAction
 
     private let healthKitService = HealthKitService()
+    private let calendar = Calendar.current
 
     private var routeCoordinates: [CLLocationCoordinate2D] {
         routeLocations.map { $0.coordinate }
@@ -54,6 +58,36 @@ struct RunDetailView: View {
         formatter.locale = Locale.current
         formatter.setLocalizedDateFormatFromTemplate("yMMMdEEEE")
         return formatter.string(from: record.date)
+    }
+
+    private var recordYear: Int {
+        calendar.component(.year, from: record.date)
+    }
+
+    private var recordMonth: Int {
+        calendar.component(.month, from: record.date)
+    }
+
+    private var formattedYear: String {
+        String(format: String(localized: "%d year_suffix", comment: "Year format e.g. 2026年"), recordYear)
+    }
+
+    private var formattedMonth: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale.current
+        formatter.setLocalizedDateFormatFromTemplate("MMM")
+        return formatter.string(from: record.date)
+    }
+
+    private var formattedDayWithWeekday: String {
+        let day = calendar.component(.day, from: record.date)
+        let formatter = DateFormatter()
+        formatter.locale = Locale.current
+        formatter.setLocalizedDateFormatFromTemplate("EEE")
+        let weekday = formatter.string(from: record.date)
+
+        let dayString = String(format: String(localized: "%d day_suffix", comment: "Day format e.g. 15日"), day)
+        return "\(dayString)(\(weekday))"
     }
 
     private var formattedTime: String {
@@ -153,6 +187,57 @@ struct RunDetailView: View {
         isLoadingAdjacent = false
     }
 
+    private var dateHeaderView: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 4) {
+            // 年
+            Button {
+                navigationAction?.append(.yearDetail(user: userProfile, initialYear: recordYear))
+            } label: {
+                Text(formattedYear)
+                    .font(.subheadline)
+                    .foregroundStyle(Color.accentColor)
+            }
+            .buttonStyle(.plain)
+
+            Image(systemName: "chevron.forward")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+
+            // 月
+            Button {
+                navigationAction?.append(.monthDetail(user: userProfile, year: recordYear, month: recordMonth))
+            } label: {
+                Text(formattedMonth)
+                    .font(.subheadline)
+                    .foregroundStyle(Color.accentColor)
+            }
+            .buttonStyle(.plain)
+
+            Image(systemName: "chevron.forward")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+
+            // 日(曜日)
+            Text(formattedDayWithWeekday)
+                .font(.largeTitle)
+                .fontWeight(.bold)
+
+            Spacer()
+        }
+        .padding(.horizontal, 20)
+        .background(
+            GeometryReader { geo in
+                Color.clear
+                    .onChange(of: geo.frame(in: .global).maxY) { _, newValue in
+                        let threshold: CGFloat = 100
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            showNavBarTitle = newValue < threshold
+                        }
+                    }
+            }
+        )
+    }
+
     private var runNavigationButtons: some View {
         ExpandableNavigationButtons(
             canGoToOldest: canGoToOldest,
@@ -169,6 +254,12 @@ struct RunDetailView: View {
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             List {
+                // 日付ヘッダー
+                dateHeaderView
+                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+
                 // 記録サマリセクション
                 Section {
                     VStack(spacing: 16) {
@@ -311,6 +402,7 @@ struct RunDetailView: View {
                         .listRowBackground(Color.clear)
                 }
             }
+            .contentMargins(.top, 0)
 
             // フローティング前後移動ボタン
             runNavigationButtons
@@ -318,9 +410,16 @@ struct RunDetailView: View {
                 .padding(.bottom, 8)
         }
         .navigationTitle(formattedDate)
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
         .analyticsScreen("RunDetail")
         .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text(formattedDate)
+                    .font(.headline)
+                    .opacity(showNavBarTitle ? 1 : 0)
+                    .blur(radius: showNavBarTitle ? 0 : 8)
+                    .offset(y: showNavBarTitle ? 0 : 16)
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 HStack(spacing: 16) {
                     if isOwnRecord {
