@@ -12,6 +12,7 @@ struct MonthDetailView: View {
     @State private var currentMonth: Int
     @State private var hasLoadedOnce = false
     @State private var showShareSettings = false
+    @State private var showNavBarTitle = false
 
     private var isOwnRecord: Bool {
         if ScreenshotMode.isEnabled {
@@ -32,6 +33,20 @@ struct MonthDetailView: View {
         let calendar = Calendar.current
         return currentYear == calendar.component(.year, from: now) &&
                currentMonth == calendar.component(.month, from: now)
+    }
+
+    private var formattedYear: String {
+        String(format: String(localized: "%d year_suffix", comment: "Year format e.g. 2026年"), currentYear)
+    }
+
+    private var formattedMonth: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale.current
+        formatter.setLocalizedDateFormatFromTemplate("MMMM")
+        guard let date = Calendar.current.date(from: DateComponents(year: currentYear, month: currentMonth)) else {
+            return ""
+        }
+        return formatter.string(from: date)
     }
 
     private func dayString(from date: Date) -> String {
@@ -109,6 +124,43 @@ struct MonthDetailView: View {
         return sundays
     }
 
+    private var dateHeaderView: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 4) {
+            // 年
+            Button {
+                navigationAction?.append(.yearDetail(user: userProfile, initialYear: currentYear))
+            } label: {
+                Text(formattedYear)
+                    .font(.subheadline)
+                    .foregroundStyle(Color.accentColor)
+            }
+            .buttonStyle(.plain)
+
+            Image(systemName: "chevron.forward")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+
+            // 月
+            Text(formattedMonth)
+                .font(.largeTitle)
+                .fontWeight(.bold)
+
+            Spacer()
+        }
+        .padding(.horizontal, 20)
+        .background(
+            GeometryReader { geo in
+                Color.clear
+                    .onChange(of: geo.frame(in: .global).maxY) { _, newValue in
+                        let threshold: CGFloat = 100
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            showNavBarTitle = newValue < threshold
+                        }
+                    }
+            }
+        )
+    }
+
     private var monthNavigationButtons: some View {
         ExpandableNavigationButtons(
             canGoToOldest: canGoToOldest,
@@ -143,9 +195,16 @@ struct MonthDetailView: View {
                 .padding(.bottom, 8)
         }
         .navigationTitle(viewModel.title)
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
         .analyticsScreen("MonthDetail")
         .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text(viewModel.title)
+                    .font(.headline)
+                    .opacity(showNavBarTitle ? 1 : 0)
+                    .blur(radius: showNavBarTitle ? 0 : 8)
+                    .offset(y: showNavBarTitle ? 0 : 16)
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 HStack(spacing: 16) {
                     if isOwnRecord {
@@ -199,6 +258,12 @@ struct MonthDetailView: View {
 
     private var recordsList: some View {
         List {
+            // 日付ヘッダー
+            dateHeaderView
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+
             // カレンダー
             Section {
                 RunCalendarView(
@@ -277,6 +342,7 @@ struct MonthDetailView: View {
                     .listRowBackground(Color.clear)
             }
         }
+        .contentMargins(.top, 0)
     }
 
     private var dailyChart: some View {
