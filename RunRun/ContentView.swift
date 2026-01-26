@@ -48,12 +48,28 @@ struct ContentView: View {
             }
         }
         .onChange(of: authService.isAuthenticated) { oldValue, newValue in
-            // サインイン時にタブと状態をリセット
             if !oldValue && newValue {
+                // サインイン時にタブと状態をリセット
                 selectedTab = .home
                 userProfile = nil
                 profileLoadError = nil
                 hasProcessedInitialPendingTab = false
+            } else if oldValue && !newValue {
+                // サインアウト時に全ての状態をリセット
+                selectedTab = .home
+                userProfile = nil
+                profileLoadError = nil
+                hasProcessedInitialPendingTab = false
+                // NavigationPathをリセット
+                homeNavigationPath = NavigationPath()
+                recordNavigationPath = NavigationPath()
+                leaderboardNavigationPath = NavigationPath()
+                friendsNavigationPath = NavigationPath()
+                settingsNavigationPath = NavigationPath()
+                // 各サービスの状態をリセット
+                syncService.reset()
+                notificationService.reset()
+                badgeService.reset()
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .userProfileDidUpdate)) { _ in

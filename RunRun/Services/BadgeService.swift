@@ -18,6 +18,13 @@ final class BadgeService: ObservableObject {
 
     private init() {}
 
+    /// サインアウト時に状態をリセット
+    func reset() {
+        unreadRequestCount = 0
+        newFriendCount = 0
+        clearAppIconBadge()
+    }
+
     // MARK: - Last Seen Timestamps
 
     private func lastSeenRequestsKey(userId: String) -> String {
