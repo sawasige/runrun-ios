@@ -225,12 +225,13 @@ struct RunDetailView: View {
             Spacer()
         }
         .padding(.horizontal, 20)
+        .opacity(showNavBarTitle ? 0 : 1)
         .background(
             GeometryReader { geo in
                 Color.clear
                     .onChange(of: geo.frame(in: .global).maxY) { _, newValue in
                         let threshold: CGFloat = 100
-                        withAnimation(.easeInOut(duration: 0.3)) {
+                        withAnimation(.easeInOut(duration: 0.4)) {
                             showNavBarTitle = newValue < threshold
                         }
                     }
