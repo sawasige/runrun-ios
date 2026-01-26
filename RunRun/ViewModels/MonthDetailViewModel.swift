@@ -205,7 +205,10 @@ final class MonthDetailViewModel: ObservableObject {
         let currentDay = calendar.component(.day, from: now)
 
         let maxDay: Int
-        if year == currentYear && month == currentMonth {
+        if ScreenshotMode.isEnabled && year == currentYear && month == currentMonth {
+            // スクリーンショットモードで当月の場合は20日まで
+            maxDay = 20
+        } else if year == currentYear && month == currentMonth {
             // 当月の場合は今日まで
             maxDay = currentDay
         } else {
