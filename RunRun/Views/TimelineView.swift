@@ -106,6 +106,18 @@ struct TimelineView: View {
                     .font(.title2)
                     .fontWeight(.bold)
             }
+            .opacity(showNavBarLogo ? 0 : 1)
+            .background(
+                GeometryReader { geo in
+                    Color.clear
+                        .onChange(of: geo.frame(in: .global).maxY) { oldValue, newValue in
+                            let threshold: CGFloat = 100
+                            withAnimation(.easeInOut(duration: 0.4)) {
+                                showNavBarLogo = newValue < threshold
+                            }
+                        }
+                }
+            )
 
             // 今月のサマリ（タップで月詳細へ）
             NavigationLink(value: ScreenType.monthDetail(
@@ -121,17 +133,6 @@ struct TimelineView: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 16)
-        .background(
-            GeometryReader { geo in
-                Color.clear
-                    .onChange(of: geo.frame(in: .global).maxY) { oldValue, newValue in
-                        let threshold: CGFloat = 100
-                        withAnimation(.easeInOut(duration: 0.4)) {
-                            showNavBarLogo = newValue < threshold
-                        }
-                    }
-            }
-        )
     }
 
     private var monthSummaryStats: some View {
