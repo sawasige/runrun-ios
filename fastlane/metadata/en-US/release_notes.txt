@@ -6,4 +6,4 @@ Thank you for using RunRun!
 
 【Improvements】
 ・Long press navigation buttons to keep them expanded
-・Stability improvements
+・Minor improvements and stability enhancements

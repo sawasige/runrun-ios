@@ -68,36 +68,43 @@ struct MockDataProvider {
 
     // MARK: - 月間記録用
 
+    /// 月別統計（yearDetailRecordsと整合性を保つ固定値）
+    /// 人間らしいサボり期間あり:
+    /// - 2月: 仕事が忙しくて2回だけ（15km）
+    /// - 6月: 膝を痛めてほぼ休み（12km）
+    /// 合計440km（前年8月末400kmの10%増）
     static var monthlyStats: [MonthlyRunningStats] {
         let calendar = Calendar.current
         let now = Date()
         let currentYear = calendar.component(.year, from: now)
 
-        // 今年の12ヶ月分を表示（1〜8月にデータあり、9〜12月は0）
+        // 月ごとの固定データ（距離m, 回数）- yearDetailRecordsと一致
+        let monthlyData: [(distance: Double, runCount: Int)] = [
+            (65000, 8),   // 1月: 65km - 新年のやる気
+            (15000, 2),   // 2月: 15km - 繁忙期で2回だけ
+            (60000, 7),   // 3月: 60km - 暖かくなって復活
+            (72000, 9),   // 4月: 72km - 絶好調
+            (78000, 10),  // 5月: 78km - ベストシーズン
+            (12000, 2),   // 6月: 12km - 膝痛めてほぼ休み
+            (58000, 7),   // 7月: 58km - リハビリ兼ねて再開
+            (80000, 9),   // 8月: 80km - 夏休みで追い込み
+            (0, 0),       // 9月: データなし
+            (0, 0),       // 10月
+            (0, 0),       // 11月
+            (0, 0),       // 12月
+        ]
+
         return (1...12).map { month in
-            if month <= 8 {
-                let baseDistance = Double.random(in: 30000...80000)
-                let runCount = Int.random(in: 5...15)
-                return MonthlyRunningStats(
-                    id: UUID(),
-                    year: currentYear,
-                    month: month,
-                    totalDistanceInMeters: baseDistance,
-                    totalDurationInSeconds: baseDistance / 1000 * 330,
-                    runCount: runCount,
-                    totalCalories: baseDistance / 1000 * 60
-                )
-            } else {
-                return MonthlyRunningStats(
-                    id: UUID(),
-                    year: currentYear,
-                    month: month,
-                    totalDistanceInMeters: 0,
-                    totalDurationInSeconds: 0,
-                    runCount: 0,
-                    totalCalories: 0
-                )
-            }
+            let data = monthlyData[month - 1]
+            return MonthlyRunningStats(
+                id: UUID(),
+                year: currentYear,
+                month: month,
+                totalDistanceInMeters: data.distance,
+                totalDurationInSeconds: data.distance / 1000 * 330,
+                runCount: data.runCount,
+                totalCalories: data.distance / 1000 * 60
+            )
         }
     }
 
@@ -268,37 +275,55 @@ struct MockDataProvider {
 
     // MARK: - 年詳細用（年間のラン記録）
 
+    /// 今年のラン記録（1〜8月）
+    /// 8月末時点で前年8月末の約10%増（440km vs 400km）
+    /// 人間らしいサボり期間:
+    /// - 2月: 繁忙期で2回だけ（15km）
+    /// - 6月: 膝痛めてほぼ休み（12km）
     static var yearDetailRecords: [RunningRecord] {
         let calendar = Calendar.current
         let now = Date()
-        let currentYear = calendar.component(.year, from: now) // 今年のデータ（1〜8月）
+        let currentYear = calendar.component(.year, from: now)
+
+        let monthlyData: [(month: Int, runs: [(day: Int, distance: Double)])] = [
+            // 1月: 65km (8回) - 新年のやる気、週末に固め打ち
+            (1, [(1, 10200), (2, 8500), (3, 5300), (11, 6800), (12, 9200), (18, 12500), (25, 5200), (26, 7300)]),
+            // 2月: 15km (2回) - 繁忙期、月末にやっと2回だけ
+            (2, [(23, 7200), (24, 7800)]),
+            // 3月: 60km (7回) - 暖かくなって復活、週末中心
+            (3, [(1, 5800), (2, 8200), (9, 10500), (16, 6200), (22, 9800), (23, 12300), (30, 7200)]),
+            // 4月: 72km (9回) - 絶好調、GW前に追い込み
+            (4, [(5, 6500), (6, 9200), (12, 10800), (13, 5200), (20, 8500), (26, 7800), (27, 11200), (29, 6300), (30, 6500)]),
+            // 5月: 78km (10回) - ベストシーズン、GW連休で走り込み
+            (5, [(3, 10500), (4, 8200), (5, 6800), (6, 5500), (11, 9200), (18, 7500), (19, 10800), (25, 6200), (26, 8100), (31, 5200)]),
+            // 6月: 12km (2回) - 膝を痛めて月初で離脱、月末に恐る恐る再開
+            (6, [(1, 5800), (29, 6200)]),
+            // 7月: 58km (7回) - リハビリ、様子見ながら週末だけ
+            (7, [(6, 5200), (7, 6800), (14, 8500), (20, 9200), (21, 10500), (27, 8300), (28, 9500)]),
+            // 8月: 80km (9回) - 完全復活、お盆休みで追い込み
+            (8, [(3, 6800), (4, 8500), (10, 12100), (11, 9200), (12, 7500), (17, 10800), (18, 8200), (24, 9500), (25, 7400)]),
+        ]
 
         var records: [RunningRecord] = []
-
-        // 各月に5〜8回のランを配置（1〜8月）
-        for month in 1...8 {
-            let runsInMonth = Int.random(in: 5...8)
-            let daysUsed = Set((1...28).shuffled().prefix(runsInMonth))
-
-            for day in daysUsed {
+        for monthData in monthlyData {
+            for run in monthData.runs {
                 var dateComponents = DateComponents()
                 dateComponents.year = currentYear
-                dateComponents.month = month
-                dateComponents.day = day
-                dateComponents.hour = Int.random(in: 6...9)
+                dateComponents.month = monthData.month
+                dateComponents.day = run.day
+                dateComponents.hour = 7
 
                 guard let date = calendar.date(from: dateComponents) else { continue }
 
-                let distance = Double.random(in: 3000...12000)
                 records.append(RunningRecord(
                     id: UUID(),
                     date: date,
-                    distanceInMeters: distance,
-                    durationInSeconds: distance / 1000 * Double.random(in: 300...400),
-                    caloriesBurned: distance / 15,
-                    averageHeartRate: Double.random(in: 140...160),
-                    maxHeartRate: Double.random(in: 165...180),
-                    minHeartRate: Double.random(in: 120...140)
+                    distanceInMeters: run.distance,
+                    durationInSeconds: run.distance / 1000 * 340,
+                    caloriesBurned: run.distance / 15,
+                    averageHeartRate: 150,
+                    maxHeartRate: 168,
+                    minHeartRate: 132
                 ))
             }
         }
@@ -306,39 +331,63 @@ struct MockDataProvider {
         return records.sorted { $0.date < $1.date }
     }
 
-    /// 前年のラン記録（今年より若干少ない総距離）
+    /// 前年のラン記録（12ヶ月分）
+    /// 8月末時点で400km、年間合計600km
+    /// 人間らしいサボり期間:
+    /// - 3月: インフルエンザで3回だけ（18km）
+    /// - 7月: 家族旅行で3回だけ（22km）
     static var previousYearDetailRecords: [RunningRecord] {
         let calendar = Calendar.current
         let now = Date()
         let previousYear = calendar.component(.year, from: now) - 1
 
+        let monthlyData: [(month: Int, runs: [(day: Int, distance: Double)])] = [
+            // 1月: 55km (7回) - 正月休みに連日、その後週末
+            (1, [(2, 8500), (3, 7200), (4, 6800), (13, 9200), (14, 8100), (27, 7500), (28, 7700)]),
+            // 2月: 48km (6回) - 週末中心
+            (2, [(4, 8200), (5, 7500), (11, 9100), (18, 6800), (25, 8200), (26, 8200)]),
+            // 3月: 18km (3回) - インフルエンザで月半ば離脱
+            (3, [(4, 6500), (5, 5800), (25, 5700)]),
+            // 4月: 62km (8回) - 回復して頑張る、週末固め打ち
+            (4, [(6, 7200), (7, 8500), (13, 6800), (14, 9500), (20, 7200), (21, 10200), (28, 6100), (29, 6500)]),
+            // 5月: 70km (9回) - GW連休で走り込み
+            (5, [(3, 8200), (4, 6500), (5, 9800), (6, 7200), (11, 8500), (12, 6800), (25, 10200), (26, 6300), (27, 6500)]),
+            // 6月: 45km (6回) - 梅雨の晴れ間
+            (6, [(1, 7500), (2, 8200), (15, 6800), (16, 9500), (29, 6200), (30, 6800)]),
+            // 7月: 22km (3回) - 家族で2週間旅行
+            (7, [(5, 8200), (6, 7500), (28, 6300)]),
+            // 8月: 80km (10回) - 帰ってきてお盆休みに追い込み
+            (8, [(3, 7200), (4, 8500), (10, 9200), (11, 6800), (12, 10200), (13, 7500), (17, 8800), (18, 7200), (24, 8100), (25, 6500)]),
+            // 9月: 52km (7回) - 週末中心
+            (9, [(7, 7500), (8, 8200), (14, 6500), (15, 9200), (22, 6800), (28, 7500), (29, 6300)]),
+            // 10月: 60km (8回) - 秋のベストシーズン、連休活用
+            (10, [(5, 8200), (6, 7500), (12, 6800), (13, 9500), (14, 7200), (26, 8500), (27, 6100), (28, 6200)]),
+            // 11月: 50km (6回) - 週末のみ
+            (11, [(2, 8500), (3, 9200), (16, 7200), (17, 8800), (23, 8100), (24, 8200)]),
+            // 12月: 38km (5回) - 年末忙しい
+            (12, [(7, 7500), (8, 8200), (14, 6800), (23, 8500), (30, 7000)]),
+        ]
+
         var records: [RunningRecord] = []
-
-        // 各月に4〜6回のランを配置（12ヶ月分、今年より少なめ）
-        for month in 1...12 {
-            let runsInMonth = Int.random(in: 4...6)
-            let daysUsed = Set((1...28).shuffled().prefix(runsInMonth))
-
-            for day in daysUsed {
+        for monthData in monthlyData {
+            for run in monthData.runs {
                 var dateComponents = DateComponents()
                 dateComponents.year = previousYear
-                dateComponents.month = month
-                dateComponents.day = day
-                dateComponents.hour = Int.random(in: 6...9)
+                dateComponents.month = monthData.month
+                dateComponents.day = run.day
+                dateComponents.hour = 7
 
                 guard let date = calendar.date(from: dateComponents) else { continue }
 
-                // 今年より若干短い距離
-                let distance = Double.random(in: 2500...10000)
                 records.append(RunningRecord(
                     id: UUID(),
                     date: date,
-                    distanceInMeters: distance,
-                    durationInSeconds: distance / 1000 * Double.random(in: 300...400),
-                    caloriesBurned: distance / 15,
-                    averageHeartRate: Double.random(in: 140...160),
-                    maxHeartRate: Double.random(in: 165...180),
-                    minHeartRate: Double.random(in: 120...140)
+                    distanceInMeters: run.distance,
+                    durationInSeconds: run.distance / 1000 * 350,
+                    caloriesBurned: run.distance / 15,
+                    averageHeartRate: 152,
+                    maxHeartRate: 170,
+                    minHeartRate: 135
                 ))
             }
         }
