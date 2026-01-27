@@ -555,14 +555,17 @@ struct RunDetailView: View {
             return
         }
 
-        // ルートと心拍数サンプルを並列取得
+        // ルート、心拍数サンプル、詳細データを並列取得
         async let locationsTask = healthKitService.fetchWorkoutRoute(for: workout)
         async let hrSamplesTask = healthKitService.fetchHeartRateSamples(for: workout)
+        async let detailsTask = healthKitService.fetchWorkoutDetails(for: workout)
 
-        let (locations, hrSamples) = await (locationsTask, hrSamplesTask)
+        let (locations, hrSamples, details) = await (locationsTask, hrSamplesTask, detailsTask)
 
         guard !locations.isEmpty else {
             clearRouteData()
+            // ルートがなくても詳細データの補完は試みる
+            await updateFirestoreDetailsIfNeeded(details: details)
             return
         }
 
@@ -584,6 +587,76 @@ struct RunDetailView: View {
         // カメラ位置を設定（ルート全体が表示されるように）
         if let region = regionToFitCoordinates(routeCoordinates) {
             mapCameraPosition = .region(region)
+        }
+
+        // Firestoreの詳細データを補完
+        await updateFirestoreDetailsIfNeeded(details: details)
+    }
+
+    /// Firestoreの詳細データが不足している場合、HealthKitから取得したデータで補完
+    private func updateFirestoreDetailsIfNeeded(
+        details: (
+            averageHeartRate: Double?,
+            maxHeartRate: Double?,
+            minHeartRate: Double?,
+            stepCount: Int?,
+            strideLength: Double?,
+            cadence: Double?
+        )
+    ) async {
+        // 自分のランのみ更新
+        guard isOwnRecord else { return }
+
+        // 不足しているフィールドがあるかチェック
+        let needsUpdate =
+            (record.averageHeartRate == nil && details.averageHeartRate != nil) ||
+            (record.maxHeartRate == nil && details.maxHeartRate != nil) ||
+            (record.minHeartRate == nil && details.minHeartRate != nil) ||
+            (record.cadence == nil && details.cadence != nil) ||
+            (record.strideLength == nil && details.strideLength != nil) ||
+            (record.stepCount == nil && details.stepCount != nil)
+
+        guard needsUpdate else { return }
+
+        // Firestoreを更新（エラーは無視）
+        do {
+            let updated = try await firestoreService.updateRunDetails(
+                userId: userId,
+                date: record.date,
+                distanceKm: record.distanceInKilometers,
+                details: (
+                    averageHeartRate: details.averageHeartRate,
+                    maxHeartRate: details.maxHeartRate,
+                    minHeartRate: details.minHeartRate,
+                    cadence: details.cadence,
+                    strideLength: details.strideLength,
+                    stepCount: details.stepCount
+                )
+            )
+
+            if updated {
+                // recordのStateを更新（UI反映）
+                if record.averageHeartRate == nil, let value = details.averageHeartRate {
+                    record.averageHeartRate = value
+                }
+                if record.maxHeartRate == nil, let value = details.maxHeartRate {
+                    record.maxHeartRate = value
+                }
+                if record.minHeartRate == nil, let value = details.minHeartRate {
+                    record.minHeartRate = value
+                }
+                if record.cadence == nil, let value = details.cadence {
+                    record.cadence = value
+                }
+                if record.strideLength == nil, let value = details.strideLength {
+                    record.strideLength = value
+                }
+                if record.stepCount == nil, let value = details.stepCount {
+                    record.stepCount = value
+                }
+            }
+        } catch {
+            // 更新エラーは無視（メイン機能に影響しない）
         }
     }
 

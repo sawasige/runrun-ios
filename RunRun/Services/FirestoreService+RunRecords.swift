@@ -121,4 +121,73 @@ extension FirestoreService {
 
         return documentIds.count
     }
+
+    /// 既存ランの詳細データを更新（不足フィールドのみ）
+    /// - Parameters:
+    ///   - userId: ユーザーID
+    ///   - date: ラン日時
+    ///   - distanceKm: 距離（km）- ドキュメント特定用
+    ///   - details: 更新する詳細データ
+    /// - Returns: 更新があったかどうか
+    @discardableResult
+    func updateRunDetails(
+        userId: String,
+        date: Date,
+        distanceKm: Double,
+        details: (
+            averageHeartRate: Double?,
+            maxHeartRate: Double?,
+            minHeartRate: Double?,
+            cadence: Double?,
+            strideLength: Double?,
+            stepCount: Int?
+        )
+    ) async throws -> Bool {
+        // 日時と距離でドキュメントを特定（60秒以内、100m以内）
+        let snapshot = try await runsCollection
+            .whereField("userId", isEqualTo: userId)
+            .getDocuments()
+
+        guard let doc = snapshot.documents.first(where: { doc in
+            let data = doc.data()
+            guard let timestamp = data["date"] as? Timestamp,
+                  let distance = data["distanceKm"] as? Double else {
+                return false
+            }
+            return abs(timestamp.dateValue().timeIntervalSince(date)) < 60 &&
+                   abs(distance - distanceKm) < 0.1
+        }) else {
+            return false
+        }
+
+        // 更新が必要なフィールドを収集
+        var updateData: [String: Any] = [:]
+        let existingData = doc.data()
+
+        if existingData["averageHeartRate"] == nil, let value = details.averageHeartRate {
+            updateData["averageHeartRate"] = value
+        }
+        if existingData["maxHeartRate"] == nil, let value = details.maxHeartRate {
+            updateData["maxHeartRate"] = value
+        }
+        if existingData["minHeartRate"] == nil, let value = details.minHeartRate {
+            updateData["minHeartRate"] = value
+        }
+        if existingData["cadence"] == nil, let value = details.cadence {
+            updateData["cadence"] = value
+        }
+        if existingData["strideLength"] == nil, let value = details.strideLength {
+            updateData["strideLength"] = value
+        }
+        if existingData["stepCount"] == nil, let value = details.stepCount {
+            updateData["stepCount"] = value
+        }
+
+        // 更新が必要なフィールドがなければ終了
+        guard !updateData.isEmpty else { return false }
+
+        // 更新実行
+        try await runsCollection.document(doc.documentID).updateData(updateData)
+        return true
+    }
 }
