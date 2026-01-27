@@ -178,11 +178,9 @@ struct MonthDetailView: View {
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             Group {
-                if viewModel.isLoading && !hasLoadedOnce {
-                    ProgressView()
-                } else if let error = viewModel.error {
+                if let error = viewModel.error {
                     errorView(error: error)
-                } else if viewModel.records.isEmpty {
+                } else if hasLoadedOnce && viewModel.records.isEmpty {
                     emptyView
                 } else {
                     recordsList
@@ -265,74 +263,79 @@ struct MonthDetailView: View {
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
 
-            // カレンダー
-            Section {
-                RunCalendarView(
-                    year: viewModel.year,
-                    month: viewModel.month,
-                    records: viewModel.records
-                ) { record in
-                    navigationAction?.append(.runDetail(record: record, user: userProfile))
+            if !hasLoadedOnce && viewModel.records.isEmpty {
+                // スケルトン表示
+                skeletonContent
+            } else {
+                // カレンダー
+                Section {
+                    RunCalendarView(
+                        year: viewModel.year,
+                        month: viewModel.month,
+                        records: viewModel.records
+                    ) { record in
+                        navigationAction?.append(.runDetail(record: record, user: userProfile))
+                    }
                 }
-            }
 
-            // 日別グラフ
-            Section("Daily Distance") {
-                dailyChart
-                    .frame(height: 150)
-            }
-
-            // 累積距離グラフ
-            Section("Distance Progress") {
-                cumulativeChart
-                    .frame(height: 150)
-            }
-
-            Section("Totals") {
-                LabeledContent("Distance") {
-                    Text(viewModel.formattedTotalDistance(useMetric: useMetric))
-                        .fontWeight(.bold)
-                        .foregroundStyle(.primary)
+                // 日別グラフ
+                Section("Daily Distance") {
+                    dailyChart
+                        .frame(height: 150)
                 }
-                LabeledContent("Time", value: viewModel.formattedTotalDuration)
-                LabeledContent("Count", value: String(format: String(localized: "%d runs", comment: "Run count"), viewModel.runCount))
-                if isOwnRecord, let calories = viewModel.formattedTotalCalories {
-                    LabeledContent("Energy", value: calories)
+
+                // 累積距離グラフ
+                Section("Distance Progress") {
+                    cumulativeChart
+                        .frame(height: 150)
                 }
-            }
 
-            Section("Averages") {
-                LabeledContent("Pace", value: viewModel.formattedAveragePace(useMetric: useMetric))
-                LabeledContent("Distance/Run", value: viewModel.formattedAverageDistance(useMetric: useMetric))
-                LabeledContent("Time/Run", value: viewModel.formattedAverageDuration)
-            }
+                Section("Totals") {
+                    LabeledContent("Distance") {
+                        Text(viewModel.formattedTotalDistance(useMetric: useMetric))
+                            .fontWeight(.bold)
+                            .foregroundStyle(.primary)
+                    }
+                    LabeledContent("Time", value: viewModel.formattedTotalDuration)
+                    LabeledContent("Count", value: String(format: String(localized: "%d runs", comment: "Run count"), viewModel.runCount))
+                    if isOwnRecord, let calories = viewModel.formattedTotalCalories {
+                        LabeledContent("Energy", value: calories)
+                    }
+                }
 
-            if viewModel.bestDayByDistance != nil || viewModel.bestDayByDuration != nil || viewModel.fastestDay != nil {
-                Section("Highlights") {
-                    if let best = viewModel.bestDayByDistance {
-                        NavigationLink(value: ScreenType.runDetail(record: best, user: userProfile)) {
-                            LabeledContent("Best Distance Day", value: "\(dayString(from: best.date)) (\(best.formattedDistance(useMetric: useMetric)))")
+                Section("Averages") {
+                    LabeledContent("Pace", value: viewModel.formattedAveragePace(useMetric: useMetric))
+                    LabeledContent("Distance/Run", value: viewModel.formattedAverageDistance(useMetric: useMetric))
+                    LabeledContent("Time/Run", value: viewModel.formattedAverageDuration)
+                }
+
+                if viewModel.bestDayByDistance != nil || viewModel.bestDayByDuration != nil || viewModel.fastestDay != nil {
+                    Section("Highlights") {
+                        if let best = viewModel.bestDayByDistance {
+                            NavigationLink(value: ScreenType.runDetail(record: best, user: userProfile)) {
+                                LabeledContent("Best Distance Day", value: "\(dayString(from: best.date)) (\(best.formattedDistance(useMetric: useMetric)))")
+                            }
+                        }
+                        if let best = viewModel.bestDayByDuration {
+                            NavigationLink(value: ScreenType.runDetail(record: best, user: userProfile)) {
+                                LabeledContent("Best Duration Day", value: "\(dayString(from: best.date)) (\(best.formattedDuration))")
+                            }
+                        }
+                        if let fastest = viewModel.fastestDay {
+                            NavigationLink(value: ScreenType.runDetail(record: fastest, user: userProfile)) {
+                                LabeledContent("Fastest Day", value: "\(dayString(from: fastest.date)) (\(fastest.formattedPace(useMetric: useMetric)))")
+                            }
                         }
                     }
-                    if let best = viewModel.bestDayByDuration {
-                        NavigationLink(value: ScreenType.runDetail(record: best, user: userProfile)) {
-                            LabeledContent("Best Duration Day", value: "\(dayString(from: best.date)) (\(best.formattedDuration))")
-                        }
-                    }
-                    if let fastest = viewModel.fastestDay {
-                        NavigationLink(value: ScreenType.runDetail(record: fastest, user: userProfile)) {
-                            LabeledContent("Fastest Day", value: "\(dayString(from: fastest.date)) (\(fastest.formattedPace(useMetric: useMetric)))")
-                        }
-                    }
                 }
-            }
 
-            Section("Running Records") {
-                ForEach(Array(viewModel.records.enumerated()), id: \.element.id) { index, record in
-                    NavigationLink(value: ScreenType.runDetail(record: record, user: userProfile)) {
-                        RunningRecordRow(record: record)
+                Section("Running Records") {
+                    ForEach(Array(viewModel.records.enumerated()), id: \.element.id) { index, record in
+                        NavigationLink(value: ScreenType.runDetail(record: record, user: userProfile)) {
+                            RunningRecordRow(record: record)
+                        }
+                        .accessibilityIdentifier(index == 0 ? "first_run_row" : "run_row_\(index)")
                     }
-                    .accessibilityIdentifier(index == 0 ? "first_run_row" : "run_row_\(index)")
                 }
             }
 
@@ -344,6 +347,48 @@ struct MonthDetailView: View {
             }
         }
         .contentMargins(.top, 0)
+    }
+
+    @ViewBuilder
+    private var skeletonContent: some View {
+        // カレンダー
+        Section {
+            SkeletonCalendar(year: currentYear, month: currentMonth)
+                .listRowBackground(ShimmerBackground())
+        }
+
+        // グラフ
+        Section("Daily Distance") {
+            SkeletonChart()
+                .frame(height: 150)
+                .listRowBackground(ShimmerBackground())
+        }
+
+        Section("Distance Progress") {
+            SkeletonChart()
+                .frame(height: 150)
+                .listRowBackground(ShimmerBackground())
+        }
+
+        // 統計
+        Section("Totals") {
+            ForEach(0..<4, id: \.self) { _ in
+                HStack {
+                    SkeletonRect()
+                        .frame(width: 80, height: 14)
+                    Spacer()
+                    SkeletonRect()
+                        .frame(width: 60, height: 14)
+                }
+            }
+        }
+
+        // ラン記録
+        Section("Running Records") {
+            ForEach(0..<5, id: \.self) { _ in
+                SkeletonRunRow()
+            }
+        }
     }
 
     private var dailyChart: some View {

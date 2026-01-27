@@ -114,6 +114,9 @@ final class MonthDetailViewModel: ObservableObject {
     }
 
     func updateMonth(year: Int, month: Int) async {
+        // デバッグ用遅延
+        await DebugSettings.applyLoadDelay()
+
         // スクリーンショットモードならモックデータを使用
         if ScreenshotMode.isEnabled {
             self.year = year

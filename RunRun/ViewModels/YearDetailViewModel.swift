@@ -173,6 +173,9 @@ final class YearDetailViewModel: ObservableObject {
     }
 
     func updateYear(to year: Int) async {
+        // デバッグ用遅延
+        await DebugSettings.applyLoadDelay()
+
         // スクリーンショットモードではモックデータを使用
         if ScreenshotMode.isEnabled {
             selectedYear = year

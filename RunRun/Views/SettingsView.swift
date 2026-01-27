@@ -158,7 +158,9 @@ struct SettingsView: View {
                 }
 
                 #if DEBUG
-                Section("Debug") {
+                Section(String(localized: "Debug", comment: "Debug section title")) {
+                    DebugLoadDelayToggle()
+
                     Button("Send Test Notification") {
                         Task { await sendTestNotification() }
                     }
@@ -461,6 +463,39 @@ private struct DistanceUnitPicker: View {
         }
     }
 }
+
+#if DEBUG
+/// デバッグ用ロード遅延トグル
+private struct DebugLoadDelayToggle: View {
+    @State private var isEnabled = DebugSettings.loadDelayEnabled
+    @State private var delaySeconds = DebugSettings.loadDelaySeconds
+
+    var body: some View {
+        Toggle(String(localized: "Load Delay", comment: "Debug load delay toggle"), isOn: $isEnabled)
+            .onChange(of: isEnabled) { _, newValue in
+                DebugSettings.loadDelayEnabled = newValue
+            }
+
+        if isEnabled {
+            HStack {
+                Text(String(localized: "Delay", comment: "Debug delay picker label"))
+                Spacer()
+                Picker("", selection: $delaySeconds) {
+                    Text("1s").tag(1.0)
+                    Text("2s").tag(2.0)
+                    Text("3s").tag(3.0)
+                    Text("5s").tag(5.0)
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 200)
+                .onChange(of: delaySeconds) { _, newValue in
+                    DebugSettings.loadDelaySeconds = newValue
+                }
+            }
+        }
+    }
+}
+#endif
 
 #Preview {
     SettingsView()

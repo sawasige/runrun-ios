@@ -31,6 +31,8 @@ final class TimelineViewModel: ObservableObject {
 
     func onAppear() async {
         if runs.isEmpty {
+            // デバッグ用遅延
+            await DebugSettings.applyLoadDelay()
             await loadInitial()
         }
     }

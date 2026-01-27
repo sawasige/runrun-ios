@@ -109,7 +109,10 @@ struct YearDetailView: View {
     private var mainContent: some View {
         ZStack(alignment: .bottomTrailing) {
             List {
-                if let error = viewModel.error {
+                if viewModel.monthlyStats.isEmpty && viewModel.error == nil {
+                    // スケルトン表示
+                    skeletonContent
+                } else if let error = viewModel.error {
                     Section {
                         VStack(spacing: 16) {
                             Image(systemName: "exclamationmark.triangle")
@@ -133,18 +136,8 @@ struct YearDetailView: View {
                 }
             }
             .listStyle(.insetGrouped)
-            .overlay {
-                if viewModel.isLoading {
-                    VStack(spacing: 12) {
-                        ProgressView()
-                            .scaleEffect(1.5)
-                        Text("Loading...")
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
 
-            if !viewModel.isLoading && viewModel.error == nil {
+            if !viewModel.isLoading && viewModel.error == nil && !viewModel.monthlyStats.isEmpty {
                 yearNavigationButtons
                     .padding()
                     .padding(.bottom, 8)
@@ -285,6 +278,39 @@ struct YearDetailView: View {
             Color.clear
                 .frame(height: 60)
                 .listRowBackground(Color.clear)
+        }
+    }
+
+    @ViewBuilder
+    private var skeletonContent: some View {
+        Section("Monthly Distance") {
+            SkeletonChart()
+                .frame(height: 200)
+                .listRowBackground(ShimmerBackground())
+        }
+
+        Section("Distance Progress") {
+            SkeletonChart()
+                .frame(height: 200)
+                .listRowBackground(ShimmerBackground())
+        }
+
+        Section("Totals") {
+            ForEach(0..<4, id: \.self) { _ in
+                HStack {
+                    SkeletonRect()
+                        .frame(width: 80, height: 14)
+                    Spacer()
+                    SkeletonRect()
+                        .frame(width: 60, height: 14)
+                }
+            }
+        }
+
+        Section("Monthly Records") {
+            ForEach(0..<6, id: \.self) { _ in
+                SkeletonMonthRow()
+            }
         }
     }
 
