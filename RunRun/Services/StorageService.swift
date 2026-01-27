@@ -27,22 +27,26 @@ final class StorageService {
 
     /// 画像を正方形にクロップしてリサイズ（中央切り抜き）
     private func resizeImage(_ image: UIImage, maxSize: CGFloat) -> UIImage {
-        let size = image.size
+        guard let cgImage = image.cgImage else { return image }
 
-        // 1. 中央から正方形にクロップ
-        let minSide = min(size.width, size.height)
+        // cgImageのraw pixelサイズを使用（orientationは無視される）
+        let cgWidth = CGFloat(cgImage.width)
+        let cgHeight = CGFloat(cgImage.height)
+
+        // 1. 中央から正方形にクロップ（raw pixel座標で）
+        let minSide = min(cgWidth, cgHeight)
         let cropRect = CGRect(
-            x: (size.width - minSide) / 2,
-            y: (size.height - minSide) / 2,
+            x: (cgWidth - minSide) / 2,
+            y: (cgHeight - minSide) / 2,
             width: minSide,
             height: minSide
         )
 
-        guard let cgImage = image.cgImage?.cropping(to: cropRect) else {
+        guard let croppedCGImage = cgImage.cropping(to: cropRect) else {
             return image
         }
 
-        let croppedImage = UIImage(cgImage: cgImage, scale: image.scale, orientation: image.imageOrientation)
+        let croppedImage = UIImage(cgImage: croppedCGImage, scale: image.scale, orientation: image.imageOrientation)
 
         // 2. 指定サイズにリサイズ
         let targetSize = min(minSide, maxSize)
