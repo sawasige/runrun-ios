@@ -53,13 +53,8 @@ struct LeaderboardView: View {
 
     var body: some View {
         Group {
-            if isLoading {
-                VStack {
-                    filterSection
-                    Spacer()
-                    ProgressView()
-                    Spacer()
-                }
+            if isLoading && users.isEmpty {
+                LeaderboardSkeletonView(filterSection: AnyView(filterSection))
             } else if let error = errorMessage {
                 VStack {
                     filterSection
@@ -155,6 +150,9 @@ struct LeaderboardView: View {
             isLoading = true
         }
         errorMessage = nil
+
+        // デバッグ用遅延
+        await DebugSettings.applyLoadDelay()
 
         do {
             switch selectedFilter {

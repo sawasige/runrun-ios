@@ -17,8 +17,8 @@ struct WeeklyStatsView: View {
 
     var body: some View {
         Group {
-            if isLoading {
-                ProgressView()
+            if isLoading && weeklyStats.isEmpty {
+                WeeklyStatsSkeletonView()
             } else if let error = error {
                 errorView(error: error)
             } else if weeklyStats.isEmpty {
@@ -112,6 +112,9 @@ struct WeeklyStatsView: View {
             isLoading = true
         }
         error = nil
+
+        // デバッグ用遅延
+        await DebugSettings.applyLoadDelay()
 
         do {
             weeklyStats = try await firestoreService.getUserWeeklyStats(userId: userId, weeks: 12)

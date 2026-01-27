@@ -13,8 +13,8 @@ struct FriendsView: View {
 
     var body: some View {
         Group {
-            if isLoading {
-                ProgressView()
+            if isLoading && friends.isEmpty && friendRequests.isEmpty {
+                FriendsSkeletonView()
             } else {
                 List {
                     if !friendRequests.isEmpty {
@@ -76,6 +76,9 @@ struct FriendsView: View {
         if friends.isEmpty {
             isLoading = true
         }
+
+        // デバッグ用遅延
+        await DebugSettings.applyLoadDelay()
 
         do {
             async let friendsTask = firestoreService.getFriendProfiles(userId: userId)
