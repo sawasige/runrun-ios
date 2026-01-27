@@ -78,23 +78,6 @@
         }
       }
     },
-    "%d year_suffix" : {
-      "comment" : "Year format e.g. 2026年",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%d"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%d年"
-          }
-        }
-      }
-    },
     "%d new records synced" : {
       "localizations" : {
         "ja" : {
@@ -152,6 +135,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%d歩"
+          }
+        }
+      }
+    },
+    "%d year_suffix" : {
+      "comment" : "Year format e.g. 2026年",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d年"
           }
         }
       }
