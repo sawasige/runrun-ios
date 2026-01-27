@@ -108,20 +108,47 @@ struct YearDetailView: View {
     @ViewBuilder
     private var mainContent: some View {
         ZStack(alignment: .bottomTrailing) {
-            Group {
-                if viewModel.isLoading {
-                    loadingView
-                } else if let error = viewModel.error {
-                    errorView(error: error)
+            List {
+                if let error = viewModel.error {
+                    Section {
+                        VStack(spacing: 16) {
+                            Image(systemName: "exclamationmark.triangle")
+                                .font(.system(size: 50))
+                                .foregroundStyle(.orange)
+                            Text(error.localizedDescription)
+                                .multilineTextAlignment(.center)
+                                .foregroundStyle(.secondary)
+                            Button("Reload") {
+                                Task {
+                                    await viewModel.refresh()
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 40)
+                    }
                 } else {
-                    statsListView
+                    statsContent
+                }
+            }
+            .listStyle(.insetGrouped)
+            .overlay {
+                if viewModel.isLoading {
+                    VStack(spacing: 12) {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                        Text("Loading...")
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
 
-            // フローティング年切り替えボタン
-            yearNavigationButtons
-                .padding()
-                .padding(.bottom, 8)
+            if !viewModel.isLoading && viewModel.error == nil {
+                yearNavigationButtons
+                    .padding()
+                    .padding(.bottom, 8)
+            }
         }
         .navigationTitle(navigationTitle)
         .navigationBarTitleDisplayMode(.large)
@@ -168,7 +195,6 @@ struct YearDetailView: View {
             await viewModel.refresh()
         }
         .onChange(of: syncService.lastSyncedAt) { _, _ in
-            // 自分のデータの場合のみリロード
             if isOwnRecord {
                 Task {
                     await viewModel.refresh()
@@ -177,43 +203,9 @@ struct YearDetailView: View {
         }
     }
 
-    private var loadingView: some View {
-        VStack {
-            Spacer()
-            ProgressView()
-                .scaleEffect(1.5)
-            Text("Loading...")
-                .foregroundStyle(.secondary)
-                .padding(.top)
-            Spacer()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    private func errorView(error: Error) -> some View {
-        VStack(spacing: 16) {
-            Spacer()
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 50))
-                .foregroundStyle(.orange)
-            Text(error.localizedDescription)
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
-            Button("Reload") {
-                Task {
-                    await viewModel.refresh()
-                }
-            }
-            .buttonStyle(.borderedProminent)
-            Spacer()
-        }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    private var statsListView: some View {
-        List {
-            Section("Monthly Distance") {
+    @ViewBuilder
+    private var statsContent: some View {
+        Section("Monthly Distance") {
                 monthlyChart
                     .frame(height: 200)
             }
@@ -288,14 +280,12 @@ struct YearDetailView: View {
                 }
             }
 
-            // フローティングボタン分の余白
-            Section {
-                Color.clear
-                    .frame(height: 60)
-                    .listRowBackground(Color.clear)
-            }
+        // フローティングボタン分の余白
+        Section {
+            Color.clear
+                .frame(height: 60)
+                .listRowBackground(Color.clear)
         }
-        .listStyle(.insetGrouped)
     }
 
     private var monthlyChart: some View {
