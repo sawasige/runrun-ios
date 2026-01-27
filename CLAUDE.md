@@ -264,6 +264,7 @@ gh pr merge <PR番号> --merge --delete-branch
 ### コミット・PR作成時のルール
 - コミットメッセージは日本語で書く
 - PRのタイトル・本文も日本語で書く
+- Co-Authored-Byの署名は付けない
 
 ### リリース（GitHub Actions）
 
