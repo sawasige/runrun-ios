@@ -69,7 +69,28 @@ platform :ios do
   desc "スクリーンショット撮影 + フレーム追加"
   lane :marketing_screenshots do
     screenshots
+    copy_manual_screenshots
     add_frames
+  end
+
+  desc "手動スクリーンショットをコピー"
+  lane :copy_manual_screenshots do
+    manual_path = File.expand_path("../screenshots-manual", __FILE__)
+    screenshots_path = File.expand_path("../screenshots", __FILE__)
+
+    ["ja", "en-US"].each do |lang|
+      src_dir = "#{manual_path}/#{lang}"
+      dst_dir = "#{screenshots_path}/#{lang}"
+
+      next unless Dir.exist?(src_dir)
+
+      Dir.glob("#{src_dir}/*.png").each do |file|
+        FileUtils.cp(file, dst_dir)
+        UI.message("Copied: #{File.basename(file)}")
+      end
+    end
+
+    UI.success("手動スクリーンショットをコピーしました")
   end
 
   desc "フレーム付きスクリーンショットのプレビューHTMLを生成"
