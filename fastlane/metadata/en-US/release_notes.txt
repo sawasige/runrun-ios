@@ -1,9 +1,9 @@
 Thank you for using RunRun!
 
-【New Features】
-・Added breadcrumb navigation to run and month detail views
-　Quickly navigate by tapping year or month
-
 【Improvements】
-・Long press navigation buttons to keep them expanded
-・Minor improvements and stability enhancements
+- Changed loading indicators to skeleton animations
+- Auto-complete run details like heart rate and cadence
+
+【Bug Fixes】
+- Fixed navigation title not showing on year detail screen
+- Fixed avatar image crop position
