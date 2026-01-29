@@ -38,7 +38,6 @@ struct RunDetailView: View {
     @State private var splits: [Split] = []
     @State private var heartRateSamples: [HeartRateSample] = []
     @State private var routeSegments: [RouteSegment] = []
-    @State private var isLoadingRoute = false
     @State private var mapCameraPosition: MapCameraPosition = .automatic
     @State private var showFullScreenMap = false
     @State private var showShareSettings = false
@@ -122,7 +121,7 @@ struct RunDetailView: View {
         record = oldest
         resetAllData()
         Task {
-            await loadRouteData()
+            await loadHealthKitData()
             await loadAdjacentRecords()
         }
     }
@@ -132,7 +131,7 @@ struct RunDetailView: View {
         record = prev
         resetAllData()
         Task {
-            await loadRouteData()
+            await loadHealthKitData()
             await loadAdjacentRecords()
         }
     }
@@ -142,7 +141,7 @@ struct RunDetailView: View {
         record = next
         resetAllData()
         Task {
-            await loadRouteData()
+            await loadHealthKitData()
             await loadAdjacentRecords()
         }
     }
@@ -152,7 +151,7 @@ struct RunDetailView: View {
         record = latest
         resetAllData()
         Task {
-            await loadRouteData()
+            await loadHealthKitData()
             await loadAdjacentRecords()
         }
     }
@@ -282,43 +281,71 @@ struct RunDetailView: View {
                     .padding(.vertical, 8)
                 }
 
-                // 地図セクション（自分の記録のみ）
-                if isOwnRecord {
-                    if !routeCoordinates.isEmpty {
-                        Section {
-                            ZStack(alignment: .bottomTrailing) {
-                                mapContent(isExpanded: false)
-                                    .allowsHitTesting(false)
+                // 地図セクション（自分の記録かつルートがある場合のみ）
+                if isOwnRecord && !routeCoordinates.isEmpty {
+                    Section {
+                        ZStack(alignment: .bottomTrailing) {
+                            mapContent(isExpanded: false)
+                                .allowsHitTesting(false)
 
-                                Button {
-                                    showFullScreenMap = true
-                                } label: {
-                                    Image(systemName: "arrow.up.left.and.arrow.down.right")
-                                        .font(.caption)
-                                        .padding(8)
-                                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
-                                }
-                                .padding(8)
-                                .accessibilityIdentifier("expand_map_button")
+                            Button {
+                                showFullScreenMap = true
+                            } label: {
+                                Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                    .font(.caption)
+                                    .padding(8)
+                                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
                             }
-                            .frame(height: 250)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                            .listRowInsets(EdgeInsets())
-                            .listRowBackground(Color.clear)
+                            .padding(8)
+                            .accessibilityIdentifier("expand_map_button")
                         }
-                    } else if isLoadingRoute {
-                        Section {
-                            HStack {
-                                Spacer()
-                                ProgressView()
-                                    .padding()
-                                Spacer()
-                            }
+                        .frame(height: 250)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                    }
+                }
+
+                // 心拍数セクション（Firestoreから取得）
+                if record.averageHeartRate != nil || record.maxHeartRate != nil || record.minHeartRate != nil {
+                    Section("Heart Rate") {
+                        if let avg = record.formattedAverageHeartRate {
+                            LabeledContent("Average", value: avg)
+                        }
+                        if let max = record.formattedMaxHeartRate {
+                            LabeledContent("Max", value: max)
+                        }
+                        if let min = record.formattedMinHeartRate {
+                            LabeledContent("Min", value: min)
                         }
                     }
                 }
 
-                // スプリットセクション（自分の記録のみ）
+                // 効率セクション（Firestoreから取得）
+                if record.cadence != nil || record.strideLength != nil || record.stepCount != nil {
+                    Section("Efficiency") {
+                        if let cadence = record.formattedCadence {
+                            LabeledContent("Cadence", value: cadence)
+                        }
+                        if let stride = record.formattedStrideLength {
+                            LabeledContent("Stride", value: stride)
+                        }
+                        if let steps = record.formattedStepCount {
+                            LabeledContent("Steps", value: steps)
+                        }
+                    }
+                }
+
+                // エネルギーセクション（Firestoreから取得）
+                if let calories = record.formattedCalories {
+                    Section("Energy") {
+                        LabeledContent("Calories Burned", value: calories)
+                    }
+                }
+
+                // --- 以下はHealthKitから取得（後から表示） ---
+
+                // スプリットセクション（自分の記録のみ、HealthKitから取得）
                 if isOwnRecord && !splits.isEmpty {
                     Section("Splits") {
                         ForEach(splits) { split in
@@ -351,48 +378,11 @@ struct RunDetailView: View {
                     }
                 }
 
-                // 心拍数推移グラフ（自分の記録のみ）
+                // 心拍数推移グラフ（自分の記録のみ、HealthKitから取得）
                 if isOwnRecord && !heartRateSamples.isEmpty {
                     Section("Heart Rate Graph") {
                         HeartRateChartView(samples: heartRateSamples)
                             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                    }
-                }
-
-                // 心拍数セクション
-                if record.averageHeartRate != nil || record.maxHeartRate != nil || record.minHeartRate != nil {
-                    Section("Heart Rate") {
-                        if let avg = record.formattedAverageHeartRate {
-                            LabeledContent("Average", value: avg)
-                        }
-                        if let max = record.formattedMaxHeartRate {
-                            LabeledContent("Max", value: max)
-                        }
-                        if let min = record.formattedMinHeartRate {
-                            LabeledContent("Min", value: min)
-                        }
-                    }
-                }
-
-                // 効率セクション
-                if record.cadence != nil || record.strideLength != nil || record.stepCount != nil {
-                    Section("Efficiency") {
-                        if let cadence = record.formattedCadence {
-                            LabeledContent("Cadence", value: cadence)
-                        }
-                        if let stride = record.formattedStrideLength {
-                            LabeledContent("Stride", value: stride)
-                        }
-                        if let steps = record.formattedStepCount {
-                            LabeledContent("Steps", value: steps)
-                        }
-                    }
-                }
-
-                // エネルギーセクション
-                if let calories = record.formattedCalories {
-                    Section("Energy") {
-                        LabeledContent("Calories Burned", value: calories)
                     }
                 }
 
@@ -453,7 +443,7 @@ struct RunDetailView: View {
             AnalyticsService.logEvent("view_run_detail", parameters: [
                 "is_own_record": isOwnRecord
             ])
-            await loadRouteData()
+            await loadHealthKitData()
             await loadAdjacentRecords()
         }
         .onDisappear {
@@ -531,21 +521,19 @@ struct RunDetailView: View {
         .mapStyle(.standard(elevation: .realistic))
     }
 
-    private func loadRouteData() async {
-        isLoadingRoute = true
-        defer { isLoadingRoute = false }
-
+    private func loadHealthKitData() async {
         // スクリーンショットモードならモックデータを使用
         if ScreenshotMode.isEnabled {
-            routeSegments = MockDataProvider.imperialPalaceRouteSegments
-            // routeLocationsも設定（地図表示の条件に必要）
-            routeLocations = routeSegments.flatMap { segment in
-                segment.coordinates.map { CLLocation(latitude: $0.latitude, longitude: $0.longitude) }
+            withAnimation {
+                routeSegments = MockDataProvider.imperialPalaceRouteSegments
+                routeLocations = routeSegments.flatMap { segment in
+                    segment.coordinates.map { CLLocation(latitude: $0.latitude, longitude: $0.longitude) }
+                }
+                mapCameraPosition = .region(MKCoordinateRegion(
+                    center: MockDataProvider.routeCenter,
+                    span: MKCoordinateSpan(latitudeDelta: 0.025, longitudeDelta: 0.025)
+                ))
             }
-            mapCameraPosition = .region(MKCoordinateRegion(
-                center: MockDataProvider.routeCenter,
-                span: MKCoordinateSpan(latitudeDelta: 0.025, longitudeDelta: 0.025)
-            ))
             return
         }
 
@@ -569,24 +557,29 @@ struct RunDetailView: View {
             return
         }
 
-        // ロケーション配列を保存
-        routeLocations = locations
-        heartRateSamples = hrSamples
-
         // スプリットを計算（心拍数データ付き）
         var calculatedSplits = healthKitService.calculateSplits(from: locations)
         calculatedSplits = healthKitService.enrichSplitsWithHeartRate(
             splits: calculatedSplits,
             heartRateSamples: hrSamples
         )
-        splits = calculatedSplits
 
         // ルートセグメントを計算（ペース別色分け用、10m単位）
-        routeSegments = healthKitService.calculateRouteSegments(from: locations, segmentDistance: 10)
+        let segments = healthKitService.calculateRouteSegments(from: locations, segmentDistance: 10)
 
         // カメラ位置を設定（ルート全体が表示されるように）
-        if let region = regionToFitCoordinates(routeCoordinates) {
-            mapCameraPosition = .region(region)
+        let coordinates = locations.map { $0.coordinate }
+        let region = regionToFitCoordinates(coordinates)
+
+        // アニメーション付きで状態を更新
+        withAnimation {
+            routeLocations = locations
+            heartRateSamples = hrSamples
+            splits = calculatedSplits
+            routeSegments = segments
+            if let region = region {
+                mapCameraPosition = .region(region)
+            }
         }
 
         // Firestoreの詳細データを補完
