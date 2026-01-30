@@ -1,9 +1,1 @@
-Thank you for using RunRun!
-
-【Improvements】
-- Changed loading indicators to skeleton animations
-- Auto-complete run details like heart rate and cadence
-
-【Bug Fixes】
-- Fixed navigation title not showing on year detail screen
-- Fixed avatar image crop position
+Minor improvements and bug fixes.
