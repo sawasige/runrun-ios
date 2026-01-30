@@ -14,47 +14,52 @@
   },
   "groups" : [
     {
-      "blend-mode" : "normal",
-      "blur-material" : 0.5,
       "layers" : [
         {
           "fill" : {
-            "solid" : "extended-gray:1.00000,1.00000"
+            "solid" : "srgb:1.00000,1.00000,1.00000,1.00000"
           },
-          "glass" : true,
-          "image-name" : "runner.png",
+          "image-name" : "runner.svg",
           "name" : "runner",
           "position" : {
-            "scale" : 1,
+            "scale" : 1.1,
             "translation-in-points" : [
-              139.66437632010457,
-              41.6484375
-            ]
-          }
-        },
-        {
-          "fill" : {
-            "solid" : "extended-gray:1.00000,1.00000"
-          },
-          "glass" : true,
-          "image-name" : "runner 3.png",
-          "name" : "friend",
-          "opacity" : 0.9,
-          "position" : {
-            "scale" : 0.8,
-            "translation-in-points" : [
-              -191.7781341866613,
-              -125.53282258838044
+              142.20341129285055,
+              47.6484375
             ]
           }
         }
       ],
-      "lighting" : "individual",
       "shadow" : {
         "kind" : "neutral",
         "opacity" : 0.5
       },
-      "specular" : true,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    },
+    {
+      "layers" : [
+        {
+          "fill" : {
+            "solid" : "srgb:1.00000,1.00000,1.00000,1.00000"
+          },
+          "image-name" : "friend.svg",
+          "name" : "friend",
+          "position" : {
+            "scale" : 0.8,
+            "translation-in-points" : [
+              -191.83382859413837,
+              -124.87770842524344
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
       "translucency" : {
         "enabled" : true,
         "value" : 0.5
