@@ -13,8 +13,8 @@ mkdir -p "$ASSETS_DIR"
 mkdir -p "$ASSETS_EN_DIR"
 
 echo "Copying logo..."
-cp "$PROJECT_ROOT/RunRun/Assets.xcassets/Logo.imageset/Logo.png" "$ASSETS_DIR/logo.png"
-cp "$PROJECT_ROOT/RunRun/Assets.xcassets/Logo.imageset/Logo.png" "$ASSETS_EN_DIR/logo.png"
+cp "$PROJECT_ROOT/RunRun/Assets.xcassets/Logo.imageset/RunRun-iOS-Default-1024x1024@1x.png" "$ASSETS_DIR/logo.png"
+cp "$PROJECT_ROOT/RunRun/Assets.xcassets/Logo.imageset/RunRun-iOS-Default-1024x1024@1x.png" "$ASSETS_EN_DIR/logo.png"
 
 echo "Copying Japanese screenshots..."
 cp "$PROJECT_ROOT/fastlane/screenshots/ja/iPhone 17 Pro Max-01_Timeline_framed.png" "$ASSETS_DIR/screenshot1.png"
