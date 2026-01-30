@@ -1,1 +1,3 @@
+Thank you for using RunRun!
+
 Minor improvements and bug fixes.
