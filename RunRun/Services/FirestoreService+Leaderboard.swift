@@ -110,22 +110,23 @@ extension FirestoreService {
             return []
         }
 
-        // 該当月のラン記録を全て取得
-        let snapshot = try await runsCollection
-            .whereField("date", isGreaterThanOrEqualTo: startOfMonth)
-            .whereField("date", isLessThan: startOfNextMonth)
-            .getDocuments()
-
-        // フレンドのみフィルタして集計
+        // フレンドのラン記録のみ取得（30件ずつ分割）
         var userStats: [String: (distance: Double, runs: Int)] = [:]
-        for doc in snapshot.documents {
-            let data = doc.data()
-            guard let odUserId = data["userId"] as? String,
-                  allIds.contains(odUserId),
-                  let distance = data["distanceKm"] as? Double else { continue }
+        for chunk in allIds.chunked(into: 30) {
+            let snapshot = try await runsCollection
+                .whereField("userId", in: chunk)
+                .whereField("date", isGreaterThanOrEqualTo: startOfMonth)
+                .whereField("date", isLessThan: startOfNextMonth)
+                .getDocuments()
 
-            let current = userStats[odUserId] ?? (0, 0)
-            userStats[odUserId] = (current.distance + distance, current.runs + 1)
+            for doc in snapshot.documents {
+                let data = doc.data()
+                guard let odUserId = data["userId"] as? String,
+                      let distance = data["distanceKm"] as? Double else { continue }
+
+                let current = userStats[odUserId] ?? (0, 0)
+                userStats[odUserId] = (current.distance + distance, current.runs + 1)
+            }
         }
 
         let userIdsWithRuns = Array(userStats.keys)
