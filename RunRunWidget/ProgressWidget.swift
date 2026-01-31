@@ -24,7 +24,8 @@ struct ProgressProvider: TimelineProvider {
                 CumulativeDataPoint(day: 20, distance: 40)
             ],
             totalDistance: 35.0,
-            useMetric: defaultUseMetric
+            useMetric: defaultUseMetric,
+            isSynced: true
         )
     }
 
@@ -48,7 +49,8 @@ struct ProgressProvider: TimelineProvider {
             cumulativeDistances: data?.cumulativeDistances ?? [],
             previousMonthCumulativeDistances: data?.previousMonthCumulativeDistances ?? [],
             totalDistance: data?.totalDistance ?? 0,
-            useMetric: data?.useMetric ?? defaultUseMetric
+            useMetric: data?.useMetric ?? defaultUseMetric,
+            isSynced: data != nil
         )
     }
 }
@@ -61,6 +63,7 @@ struct ProgressEntry: TimelineEntry {
     let previousMonthCumulativeDistances: [CumulativeDataPoint]
     let totalDistance: Double
     let useMetric: Bool
+    let isSynced: Bool  // データが同期済みかどうか
 }
 
 // MARK: - Widget View
@@ -85,7 +88,7 @@ struct ProgressWidgetEntryView: View {
     }
 
     private var hasData: Bool {
-        !entry.cumulativeDistances.isEmpty
+        entry.isSynced
     }
 
     /// 現在の月の日曜日の日（Int）を返す
@@ -304,6 +307,7 @@ struct ProgressWidget: Widget {
             CumulativeDataPoint(day: 30, distance: 50.0)
         ],
         totalDistance: 38.2,
-        useMetric: true
+        useMetric: true,
+        isSynced: true
     )
 }
