@@ -9,7 +9,7 @@ struct CalendarProvider: TimelineProvider {
     }
 
     func placeholder(in context: Context) -> CalendarEntry {
-        CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 12, 15], runCount: 6, totalDistance: 42.5, totalDuration: 3600 * 4, useMetric: defaultUseMetric)
+        CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 12, 15], runCount: 6, totalDistance: 42.5, totalDuration: 3600 * 4, useMetric: defaultUseMetric, isSynced: true)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (CalendarEntry) -> Void) {
@@ -33,7 +33,8 @@ struct CalendarProvider: TimelineProvider {
             runCount: data?.runCount ?? 0,
             totalDistance: data?.totalDistance ?? 0,
             totalDuration: data?.totalDuration ?? 0,
-            useMetric: data?.useMetric ?? defaultUseMetric
+            useMetric: data?.useMetric ?? defaultUseMetric,
+            isSynced: data != nil
         )
     }
 }
@@ -47,6 +48,7 @@ struct CalendarEntry: TimelineEntry {
     let totalDistance: Double
     let totalDuration: TimeInterval
     let useMetric: Bool
+    let isSynced: Bool  // データが同期済みかどうか
 }
 
 // MARK: - Widget View
@@ -135,8 +137,7 @@ struct CalendarWidgetEntryView: View {
     }
 
     private var hasData: Bool {
-        // データが読み込まれているかチェック（距離0かつラン日なしはデータ未同期とみなす）
-        !(entry.runDays.isEmpty && entry.totalDistance == 0)
+        entry.isSynced
     }
 
     var body: some View {
@@ -439,17 +440,17 @@ struct CalendarWidget: Widget {
 #Preview("Small", as: .systemSmall) {
     CalendarWidget()
 } timeline: {
-    CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 10, 12, 15, 18, 20], runCount: 9, totalDistance: 52.3, totalDuration: 3600 * 5 + 1800, useMetric: true)
+    CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 10, 12, 15, 18, 20], runCount: 9, totalDistance: 52.3, totalDuration: 3600 * 5 + 1800, useMetric: true, isSynced: true)
 }
 
 #Preview("Medium", as: .systemMedium) {
     CalendarWidget()
 } timeline: {
-    CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 10, 12, 15, 18, 20], runCount: 9, totalDistance: 52.3, totalDuration: 3600 * 5 + 1800, useMetric: true)
+    CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 10, 12, 15, 18, 20], runCount: 9, totalDistance: 52.3, totalDuration: 3600 * 5 + 1800, useMetric: true, isSynced: true)
 }
 
 #Preview("Large", as: .systemLarge) {
     CalendarWidget()
 } timeline: {
-    CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 10, 12, 15, 18, 20], runCount: 9, totalDistance: 52.3, totalDuration: 3600 * 5 + 1800, useMetric: true)
+    CalendarEntry(date: Date(), runDays: [1, 3, 5, 8, 10, 12, 15, 18, 20], runCount: 9, totalDistance: 52.3, totalDuration: 3600 * 5 + 1800, useMetric: true, isSynced: true)
 }
