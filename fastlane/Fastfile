@@ -2,11 +2,12 @@ default_platform(:ios)
 
 platform :ios do
   desc "メタデータとスクリーンショットをアップロード"
-  lane :upload_metadata do
+  lane :upload_metadata do |options|
     setup_api_key
     deliver(
       skip_binary_upload: true,
       skip_app_version_update: true,
+      skip_screenshots: options[:skip_screenshots] || false,
       overwrite_screenshots: true,
       force: true,
       run_precheck_before_submit: false
