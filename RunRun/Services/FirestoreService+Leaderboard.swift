@@ -53,19 +53,45 @@ extension FirestoreService {
             userStats[userId] = (current.distance + distance, current.runs + 1)
         }
 
-        // ユーザープロフィールを取得して結合
+        // 距離でソートして上位のユーザーIDを取得
+        let topUserIds = userStats
+            .sorted { $0.value.distance > $1.value.distance }
+            .prefix(limit)
+            .map { $0.key }
+
+        guard !topUserIds.isEmpty else { return [] }
+
+        // 上位ユーザーのプロフィールをバッチ取得
+        let profilesSnapshot = try await usersCollection
+            .whereField(FieldPath.documentID(), in: topUserIds)
+            .getDocuments()
+
+        // プロフィールと統計を結合
         var profiles: [UserProfile] = []
-        for (userId, stats) in userStats {
-            if let profile = try? await getUserProfile(userId: userId) {
-                var monthlyProfile = profile
-                monthlyProfile.totalDistanceKm = stats.distance
-                monthlyProfile.totalRuns = stats.runs
-                profiles.append(monthlyProfile)
+        for doc in profilesSnapshot.documents {
+            let data = doc.data()
+            guard let stats = userStats[doc.documentID] else { continue }
+
+            var avatarURL: URL?
+            if let urlString = data["avatarURL"] as? String {
+                avatarURL = URL(string: urlString)
             }
+
+            let profile = UserProfile(
+                id: doc.documentID,
+                displayName: data["displayName"] as? String ?? "Runner",
+                email: data["email"] as? String,
+                iconName: data["iconName"] as? String ?? "figure.run",
+                avatarURL: avatarURL,
+                createdAt: (data["createdAt"] as? Timestamp)?.dateValue() ?? Date(),
+                totalDistanceKm: stats.distance,
+                totalRuns: stats.runs
+            )
+            profiles.append(profile)
         }
 
-        // 距離でソート
-        return profiles.sorted { $0.totalDistanceKm > $1.totalDistanceKm }.prefix(limit).map { $0 }
+        // 距離でソート（バッチ取得は順序を保証しないため）
+        return profiles.sorted { $0.totalDistanceKm > $1.totalDistanceKm }
     }
 }
 
@@ -102,14 +128,36 @@ extension FirestoreService {
             userStats[odUserId] = (current.distance + distance, current.runs + 1)
         }
 
-        // ユーザープロフィールを取得して結合
+        let userIdsWithRuns = Array(userStats.keys)
+        guard !userIdsWithRuns.isEmpty else { return [] }
+
+        // プロフィールをバッチ取得（30件ずつ分割）
         var profiles: [UserProfile] = []
-        for (odUserId, stats) in userStats {
-            if let profile = try? await getUserProfile(userId: odUserId) {
-                var monthlyProfile = profile
-                monthlyProfile.totalDistanceKm = stats.distance
-                monthlyProfile.totalRuns = stats.runs
-                profiles.append(monthlyProfile)
+        for chunk in userIdsWithRuns.chunked(into: 30) {
+            let profilesSnapshot = try await usersCollection
+                .whereField(FieldPath.documentID(), in: chunk)
+                .getDocuments()
+
+            for doc in profilesSnapshot.documents {
+                let data = doc.data()
+                guard let stats = userStats[doc.documentID] else { continue }
+
+                var avatarURL: URL?
+                if let urlString = data["avatarURL"] as? String {
+                    avatarURL = URL(string: urlString)
+                }
+
+                let profile = UserProfile(
+                    id: doc.documentID,
+                    displayName: data["displayName"] as? String ?? "Runner",
+                    email: data["email"] as? String,
+                    iconName: data["iconName"] as? String ?? "figure.run",
+                    avatarURL: avatarURL,
+                    createdAt: (data["createdAt"] as? Timestamp)?.dateValue() ?? Date(),
+                    totalDistanceKm: stats.distance,
+                    totalRuns: stats.runs
+                )
+                profiles.append(profile)
             }
         }
 
