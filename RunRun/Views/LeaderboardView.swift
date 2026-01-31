@@ -56,22 +56,32 @@ struct LeaderboardView: View {
             if isLoading && users.isEmpty {
                 LeaderboardSkeletonView(filterSection: AnyView(filterSection))
             } else if let error = errorMessage {
-                VStack {
-                    filterSection
+                List {
+                    Section {
+                        filterSection
+                            .listRowInsets(EdgeInsets())
+                            .listRowBackground(Color.clear)
+                    }
                     ContentUnavailableView(
                         "Loading Error",
                         systemImage: "exclamationmark.triangle",
                         description: Text(error)
                     )
+                    .listRowBackground(Color.clear)
                 }
             } else if users.isEmpty {
-                VStack {
-                    filterSection
+                List {
+                    Section {
+                        filterSection
+                            .listRowInsets(EdgeInsets())
+                            .listRowBackground(Color.clear)
+                    }
                     ContentUnavailableView(
                         "No Rankings",
                         systemImage: "trophy",
                         description: Text("No data for this month")
                     )
+                    .listRowBackground(Color.clear)
                 }
             } else {
                 List {
