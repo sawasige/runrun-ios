@@ -7,62 +7,121 @@ struct FriendsView: View {
     @State private var friends: [UserProfile] = []
     @State private var friendRequests: [FriendRequest] = []
     @State private var isLoading = true
-    @State private var showingSearch = false
+
+    // 検索モード
+    @State private var isSearching = false
+    @State private var searchText = ""
+    @State private var searchResults: [UserProfile] = []
+    @State private var sentRequests: Set<String> = []
+    @State private var isSearchInProgress = false
 
     private let firestoreService = FirestoreService.shared
 
     var body: some View {
         Group {
-            if isLoading && friends.isEmpty && friendRequests.isEmpty {
+            if isLoading && friends.isEmpty && friendRequests.isEmpty && !isSearching {
                 FriendsSkeletonView()
             } else {
                 List {
-                    if !friendRequests.isEmpty {
-                        Section("Requests") {
-                            ForEach(friendRequests) { request in
-                                FriendRequestRow(
-                                    request: request,
-                                    onAccept: { await acceptRequest(request) },
-                                    onReject: { await rejectRequest(request) }
-                                )
+                    if isSearching {
+                        // 検索結果
+                        if searchText.isEmpty {
+                            // 検索文字を入力していない場合は何も表示しない
+                        } else if isSearchInProgress {
+                            // 検索中
+                            HStack {
+                                Spacer()
+                                ProgressView()
+                                    .padding()
+                                Spacer()
                             }
-                        }
-                    }
-
-                    Section("Friends (\(friends.count))") {
-                        if friends.isEmpty {
-                            Text("No friends yet")
-                                .foregroundStyle(.secondary)
+                            .listRowBackground(Color.clear)
+                        } else if searchResults.isEmpty {
+                            // 検索完了だが結果なし
+                            ContentUnavailableView(
+                                String(localized: "No Users Found"),
+                                systemImage: "magnifyingglass",
+                                description: Text("Try a different search term")
+                            )
+                            .listRowBackground(Color.clear)
                         } else {
-                            ForEach(friends) { friend in
-                                NavigationLink(value: ScreenType.profile(friend)) {
-                                    FriendRow(friend: friend)
+                            // 検索結果あり
+                            ForEach(searchResults) { user in
+                                NavigationLink(value: ScreenType.profile(user)) {
+                                    UserSearchRow(
+                                        user: user,
+                                        isFriend: friends.contains { $0.id == user.id },
+                                        requestSent: sentRequests.contains(user.id ?? ""),
+                                        onSendRequest: { await sendRequest(to: user) }
+                                    )
                                 }
                             }
-                            .onDelete(perform: deleteFriend)
+                        }
+                    } else {
+                        // フレンド一覧
+                        if !friendRequests.isEmpty {
+                            Section("Requests") {
+                                ForEach(friendRequests) { request in
+                                    FriendRequestRow(
+                                        request: request,
+                                        onAccept: { await acceptRequest(request) },
+                                        onReject: { await rejectRequest(request) }
+                                    )
+                                }
+                            }
+                        }
+
+                        Section("Friends (\(friends.count))") {
+                            if friends.isEmpty {
+                                Text("No friends yet")
+                                    .foregroundStyle(.secondary)
+                            } else {
+                                ForEach(friends) { friend in
+                                    NavigationLink(value: ScreenType.profile(friend)) {
+                                        FriendRow(friend: friend)
+                                    }
+                                }
+                                .onDelete(perform: deleteFriend)
+                            }
                         }
                     }
                 }
             }
         }
         .navigationTitle("Friends")
+        .searchable(text: $searchText, isPresented: $isSearching, prompt: Text("Search users"))
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
-                    showingSearch = true
+                    isSearching = true
                 } label: {
                     Image(systemName: "person.badge.plus")
                 }
             }
-        }
-        .sheet(isPresented: $showingSearch) {
-            UserSearchView()
         }
         .refreshable {
             await loadData()
         }
         .task {
             await loadData()
+        }
+        .task(id: searchText) {
+            guard isSearching, !searchText.isEmpty else {
+                searchResults = []
+                isSearchInProgress = false
+                return
+            }
+            isSearchInProgress = true
+            try? await Task.sleep(for: .milliseconds(300))
+            guard !Task.isCancelled else { return }
+            await performSearch(query: searchText)
+            isSearchInProgress = false
+        }
+        .onChange(of: isSearching) { _, newValue in
+            if !newValue {
+                searchText = ""
+                searchResults = []
+            }
         }
         .onAppear {
             AnalyticsService.logScreenView("Friends")
@@ -138,6 +197,42 @@ struct FriendsView: View {
                 AnalyticsService.logEvent("remove_friend")
                 await loadData()
             }
+        }
+    }
+
+    // MARK: - Search
+
+    private func performSearch(query: String) async {
+        guard !query.isEmpty else { return }
+        guard let userId = authService.user?.uid else { return }
+
+        do {
+            let results = try await firestoreService.searchUsers(
+                query: query,
+                excludeUserId: userId
+            )
+            guard !Task.isCancelled else { return }
+            searchResults = results
+        } catch {
+            print("Search error: \(error)")
+        }
+    }
+
+    private func sendRequest(to user: UserProfile) async {
+        guard let userId = authService.user?.uid,
+              let toUserId = user.id,
+              let profile = try? await firestoreService.getUserProfile(userId: userId) else { return }
+
+        do {
+            try await firestoreService.sendFriendRequest(
+                fromUserId: userId,
+                fromDisplayName: profile.displayName,
+                toUserId: toUserId
+            )
+            AnalyticsService.logEvent("send_friend_request")
+            sentRequests.insert(toUserId)
+        } catch {
+            print("Send request error: \(error)")
         }
     }
 }
