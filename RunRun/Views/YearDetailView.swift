@@ -695,7 +695,7 @@ private struct ChartTooltip: View {
                 .fontWeight(.semibold)
             if let previousValue {
                 HStack(spacing: 2) {
-                    Text("前年")
+                    Text("Prev year")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                     Text(previousValue)
