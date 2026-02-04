@@ -1,9 +1,11 @@
 import SwiftUI
 import FirebaseAuth
 import Charts
+import UIKit
 
 struct ProfileView: View {
     @EnvironmentObject private var authService: AuthenticationService
+    @Environment(\.navigationAction) private var navigationAction
     let user: UserProfile
 
     @AppStorage("units.distance") private var useMetric = UnitFormatter.defaultUseMetric
@@ -15,6 +17,12 @@ struct ProfileView: View {
     @State private var showingProfileEdit = false
     @State private var currentProfile: UserProfile?
     @State private var showShareSettings = false
+
+    // チャートタップ状態
+    @State private var selectedYear: Int?
+    @State private var draggingYear: Int?
+    @State private var tooltipPosition: CGPoint?
+    private let hapticFeedback = UIImpactFeedbackGenerator(style: .light)
 
     // 統計データ
     @State private var yearlyStats: [YearlyStats] = []
@@ -345,8 +353,24 @@ struct ProfileView: View {
 
     // MARK: - Views
 
+    private var highlightedYear: Int? {
+        draggingYear ?? selectedYear
+    }
+
+    private var sortedYearlyStats: [YearlyStats] {
+        yearlyStats.suffix(12).sorted { $0.year < $1.year }
+    }
+
     private var yearlyChart: some View {
-        Chart(yearlyStats.suffix(12).sorted { $0.year < $1.year }) { stats in
+        Chart(sortedYearlyStats) { stats in
+            // ハイライト
+            if highlightedYear == stats.year {
+                RectangleMark(
+                    x: .value(String(localized: "Year"), stats.shortFormattedYear)
+                )
+                .foregroundStyle(Color.accentColor.opacity(0.15))
+            }
+
             BarMark(
                 x: .value(String(localized: "Year"), stats.shortFormattedYear),
                 y: .value(String(localized: "Distance"), stats.chartDistance(useMetric: useMetric))
@@ -360,6 +384,83 @@ struct ProfileView: View {
             }
         }
         .chartYAxisLabel(UnitFormatter.distanceUnit(useMetric: useMetric))
+        .chartOverlay { proxy in
+            GeometryReader { geometry in
+                let bounds = geometry.frame(in: .local)
+                ZStack(alignment: .topLeading) {
+                    Rectangle()
+                        .fill(.clear)
+                        .contentShape(Rectangle())
+                        .gesture(
+                            DragGesture(minimumDistance: 0)
+                                .onChanged { value in
+                                    guard bounds.contains(value.location) else {
+                                        draggingYear = nil
+                                        return
+                                    }
+                                    guard let yearLabel: String = proxy.value(atX: value.location.x) else {
+                                        draggingYear = nil
+                                        return
+                                    }
+                                    guard let stats = sortedYearlyStats.first(where: { $0.shortFormattedYear == yearLabel }),
+                                          stats.runCount > 0 else {
+                                        draggingYear = nil
+                                        return
+                                    }
+                                    if draggingYear != stats.year {
+                                        draggingYear = stats.year
+                                        hapticFeedback.impactOccurred()
+                                    }
+                                    if let xPos = proxy.position(forX: stats.shortFormattedYear) {
+                                        tooltipPosition = CGPoint(x: xPos, y: 8)
+                                    }
+                                }
+                                .onEnded { value in
+                                    defer { draggingYear = nil }
+
+                                    guard bounds.contains(value.location) else {
+                                        selectedYear = nil
+                                        tooltipPosition = nil
+                                        return
+                                    }
+                                    guard let yearLabel: String = proxy.value(atX: value.location.x) else {
+                                        selectedYear = nil
+                                        tooltipPosition = nil
+                                        return
+                                    }
+                                    guard let stats = sortedYearlyStats.first(where: { $0.shortFormattedYear == yearLabel }),
+                                          stats.runCount > 0 else {
+                                        selectedYear = nil
+                                        tooltipPosition = nil
+                                        return
+                                    }
+
+                                    if selectedYear == stats.year {
+                                        navigationAction?.append(ScreenType.yearDetail(user: user, initialYear: stats.year))
+                                        selectedYear = nil
+                                        tooltipPosition = nil
+                                    } else {
+                                        selectedYear = stats.year
+                                        if let xPos = proxy.position(forX: stats.shortFormattedYear) {
+                                            tooltipPosition = CGPoint(x: xPos, y: 8)
+                                        }
+                                    }
+                                }
+                        )
+
+                    // ツールチップ
+                    if let year = highlightedYear,
+                       let position = tooltipPosition,
+                       let stats = sortedYearlyStats.first(where: { $0.year == year }) {
+                        ProfileChartTooltip(
+                            title: stats.shortFormattedYear,
+                            value: stats.formattedTotalDistance(useMetric: useMetric)
+                        )
+                        .position(x: position.x, y: position.y)
+                    }
+                }
+            }
+        }
     }
 
     @ViewBuilder
@@ -633,6 +734,25 @@ private struct YearlyStatsRow: View {
                 .foregroundStyle(stats.totalDistanceInKilometers > 0 ? .primary : .secondary)
         }
         .padding(.vertical, 4)
+    }
+}
+
+private struct ProfileChartTooltip: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        VStack(spacing: 2) {
+            Text(title)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.caption)
+                .fontWeight(.semibold)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
     }
 }
 
