@@ -1,6 +1,7 @@
 import SwiftUI
 import Charts
 import FirebaseAuth
+import UIKit
 
 struct MonthDetailView: View {
     @StateObject private var viewModel: MonthDetailViewModel
@@ -13,6 +14,17 @@ struct MonthDetailView: View {
     @State private var hasLoadedOnce = false
     @State private var showShareSettings = false
     @State private var showNavBarTitle = false
+
+    // チャートタップ状態
+    @State private var selectedDay: Int?
+    @State private var draggingDay: Int?
+    @State private var tooltipPosition: CGPoint?
+    private let hapticFeedback = UIImpactFeedbackGenerator(style: .light)
+
+    /// 現在ハイライトすべき日（ドラッグ中 or 選択中）
+    private var highlightedDay: Int? {
+        draggingDay ?? selectedDay
+    }
 
     private var isOwnRecord: Bool {
         if ScreenshotMode.isEnabled {
@@ -122,6 +134,125 @@ struct MonthDetailView: View {
             }
         }
         return sundays
+    }
+
+    /// 指定日にランがあるかどうか
+    private func canNavigateToDay(_ day: Int) -> Bool {
+        let calendar = Calendar.current
+        return viewModel.records.contains { record in
+            let recordDay = calendar.component(.day, from: record.date)
+            return recordDay == day
+        }
+    }
+
+    /// 指定日のランレコードを取得
+    private func recordForDay(_ day: Int) -> RunningRecord? {
+        let calendar = Calendar.current
+        return viewModel.records.first { record in
+            let recordDay = calendar.component(.day, from: record.date)
+            return recordDay == day
+        }
+    }
+
+    /// 指定日の距離を取得（km）
+    private func distanceForDay(_ day: Int) -> Double {
+        if let record = recordForDay(day) {
+            return record.distanceInKilometers
+        }
+        return 0
+    }
+
+    /// 指定日末時点の累計距離を取得（km）
+    private func cumulativeDistanceAtDay(_ day: Int) -> Double {
+        if let data = viewModel.cumulativeDistanceData.last(where: { $0.day <= day }) {
+            return data.distance
+        }
+        return 0
+    }
+
+    /// 前月同日末時点の累計距離を取得（km）
+    private func previousMonthCumulativeDistanceAtDay(_ day: Int) -> Double {
+        if let data = viewModel.previousMonthCumulativeData.last(where: { $0.day <= day }) {
+            return data.distance
+        }
+        return 0
+    }
+
+    /// 日付から「◯日」の文字列を取得
+    private func dayLabel(_ day: Int) -> String {
+        String(format: String(localized: "%d day_suffix", comment: "Day format e.g. 15日"), day)
+    }
+
+    /// 現在の月の日数を取得
+    private var daysInCurrentMonth: Int {
+        let calendar = Calendar.current
+        guard let date = calendar.date(from: DateComponents(year: currentYear, month: currentMonth)),
+              let range = calendar.range(of: .day, in: .month, for: date) else {
+            return 31
+        }
+        return range.count
+    }
+
+    /// 指定日が現在の月に存在するかどうか
+    private func isValidDay(_ day: Int) -> Bool {
+        day >= 1 && day <= daysInCurrentMonth
+    }
+
+    /// 累積距離データを展開（日の領域内で斜めに上昇するように）
+    private var expandedCumulativeData: [(x: Double, y: Double)] {
+        expandCumulativeData(viewModel.cumulativeDistanceData, extendToDay: daysInCurrentMonth)
+    }
+
+    /// 前月累積距離データを展開
+    private var expandedPreviousMonthData: [(x: Double, y: Double)] {
+        // 前月の日数を計算
+        let calendar = Calendar.current
+        var prevYear = currentYear
+        var prevMonth = currentMonth - 1
+        if prevMonth < 1 {
+            prevMonth = 12
+            prevYear -= 1
+        }
+        let prevMonthDays: Int
+        if let date = calendar.date(from: DateComponents(year: prevYear, month: prevMonth)),
+           let range = calendar.range(of: .day, in: .month, for: date) {
+            prevMonthDays = range.count
+        } else {
+            prevMonthDays = 31
+        }
+        return expandCumulativeData(viewModel.previousMonthCumulativeData, extendToDay: prevMonthDays)
+    }
+
+    /// 累積データを展開して、各日の領域内で斜めに上昇するデータポイントを生成
+    private func expandCumulativeData(_ data: [(day: Int, distance: Double)], extendToDay: Int) -> [(x: Double, y: Double)] {
+        guard !data.isEmpty else { return [] }
+
+        var result: [(x: Double, y: Double)] = []
+        var previousDistance: Double = 0
+
+        for (index, point) in data.enumerated() {
+            let day = Double(point.day)
+
+            if index == 0 {
+                // 最初のポイント: 日の開始位置
+                result.append((x: day, y: previousDistance))
+            } else {
+                // 日の開始位置（前の累積値）
+                result.append((x: day, y: previousDistance))
+            }
+
+            // 日の終了位置（新しい累積値）
+            result.append((x: day + 0.9, y: point.distance))
+
+            previousDistance = point.distance
+        }
+
+        // 月末まで線を延長
+        if let lastPoint = data.last, lastPoint.day < extendToDay {
+            result.append((x: Double(extendToDay) + 0.9, y: previousDistance))
+        }
+
+        return result
     }
 
     private var dateHeaderView: some View {
@@ -241,6 +372,9 @@ struct MonthDetailView: View {
             hasLoadedOnce = true
         }
         .onChange(of: [currentYear, currentMonth]) { _, _ in
+            // 月移動時に選択解除
+            selectedDay = nil
+            tooltipPosition = nil
             Task {
                 await viewModel.updateMonth(year: currentYear, month: currentMonth)
             }
@@ -396,14 +530,25 @@ struct MonthDetailView: View {
         let startOfMonth = calendar.date(from: DateComponents(year: viewModel.year, month: viewModel.month, day: 1))!
         let endOfMonth = calendar.date(byAdding: DateComponents(day: 31), to: startOfMonth)! // 常に31日分表示（バーが見切れないよう1日余裕）
 
-        return Chart(viewModel.records) { record in
-            BarMark(
-                x: .value(String(localized: "Day"), record.date, unit: .day),
-                y: .value(String(localized: "Distance"), record.chartDistance(useMetric: useMetric))
-            )
-            .foregroundStyle(Color.accentColor.gradient)
+        return Chart {
+            // タップ中または選択中の日エリアをハイライト
+            if let day = highlightedDay,
+               let highlightDate = calendar.date(from: DateComponents(year: viewModel.year, month: viewModel.month, day: day)) {
+                RectangleMark(
+                    x: .value(String(localized: "Day"), highlightDate, unit: .day)
+                )
+                .foregroundStyle(Color.accentColor.opacity(0.15))
+            }
 
-            if let best = viewModel.bestDayByDistance, calendar.isDate(record.date, inSameDayAs: best.date), best.distanceInKilometers > 0 {
+            ForEach(viewModel.records) { record in
+                BarMark(
+                    x: .value(String(localized: "Day"), record.date, unit: .day),
+                    y: .value(String(localized: "Distance"), record.chartDistance(useMetric: useMetric))
+                )
+                .foregroundStyle(Color.accentColor.gradient)
+            }
+
+            if let best = viewModel.bestDayByDistance, best.distanceInKilometers > 0 {
                 RuleMark(y: .value(String(localized: "Best"), best.chartDistance(useMetric: useMetric)))
                     .foregroundStyle(.orange)
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 5]))
@@ -417,32 +562,92 @@ struct MonthDetailView: View {
             }
         }
         .chartYAxisLabel(UnitFormatter.distanceUnit(useMetric: useMetric))
+        .chartOverlay { proxy in
+            GeometryReader { geometry in
+                let calendar = Calendar.current
+                ZStack(alignment: .topLeading) {
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onTapGesture { location in
+                            guard let date: Date = proxy.value(atX: location.x) else {
+                                // グラフ外タップで選択解除
+                                selectedDay = nil
+                                tooltipPosition = nil
+                                return
+                            }
+                            let day = calendar.component(.day, from: date)
+                            // 存在する日かチェック（2月31日など除外）
+                            guard isValidDay(day) else {
+                                selectedDay = nil
+                                tooltipPosition = nil
+                                return
+                            }
+
+                            // タップで選択（または選択変更）- 走ってない日も選択可
+                            selectedDay = day
+                            hapticFeedback.impactOccurred()
+                            if let dayDate = calendar.date(from: DateComponents(year: viewModel.year, month: viewModel.month, day: day)),
+                               let xPos = proxy.position(forX: dayDate) {
+                                tooltipPosition = CGPoint(x: xPos, y: 8)
+                            }
+                        }
+
+                    // ツールチップ表示（選択中のみ）- 走った日のみタップで遷移可
+                    if let day = selectedDay,
+                       let position = tooltipPosition {
+                        let distance = distanceForDay(day)
+                        let hasRun = canNavigateToDay(day)
+                        MonthChartTooltip(
+                            title: dayLabel(day),
+                            value: UnitFormatter.formatDistance(distance, useMetric: useMetric),
+                            onTap: hasRun ? {
+                                if let record = recordForDay(day) {
+                                    navigationAction?.append(ScreenType.runDetail(record: record, user: userProfile))
+                                }
+                                selectedDay = nil
+                                tooltipPosition = nil
+                            } : nil
+                        )
+                        .position(x: position.x, y: position.y)
+                    }
+                }
+            }
+        }
     }
 
     private var cumulativeChart: some View {
         Chart {
-            // 当月の累積距離
-            ForEach(viewModel.cumulativeDistanceData, id: \.day) { data in
+            // タップ中または選択中の日エリアをハイライト
+            if let day = highlightedDay {
+                RectangleMark(
+                    xStart: .value("Start", day),
+                    xEnd: .value("End", day + 1)
+                )
+                .foregroundStyle(Color.accentColor.opacity(0.15))
+            }
+
+            // 当月の累積距離（日の領域内で斜めに上昇）
+            ForEach(expandedCumulativeData, id: \.x) { data in
                 LineMark(
-                    x: .value(String(localized: "Day"), data.day),
-                    y: .value(String(localized: "Distance"), UnitFormatter.convertDistance(data.distance, useMetric: useMetric)),
+                    x: .value(String(localized: "Day"), data.x),
+                    y: .value(String(localized: "Distance"), UnitFormatter.convertDistance(data.y, useMetric: useMetric)),
                     series: .value("Series", "current")
                 )
                 .foregroundStyle(Color.accentColor)
                 .lineStyle(StrokeStyle(lineWidth: 2))
 
                 AreaMark(
-                    x: .value(String(localized: "Day"), data.day),
-                    y: .value(String(localized: "Distance"), UnitFormatter.convertDistance(data.distance, useMetric: useMetric))
+                    x: .value(String(localized: "Day"), data.x),
+                    y: .value(String(localized: "Distance"), UnitFormatter.convertDistance(data.y, useMetric: useMetric))
                 )
                 .foregroundStyle(Color.accentColor.opacity(0.1))
             }
 
             // 前月の累積距離（比較用）
-            ForEach(viewModel.previousMonthCumulativeData, id: \.day) { data in
+            ForEach(expandedPreviousMonthData, id: \.x) { data in
                 LineMark(
-                    x: .value(String(localized: "Day"), data.day),
-                    y: .value(String(localized: "Distance"), UnitFormatter.convertDistance(data.distance, useMetric: useMetric)),
+                    x: .value(String(localized: "Day"), data.x),
+                    y: .value(String(localized: "Distance"), UnitFormatter.convertDistance(data.y, useMetric: useMetric)),
                     series: .value("Series", "previous")
                 )
                 .foregroundStyle(Color.secondary)
@@ -463,6 +668,57 @@ struct MonthDetailView: View {
         }
         .chartYAxisLabel(UnitFormatter.distanceUnit(useMetric: useMetric))
         .chartLegend(Visibility.hidden)
+        .chartOverlay { proxy in
+            GeometryReader { geometry in
+                ZStack(alignment: .topLeading) {
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onTapGesture { location in
+                            guard let dayValue: Int = proxy.value(atX: location.x) else {
+                                selectedDay = nil
+                                tooltipPosition = nil
+                                return
+                            }
+                            let day = max(1, min(31, dayValue))
+
+                            // 存在する日かチェック（2月31日など除外）
+                            guard isValidDay(day) else {
+                                selectedDay = nil
+                                tooltipPosition = nil
+                                return
+                            }
+
+                            // タップで選択（または選択変更）- 走ってない日も選択可
+                            selectedDay = day
+                            hapticFeedback.impactOccurred()
+                            if let xPos = proxy.position(forX: day) {
+                                tooltipPosition = CGPoint(x: xPos, y: 8)
+                            }
+                        }
+
+                    // ツールチップ表示（選択中のみ）- 走った日のみタップで遷移可
+                    if let day = selectedDay,
+                       let position = tooltipPosition {
+                        let cumulativeDistance = cumulativeDistanceAtDay(day)
+                        let prevCumulativeDistance = previousMonthCumulativeDistanceAtDay(day)
+                        let hasRun = canNavigateToDay(day)
+                        MonthChartTooltip(
+                            title: dayLabel(day),
+                            value: UnitFormatter.formatDistance(cumulativeDistance, useMetric: useMetric),
+                            previousValue: prevCumulativeDistance > 0 ? UnitFormatter.formatDistance(prevCumulativeDistance, useMetric: useMetric) : nil,
+                            onTap: hasRun ? {
+                                if let record = recordForDay(day) {
+                                    navigationAction?.append(ScreenType.runDetail(record: record, user: userProfile))
+                                }
+                                selectedDay = nil
+                                tooltipPosition = nil
+                            } : nil
+                        )
+                        .position(x: position.x, y: position.y)
+                    }
+                }
+            }
+        }
     }
 
     private var emptyView: some View {
@@ -518,6 +774,54 @@ struct RunningRecordRow: View {
             .foregroundStyle(.secondary)
         }
         .padding(.vertical, 4)
+    }
+}
+
+/// 月詳細チャート用ツールチップ
+private struct MonthChartTooltip: View {
+    let title: String
+    let value: String
+    var previousValue: String?
+    var onTap: (() -> Void)?
+
+    private var isTappable: Bool {
+        onTap != nil
+    }
+
+    var body: some View {
+        HStack(spacing: 4) {
+            VStack(spacing: 2) {
+                Text(title)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                Text(value)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                if let previousValue {
+                    HStack(spacing: 2) {
+                        Text("Prev month")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        Text(previousValue)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+
+            if isTappable {
+                Image(systemName: "chevron.right")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(isTappable ? AnyShapeStyle(.thinMaterial) : AnyShapeStyle(.ultraThinMaterial), in: RoundedRectangle(cornerRadius: 6))
+        .contentShape(RoundedRectangle(cornerRadius: 6))
+        .onTapGesture {
+            onTap?()
+        }
     }
 }
 
