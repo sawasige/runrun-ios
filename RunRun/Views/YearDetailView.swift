@@ -1,6 +1,7 @@
 import SwiftUI
 import Charts
 import FirebaseAuth
+import UIKit
 
 struct YearDetailView: View {
     @StateObject private var viewModel: YearDetailViewModel
@@ -11,6 +12,9 @@ struct YearDetailView: View {
     let userProfile: UserProfile
     @State private var showShareSettings = false
     @State private var tappedMonth: Int?
+    @State private var tappedPosition: CGPoint?
+
+    private let hapticFeedback = UIImpactFeedbackGenerator(style: .light)
 
     private var isOwnRecord: Bool {
         if ScreenshotMode.isEnabled {
@@ -341,50 +345,88 @@ struct YearDetailView: View {
         .chartYAxisLabel(UnitFormatter.distanceUnit(useMetric: useMetric))
         .chartOverlay { proxy in
             GeometryReader { geometry in
-                Rectangle()
-                    .fill(.clear)
-                    .contentShape(Rectangle())
-                    .gesture(
-                        DragGesture(minimumDistance: 0)
-                            .onChanged { value in
-                                guard let monthName: String = proxy.value(atX: value.location.x) else {
+                let bounds = geometry.frame(in: .local)
+                ZStack(alignment: .topLeading) {
+                    Rectangle()
+                        .fill(.clear)
+                        .contentShape(Rectangle())
+                        .gesture(
+                            DragGesture(minimumDistance: 0)
+                                .onChanged { value in
+                                    // グラフ外にドラッグしたらキャンセル
+                                    guard bounds.contains(value.location) else {
+                                        tappedMonth = nil
+                                        tappedPosition = nil
+                                        return
+                                    }
+                                    guard let monthName: String = proxy.value(atX: value.location.x) else {
+                                        tappedMonth = nil
+                                        tappedPosition = nil
+                                        return
+                                    }
+                                    guard let stats = viewModel.monthlyStats.first(where: { $0.shortMonthName == monthName }) else {
+                                        tappedMonth = nil
+                                        tappedPosition = nil
+                                        return
+                                    }
+                                    // 未来月・ランなし月はハイライトしない
+                                    guard canNavigateToMonth(stats: stats) else {
+                                        tappedMonth = nil
+                                        tappedPosition = nil
+                                        return
+                                    }
+                                    if tappedMonth != stats.month {
+                                        tappedMonth = stats.month
+                                        hapticFeedback.impactOccurred()
+                                    }
+                                    // 棒の中央位置を計算
+                                    if let xPos = proxy.position(forX: stats.shortMonthName) {
+                                        tappedPosition = CGPoint(x: xPos, y: 8)
+                                    }
+                                }
+                                .onEnded { value in
+                                    // グラフ外で離したらキャンセル
+                                    guard bounds.contains(value.location) else {
+                                        tappedMonth = nil
+                                        tappedPosition = nil
+                                        return
+                                    }
+                                    guard let monthName: String = proxy.value(atX: value.location.x) else {
+                                        tappedMonth = nil
+                                        tappedPosition = nil
+                                        return
+                                    }
+                                    guard let stats = viewModel.monthlyStats.first(where: { $0.shortMonthName == monthName }) else {
+                                        tappedMonth = nil
+                                        tappedPosition = nil
+                                        return
+                                    }
+                                    // 未来月・ランなし月は遷移しない
+                                    guard canNavigateToMonth(stats: stats) else {
+                                        tappedMonth = nil
+                                        tappedPosition = nil
+                                        return
+                                    }
+                                    // 押下中の月と同じ月で離した場合のみ遷移
+                                    if tappedMonth == stats.month {
+                                        navigationAction?.append(ScreenType.monthDetail(user: userProfile, year: stats.year, month: stats.month))
+                                    }
                                     tappedMonth = nil
-                                    return
+                                    tappedPosition = nil
                                 }
-                                guard let stats = viewModel.monthlyStats.first(where: { $0.shortMonthName == monthName }) else {
-                                    tappedMonth = nil
-                                    return
-                                }
-                                // 未来月・ランなし月はハイライトしない
-                                guard canNavigateToMonth(stats: stats) else {
-                                    tappedMonth = nil
-                                    return
-                                }
-                                if tappedMonth != stats.month {
-                                    tappedMonth = stats.month
-                                }
-                            }
-                            .onEnded { value in
-                                guard let monthName: String = proxy.value(atX: value.location.x) else {
-                                    tappedMonth = nil
-                                    return
-                                }
-                                guard let stats = viewModel.monthlyStats.first(where: { $0.shortMonthName == monthName }) else {
-                                    tappedMonth = nil
-                                    return
-                                }
-                                // 未来月・ランなし月は遷移しない
-                                guard canNavigateToMonth(stats: stats) else {
-                                    tappedMonth = nil
-                                    return
-                                }
-                                // 押下中の月と同じ月で離した場合のみ遷移
-                                if tappedMonth == stats.month {
-                                    navigationAction?.append(ScreenType.monthDetail(user: userProfile, year: stats.year, month: stats.month))
-                                }
-                                tappedMonth = nil
-                            }
-                    )
+                        )
+
+                    // タップ中のツールチップ表示
+                    if let month = tappedMonth,
+                       let position = tappedPosition,
+                       let stats = viewModel.monthlyStats.first(where: { $0.month == month }) {
+                        ChartTooltip(
+                            title: stats.shortMonthName,
+                            value: stats.formattedTotalDistance(useMetric: useMetric)
+                        )
+                        .position(x: position.x, y: position.y)
+                    }
+                }
             }
         }
     }
@@ -469,51 +511,103 @@ struct YearDetailView: View {
         .chartLegend(Visibility.hidden)
         .chartOverlay { proxy in
             GeometryReader { geometry in
-                Rectangle()
-                    .fill(.clear)
-                    .contentShape(Rectangle())
-                    .gesture(
-                        DragGesture(minimumDistance: 0)
-                            .onChanged { value in
-                                guard let dayOfYear: Int = proxy.value(atX: value.location.x) else {
+                let bounds = geometry.frame(in: .local)
+                ZStack(alignment: .topLeading) {
+                    Rectangle()
+                        .fill(.clear)
+                        .contentShape(Rectangle())
+                        .gesture(
+                            DragGesture(minimumDistance: 0)
+                                .onChanged { value in
+                                    // グラフ外にドラッグしたらキャンセル
+                                    guard bounds.contains(value.location) else {
+                                        tappedMonth = nil
+                                        tappedPosition = nil
+                                        return
+                                    }
+                                    guard let dayOfYear: Int = proxy.value(atX: value.location.x) else {
+                                        tappedMonth = nil
+                                        tappedPosition = nil
+                                        return
+                                    }
+                                    let month = dayOfYearToMonth(dayOfYear)
+                                    guard let stats = viewModel.monthlyStats.first(where: { $0.month == month }) else {
+                                        tappedMonth = nil
+                                        tappedPosition = nil
+                                        return
+                                    }
+                                    guard canNavigateToMonth(stats: stats) else {
+                                        tappedMonth = nil
+                                        tappedPosition = nil
+                                        return
+                                    }
+                                    if tappedMonth != month {
+                                        tappedMonth = month
+                                        hapticFeedback.impactOccurred()
+                                    }
+                                    // 月の中央位置を計算
+                                    let startDay = monthStartDays[month - 1]
+                                    let endDay = month < 12 ? monthStartDays[month] - 1 : 365
+                                    let midDay = (startDay + endDay) / 2
+                                    if let xPos = proxy.position(forX: midDay) {
+                                        tappedPosition = CGPoint(x: xPos, y: 8)
+                                    }
+                                }
+                                .onEnded { value in
+                                    // グラフ外で離したらキャンセル
+                                    guard bounds.contains(value.location) else {
+                                        tappedMonth = nil
+                                        tappedPosition = nil
+                                        return
+                                    }
+                                    guard let dayOfYear: Int = proxy.value(atX: value.location.x) else {
+                                        tappedMonth = nil
+                                        tappedPosition = nil
+                                        return
+                                    }
+                                    let month = dayOfYearToMonth(dayOfYear)
+                                    guard let stats = viewModel.monthlyStats.first(where: { $0.month == month }) else {
+                                        tappedMonth = nil
+                                        tappedPosition = nil
+                                        return
+                                    }
+                                    guard canNavigateToMonth(stats: stats) else {
+                                        tappedMonth = nil
+                                        tappedPosition = nil
+                                        return
+                                    }
+                                    if tappedMonth == month {
+                                        navigationAction?.append(ScreenType.monthDetail(user: userProfile, year: stats.year, month: stats.month))
+                                    }
                                     tappedMonth = nil
-                                    return
+                                    tappedPosition = nil
                                 }
-                                let month = dayOfYearToMonth(dayOfYear)
-                                guard let stats = viewModel.monthlyStats.first(where: { $0.month == month }) else {
-                                    tappedMonth = nil
-                                    return
-                                }
-                                guard canNavigateToMonth(stats: stats) else {
-                                    tappedMonth = nil
-                                    return
-                                }
-                                if tappedMonth != month {
-                                    tappedMonth = month
-                                }
-                            }
-                            .onEnded { value in
-                                guard let dayOfYear: Int = proxy.value(atX: value.location.x) else {
-                                    tappedMonth = nil
-                                    return
-                                }
-                                let month = dayOfYearToMonth(dayOfYear)
-                                guard let stats = viewModel.monthlyStats.first(where: { $0.month == month }) else {
-                                    tappedMonth = nil
-                                    return
-                                }
-                                guard canNavigateToMonth(stats: stats) else {
-                                    tappedMonth = nil
-                                    return
-                                }
-                                if tappedMonth == month {
-                                    navigationAction?.append(ScreenType.monthDetail(user: userProfile, year: stats.year, month: stats.month))
-                                }
-                                tappedMonth = nil
-                            }
-                    )
+                        )
+
+                    // タップ中のツールチップ表示（累計距離）
+                    if let month = tappedMonth,
+                       let position = tappedPosition,
+                       let stats = viewModel.monthlyStats.first(where: { $0.month == month }) {
+                        let cumulativeDistance = cumulativeDistanceAtEndOfMonth(month)
+                        ChartTooltip(
+                            title: stats.shortMonthName,
+                            value: UnitFormatter.formatDistance(cumulativeDistance, useMetric: useMetric)
+                        )
+                        .position(x: position.x, y: position.y)
+                    }
+                }
             }
         }
+    }
+
+    /// 指定月末時点の累計距離を取得
+    private func cumulativeDistanceAtEndOfMonth(_ month: Int) -> Double {
+        let endDay = month < 12 ? monthStartDays[month] - 1 : 365
+        // その日以下で最も大きい日のデータを取得
+        if let data = viewModel.cumulativeDistanceData.last(where: { $0.dayOfYear <= endDay }) {
+            return data.distance
+        }
+        return 0
     }
 
     private func dayOfYearToMonth(_ dayOfYear: Int) -> Int {
@@ -550,6 +644,26 @@ struct MonthlyStatsRow: View {
                 .foregroundStyle(stats.totalDistanceInKilometers > 0 ? .primary : .secondary)
         }
         .padding(.vertical, 4)
+    }
+}
+
+/// チャート上に表示するツールチップ
+private struct ChartTooltip: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        VStack(spacing: 2) {
+            Text(title)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.caption)
+                .fontWeight(.semibold)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
     }
 }
 
