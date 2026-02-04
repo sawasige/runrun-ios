@@ -5,10 +5,12 @@ import FirebaseAuth
 struct YearDetailView: View {
     @StateObject private var viewModel: YearDetailViewModel
     @EnvironmentObject private var syncService: SyncService
+    @Environment(\.navigationAction) private var navigationAction
     @AppStorage("units.distance") private var useMetric = UnitFormatter.defaultUseMetric
 
     let userProfile: UserProfile
     @State private var showShareSettings = false
+    @State private var tappedMonth: Int?
 
     private var isOwnRecord: Bool {
         if ScreenshotMode.isEnabled {
@@ -316,6 +318,14 @@ struct YearDetailView: View {
 
     private var monthlyChart: some View {
         Chart(viewModel.monthlyStats) { stats in
+            // タップ中の月エリアをハイライト
+            if tappedMonth == stats.month {
+                RectangleMark(
+                    x: .value(String(localized: "Month"), stats.shortMonthName)
+                )
+                .foregroundStyle(Color.accentColor.opacity(0.15))
+            }
+
             BarMark(
                 x: .value(String(localized: "Month"), stats.shortMonthName),
                 y: .value(String(localized: "Distance"), stats.chartDistance(useMetric: useMetric))
@@ -329,10 +339,90 @@ struct YearDetailView: View {
             }
         }
         .chartYAxisLabel(UnitFormatter.distanceUnit(useMetric: useMetric))
+        .chartOverlay { proxy in
+            GeometryReader { geometry in
+                Rectangle()
+                    .fill(.clear)
+                    .contentShape(Rectangle())
+                    .gesture(
+                        DragGesture(minimumDistance: 0)
+                            .onChanged { value in
+                                guard let monthName: String = proxy.value(atX: value.location.x) else {
+                                    tappedMonth = nil
+                                    return
+                                }
+                                guard let stats = viewModel.monthlyStats.first(where: { $0.shortMonthName == monthName }) else {
+                                    tappedMonth = nil
+                                    return
+                                }
+                                // 未来月・ランなし月はハイライトしない
+                                guard canNavigateToMonth(stats: stats) else {
+                                    tappedMonth = nil
+                                    return
+                                }
+                                if tappedMonth != stats.month {
+                                    tappedMonth = stats.month
+                                }
+                            }
+                            .onEnded { value in
+                                guard let monthName: String = proxy.value(atX: value.location.x) else {
+                                    tappedMonth = nil
+                                    return
+                                }
+                                guard let stats = viewModel.monthlyStats.first(where: { $0.shortMonthName == monthName }) else {
+                                    tappedMonth = nil
+                                    return
+                                }
+                                // 未来月・ランなし月は遷移しない
+                                guard canNavigateToMonth(stats: stats) else {
+                                    tappedMonth = nil
+                                    return
+                                }
+                                // 押下中の月と同じ月で離した場合のみ遷移
+                                if tappedMonth == stats.month {
+                                    navigationAction?.append(ScreenType.monthDetail(user: userProfile, year: stats.year, month: stats.month))
+                                }
+                                tappedMonth = nil
+                            }
+                    )
+            }
+        }
     }
+
+    private func canNavigateToMonth(stats: MonthlyRunningStats) -> Bool {
+        // ランがない月は遷移不可
+        guard stats.runCount > 0 else { return false }
+
+        // 未来月は遷移不可
+        let calendar = Calendar.current
+        let now = Date()
+        let currentYear = calendar.component(.year, from: now)
+        let currentMonth = calendar.component(.month, from: now)
+
+        if stats.year > currentYear {
+            return false
+        } else if stats.year == currentYear && stats.month > currentMonth {
+            return false
+        }
+        return true
+    }
+
+    /// 各月の開始日（非閏年）
+    private let monthStartDays = [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335]
 
     private var cumulativeChart: some View {
         Chart {
+            // タップ中の月エリアをハイライト
+            if let month = tappedMonth {
+                let startDay = monthStartDays[month - 1]
+                let endDay = month < 12 ? monthStartDays[month] - 1 : 365
+                RectangleMark(
+                    xStart: .value("Start", startDay),
+                    xEnd: .value("End", endDay)
+                )
+                .foregroundStyle(Color.accentColor.opacity(0.15))
+            }
+
             // 当年の累積距離
             ForEach(viewModel.cumulativeDistanceData, id: \.dayOfYear) { data in
                 LineMark(
@@ -377,6 +467,53 @@ struct YearDetailView: View {
         }
         .chartYAxisLabel(UnitFormatter.distanceUnit(useMetric: useMetric))
         .chartLegend(Visibility.hidden)
+        .chartOverlay { proxy in
+            GeometryReader { geometry in
+                Rectangle()
+                    .fill(.clear)
+                    .contentShape(Rectangle())
+                    .gesture(
+                        DragGesture(minimumDistance: 0)
+                            .onChanged { value in
+                                guard let dayOfYear: Int = proxy.value(atX: value.location.x) else {
+                                    tappedMonth = nil
+                                    return
+                                }
+                                let month = dayOfYearToMonth(dayOfYear)
+                                guard let stats = viewModel.monthlyStats.first(where: { $0.month == month }) else {
+                                    tappedMonth = nil
+                                    return
+                                }
+                                guard canNavigateToMonth(stats: stats) else {
+                                    tappedMonth = nil
+                                    return
+                                }
+                                if tappedMonth != month {
+                                    tappedMonth = month
+                                }
+                            }
+                            .onEnded { value in
+                                guard let dayOfYear: Int = proxy.value(atX: value.location.x) else {
+                                    tappedMonth = nil
+                                    return
+                                }
+                                let month = dayOfYearToMonth(dayOfYear)
+                                guard let stats = viewModel.monthlyStats.first(where: { $0.month == month }) else {
+                                    tappedMonth = nil
+                                    return
+                                }
+                                guard canNavigateToMonth(stats: stats) else {
+                                    tappedMonth = nil
+                                    return
+                                }
+                                if tappedMonth == month {
+                                    navigationAction?.append(ScreenType.monthDetail(user: userProfile, year: stats.year, month: stats.month))
+                                }
+                                tappedMonth = nil
+                            }
+                    )
+            }
+        }
     }
 
     private func dayOfYearToMonth(_ dayOfYear: Int) -> Int {
