@@ -353,28 +353,36 @@ struct YearDetailView: View {
                             if let plotFrame = proxy.plotFrame {
                                 let plotArea = geometry[plotFrame]
                                 guard plotArea.contains(location) else {
-                                    selectedMonth = nil
-                                    tooltipPosition = nil
+                                    withAnimation(.easeOut(duration: 0.15)) {
+                                        selectedMonth = nil
+                                        tooltipPosition = nil
+                                    }
                                     return
                                 }
                             }
 
                             guard let monthName: String = proxy.value(atX: location.x) else {
-                                selectedMonth = nil
-                                tooltipPosition = nil
+                                withAnimation(.easeOut(duration: 0.15)) {
+                                    selectedMonth = nil
+                                    tooltipPosition = nil
+                                }
                                 return
                             }
                             guard let stats = viewModel.monthlyStats.first(where: { $0.shortMonthName == monthName }) else {
-                                selectedMonth = nil
-                                tooltipPosition = nil
+                                withAnimation(.easeOut(duration: 0.15)) {
+                                    selectedMonth = nil
+                                    tooltipPosition = nil
+                                }
                                 return
                             }
 
-                            selectedMonth = stats.month
-                            hapticFeedback.impactOccurred()
-                            if let xPos = proxy.position(forX: stats.shortMonthName) {
-                                tooltipPosition = CGPoint(x: xPos, y: 8)
+                            withAnimation(.easeOut(duration: 0.15)) {
+                                selectedMonth = stats.month
+                                if let xPos = proxy.position(forX: stats.shortMonthName) {
+                                    tooltipPosition = CGPoint(x: xPos, y: 8)
+                                }
                             }
+                            hapticFeedback.impactOccurred()
                         }
 
                     // ツールチップ表示
@@ -390,11 +398,14 @@ struct YearDetailView: View {
                             previousLabel: String(localized: "Prev year"),
                             onTap: canNavigate ? {
                                 navigationAction?.append(ScreenType.monthDetail(user: userProfile, year: stats.year, month: stats.month))
-                                selectedMonth = nil
-                                tooltipPosition = nil
+                                withAnimation(.easeOut(duration: 0.15)) {
+                                    selectedMonth = nil
+                                    tooltipPosition = nil
+                                }
                             } : nil
                         )
                         .position(x: position.x, y: position.y)
+                        .transition(.scale.combined(with: .opacity))
                     }
                 }
             }
@@ -500,33 +511,41 @@ struct YearDetailView: View {
                             if let plotFrame = proxy.plotFrame {
                                 let plotArea = geometry[plotFrame]
                                 guard plotArea.contains(location) else {
-                                    selectedMonth = nil
-                                    tooltipPosition = nil
+                                    withAnimation(.easeOut(duration: 0.15)) {
+                                        selectedMonth = nil
+                                        tooltipPosition = nil
+                                    }
                                     return
                                 }
                             }
 
                             guard let dayOfYear: Double = proxy.value(atX: location.x) else {
-                                selectedMonth = nil
-                                tooltipPosition = nil
+                                withAnimation(.easeOut(duration: 0.15)) {
+                                    selectedMonth = nil
+                                    tooltipPosition = nil
+                                }
                                 return
                             }
                             let month = dayOfYearToMonth(Int(dayOfYear))
                             guard viewModel.monthlyStats.contains(where: { $0.month == month }) else {
-                                selectedMonth = nil
-                                tooltipPosition = nil
+                                withAnimation(.easeOut(duration: 0.15)) {
+                                    selectedMonth = nil
+                                    tooltipPosition = nil
+                                }
                                 return
                             }
 
-                            selectedMonth = month
-                            hapticFeedback.impactOccurred()
-                            // 月の中央位置を計算
-                            let startDay = monthStartDays[month - 1]
-                            let endDay = month < 12 ? monthStartDays[month] - 1 : 365
-                            let midDay = (startDay + endDay) / 2
-                            if let xPos = proxy.position(forX: midDay) {
-                                tooltipPosition = CGPoint(x: xPos, y: 8)
+                            withAnimation(.easeOut(duration: 0.15)) {
+                                selectedMonth = month
+                                // 月の中央位置を計算
+                                let startDay = monthStartDays[month - 1]
+                                let endDay = month < 12 ? monthStartDays[month] - 1 : 365
+                                let midDay = (startDay + endDay) / 2
+                                if let xPos = proxy.position(forX: midDay) {
+                                    tooltipPosition = CGPoint(x: xPos, y: 8)
+                                }
                             }
+                            hapticFeedback.impactOccurred()
                         }
 
                     // ツールチップ表示
@@ -543,11 +562,14 @@ struct YearDetailView: View {
                             previousLabel: String(localized: "Prev year"),
                             onTap: canNavigate ? {
                                 navigationAction?.append(ScreenType.monthDetail(user: userProfile, year: stats.year, month: stats.month))
-                                selectedMonth = nil
-                                tooltipPosition = nil
+                                withAnimation(.easeOut(duration: 0.15)) {
+                                    selectedMonth = nil
+                                    tooltipPosition = nil
+                                }
                             } : nil
                         )
                         .position(x: position.x, y: position.y)
+                        .transition(.scale.combined(with: .opacity))
                     }
                 }
             }
