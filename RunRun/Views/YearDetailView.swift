@@ -349,6 +349,16 @@ struct YearDetailView: View {
                     Color.clear
                         .contentShape(Rectangle())
                         .onTapGesture { location in
+                            // グラフ領域外のタップは無視
+                            if let plotFrame = proxy.plotFrame {
+                                let plotArea = geometry[plotFrame]
+                                guard plotArea.contains(location) else {
+                                    selectedMonth = nil
+                                    tooltipPosition = nil
+                                    return
+                                }
+                            }
+
                             guard let monthName: String = proxy.value(atX: location.x) else {
                                 selectedMonth = nil
                                 tooltipPosition = nil
@@ -486,6 +496,16 @@ struct YearDetailView: View {
                     Color.clear
                         .contentShape(Rectangle())
                         .onTapGesture { location in
+                            // グラフ領域外のタップは無視
+                            if let plotFrame = proxy.plotFrame {
+                                let plotArea = geometry[plotFrame]
+                                guard plotArea.contains(location) else {
+                                    selectedMonth = nil
+                                    tooltipPosition = nil
+                                    return
+                                }
+                            }
+
                             guard let dayOfYear: Double = proxy.value(atX: location.x) else {
                                 selectedMonth = nil
                                 tooltipPosition = nil
