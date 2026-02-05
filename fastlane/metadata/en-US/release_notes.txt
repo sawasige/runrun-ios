@@ -1,3 +1,9 @@
 Thank you for using RunRun!
 
-Minor improvements and bug fixes.
+【New Features】
+・Tap charts to navigate to detail screens
+・Pulsing dot at the end of cumulative distance charts
+
+【Improvements】
+・Improved search experience on Friends screen
+・Unified chart interactions and stability enhancements
