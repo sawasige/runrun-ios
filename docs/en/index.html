@@ -303,6 +303,36 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Lightbox */
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            cursor: zoom-out;
+        }
+
+        .lightbox.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .screenshots img {
+            cursor: zoom-in;
+        }
     </style>
 </head>
 <body>
@@ -416,5 +446,26 @@
         </div>
         <p>&copy; 2025 himatsubu</p>
     </footer>
+
+    <div class="lightbox" id="lightbox">
+        <img src="" alt="">
+    </div>
+
+    <script>
+        var lightbox = document.getElementById('lightbox');
+        var lightboxImg = lightbox.querySelector('img');
+
+        document.querySelectorAll('.screenshots img').forEach(function(img) {
+            img.addEventListener('click', function() {
+                lightboxImg.src = this.src;
+                lightboxImg.alt = this.alt;
+                lightbox.classList.add('active');
+            });
+        });
+
+        lightbox.addEventListener('click', function() {
+            lightbox.classList.remove('active');
+        });
+    </script>
 </body>
 </html>
