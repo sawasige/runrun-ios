@@ -373,10 +373,11 @@ struct YearDetailView: View {
                        let stats = viewModel.monthlyStats.first(where: { $0.month == month }) {
                         let prevStats = viewModel.previousYearMonthlyStats.first(where: { $0.month == month })
                         let canNavigate = canNavigateToMonth(stats: stats)
-                        YearChartTooltip(
+                        ChartTooltip(
                             title: stats.shortMonthName,
                             value: stats.formattedTotalDistance(useMetric: useMetric),
                             previousValue: prevStats?.formattedTotalDistance(useMetric: useMetric),
+                            previousLabel: String(localized: "Prev year"),
                             onTap: canNavigate ? {
                                 navigationAction?.append(ScreenType.monthDetail(user: userProfile, year: stats.year, month: stats.month))
                                 selectedMonth = nil
@@ -459,7 +460,7 @@ struct YearDetailView: View {
                     y: .value(String(localized: "Distance"), UnitFormatter.convertDistance(lastPoint.distance, useMetric: useMetric))
                 )
                 .symbol {
-                    YearPulsingDot()
+                    PulsingDot()
                 }
             }
         }
@@ -515,10 +516,11 @@ struct YearDetailView: View {
                         let cumulativeDistance = cumulativeDistanceAtEndOfMonth(month)
                         let prevCumulativeDistance = previousYearCumulativeDistanceAtEndOfMonth(month)
                         let canNavigate = canNavigateToMonth(stats: stats)
-                        YearChartTooltip(
+                        ChartTooltip(
                             title: stats.shortMonthName,
                             value: UnitFormatter.formatDistance(cumulativeDistance, useMetric: useMetric),
                             previousValue: prevCumulativeDistance > 0 ? UnitFormatter.formatDistance(prevCumulativeDistance, useMetric: useMetric) : nil,
+                            previousLabel: String(localized: "Prev year"),
                             onTap: canNavigate ? {
                                 navigationAction?.append(ScreenType.monthDetail(user: userProfile, year: stats.year, month: stats.month))
                                 selectedMonth = nil
@@ -588,71 +590,6 @@ struct MonthlyStatsRow: View {
     }
 }
 
-/// 年詳細チャート用ツールチップ
-private struct YearChartTooltip: View {
-    let title: String
-    let value: String
-    var previousValue: String?
-    var onTap: (() -> Void)?
-
-    private var isTappable: Bool {
-        onTap != nil
-    }
-
-    var body: some View {
-        HStack(spacing: 4) {
-            VStack(spacing: 2) {
-                Text(title)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                Text(value)
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                if let previousValue {
-                    HStack(spacing: 2) {
-                        Text("Prev year")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                        Text(previousValue)
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
-
-            if isTappable {
-                Image(systemName: "chevron.right")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(isTappable ? AnyShapeStyle(.thinMaterial) : AnyShapeStyle(.ultraThinMaterial), in: RoundedRectangle(cornerRadius: 6))
-        .contentShape(RoundedRectangle(cornerRadius: 6))
-        .onTapGesture {
-            onTap?()
-        }
-    }
-}
-
-/// 当年グラフの終点に表示する点滅ドット
-private struct YearPulsingDot: View {
-    @State private var phase = false
-
-    private let brightColor = Color(red: 1.5, green: 0.4, blue: 0.4) // HDR対応の明るい色
-
-    var body: some View {
-        Circle()
-            .fill(phase ? brightColor : Color.accentColor)
-            .frame(width: 6, height: 6)
-            .onAppear {
-                withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
-                    phase = true
-                }
-            }
-    }
-}
 
 #Preview {
     YearDetailView(user: UserProfile(id: "preview", displayName: "Preview User", email: nil, iconName: "figure.run"))
