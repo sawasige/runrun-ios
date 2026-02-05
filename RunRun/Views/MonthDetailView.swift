@@ -200,7 +200,14 @@ struct MonthDetailView: View {
 
     /// 累積距離データを展開（日の領域内で斜めに上昇するように）
     private var expandedCumulativeData: [(x: Double, y: Double)] {
-        expandCumulativeData(viewModel.cumulativeDistanceData, extendToDay: daysInCurrentMonth)
+        // 当月の場合は今日まで、過去月の場合は月末まで
+        let maxDay: Int
+        if isCurrentMonth {
+            maxDay = Calendar.current.component(.day, from: Date())
+        } else {
+            maxDay = daysInCurrentMonth
+        }
+        return expandCumulativeData(viewModel.cumulativeDistanceData, extendToDay: maxDay)
     }
 
     /// 前月累積距離データを展開
@@ -528,7 +535,7 @@ struct MonthDetailView: View {
     private var dailyChart: some View {
         let calendar = Calendar.current
         let startOfMonth = calendar.date(from: DateComponents(year: viewModel.year, month: viewModel.month, day: 1))!
-        let endOfMonth = calendar.date(byAdding: DateComponents(day: 31), to: startOfMonth)! // 常に31日分表示（バーが見切れないよう1日余裕）
+        let endOfMonth = calendar.date(byAdding: DateComponents(day: 31), to: startOfMonth)!
 
         return Chart {
             // タップ中または選択中の日エリアをハイライト
@@ -561,7 +568,7 @@ struct MonthDetailView: View {
                 AxisValueLabel(format: .dateTime.day())
             }
         }
-        .chartYAxisLabel(UnitFormatter.distanceUnit(useMetric: useMetric))
+        .chartYAxisLabel(useMetric ? "km" : "mi", position: .top)
         .chartOverlay { proxy in
             GeometryReader { geometry in
                 let calendar = Calendar.current
@@ -570,20 +577,27 @@ struct MonthDetailView: View {
                         .contentShape(Rectangle())
                         .onTapGesture { location in
                             guard let date: Date = proxy.value(atX: location.x) else {
-                                // グラフ外タップで選択解除
                                 selectedDay = nil
                                 tooltipPosition = nil
                                 return
                             }
+
+                            // 表示月内の日付かチェック
+                            let dateYear = calendar.component(.year, from: date)
+                            let dateMonth = calendar.component(.month, from: date)
+                            guard dateYear == viewModel.year && dateMonth == viewModel.month else {
+                                selectedDay = nil
+                                tooltipPosition = nil
+                                return
+                            }
+
                             let day = calendar.component(.day, from: date)
-                            // 存在する日かチェック（2月31日など除外）
                             guard isValidDay(day) else {
                                 selectedDay = nil
                                 tooltipPosition = nil
                                 return
                             }
 
-                            // タップで選択（または選択変更）- 走ってない日も選択可
                             selectedDay = day
                             hapticFeedback.impactOccurred()
                             if let dayDate = calendar.date(from: DateComponents(year: viewModel.year, month: viewModel.month, day: day)),
@@ -592,7 +606,7 @@ struct MonthDetailView: View {
                             }
                         }
 
-                    // ツールチップ表示（選択中のみ）- 走った日のみタップで遷移可
+                    // ツールチップ表示
                     if let day = selectedDay,
                        let position = tooltipPosition {
                         let distance = distanceForDay(day)
@@ -626,7 +640,7 @@ struct MonthDetailView: View {
                 .foregroundStyle(Color.accentColor.opacity(0.15))
             }
 
-            // 当月の累積距離（日の領域内で斜めに上昇）
+            // 当月の累積距離
             ForEach(expandedCumulativeData, id: \.x) { data in
                 LineMark(
                     x: .value(String(localized: "Day"), data.x),
@@ -654,7 +668,7 @@ struct MonthDetailView: View {
                 .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5, 3]))
             }
         }
-        .chartXScale(domain: 1...31)
+        .chartXScale(domain: 1...32)
         .chartXAxis {
             AxisMarks(values: sundayDaysInMonth) { value in
                 AxisGridLine()
@@ -666,7 +680,7 @@ struct MonthDetailView: View {
                 }
             }
         }
-        .chartYAxisLabel(UnitFormatter.distanceUnit(useMetric: useMetric))
+        .chartYAxisLabel(useMetric ? "km" : "mi", position: .top)
         .chartLegend(Visibility.hidden)
         .chartOverlay { proxy in
             GeometryReader { geometry in
@@ -674,29 +688,28 @@ struct MonthDetailView: View {
                     Color.clear
                         .contentShape(Rectangle())
                         .onTapGesture { location in
-                            guard let dayValue: Int = proxy.value(atX: location.x) else {
+                            guard let dayValue: Double = proxy.value(atX: location.x) else {
                                 selectedDay = nil
                                 tooltipPosition = nil
                                 return
                             }
-                            let day = max(1, min(31, dayValue))
+                            let day = max(1, min(31, Int(dayValue)))
 
-                            // 存在する日かチェック（2月31日など除外）
                             guard isValidDay(day) else {
                                 selectedDay = nil
                                 tooltipPosition = nil
                                 return
                             }
 
-                            // タップで選択（または選択変更）- 走ってない日も選択可
                             selectedDay = day
                             hapticFeedback.impactOccurred()
-                            if let xPos = proxy.position(forX: day) {
+                            // 日の中央に配置（day + 0.5）
+                            if let xPos = proxy.position(forX: Double(day) + 0.5) {
                                 tooltipPosition = CGPoint(x: xPos, y: 8)
                             }
                         }
 
-                    // ツールチップ表示（選択中のみ）- 走った日のみタップで遷移可
+                    // ツールチップ表示
                     if let day = selectedDay,
                        let position = tooltipPosition {
                         let cumulativeDistance = cumulativeDistanceAtDay(day)
