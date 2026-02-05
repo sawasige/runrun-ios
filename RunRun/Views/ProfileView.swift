@@ -409,7 +409,7 @@ struct ProfileView: View {
                        let position = tooltipPosition,
                        let stats = sortedYearlyStats.first(where: { $0.year == year }) {
                         let canNavigate = stats.runCount > 0
-                        ProfileChartTooltip(
+                        ChartTooltip(
                             title: stats.shortFormattedYear,
                             value: stats.formattedTotalDistance(useMetric: useMetric),
                             onTap: canNavigate ? {
@@ -696,42 +696,6 @@ private struct YearlyStatsRow: View {
                 .foregroundStyle(stats.totalDistanceInKilometers > 0 ? .primary : .secondary)
         }
         .padding(.vertical, 4)
-    }
-}
-
-private struct ProfileChartTooltip: View {
-    let title: String
-    let value: String
-    var onTap: (() -> Void)?
-
-    private var isTappable: Bool {
-        onTap != nil
-    }
-
-    var body: some View {
-        HStack(spacing: 4) {
-            VStack(spacing: 2) {
-                Text(title)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                Text(value)
-                    .font(.caption)
-                    .fontWeight(.semibold)
-            }
-
-            if isTappable {
-                Image(systemName: "chevron.right")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(isTappable ? AnyShapeStyle(.thinMaterial) : AnyShapeStyle(.ultraThinMaterial), in: RoundedRectangle(cornerRadius: 6))
-        .contentShape(RoundedRectangle(cornerRadius: 6))
-        .onTapGesture {
-            onTap?()
-        }
     }
 }
 

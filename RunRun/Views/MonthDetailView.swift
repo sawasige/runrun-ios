@@ -611,7 +611,7 @@ struct MonthDetailView: View {
                        let position = tooltipPosition {
                         let distance = distanceForDay(day)
                         let hasRun = canNavigateToDay(day)
-                        MonthChartTooltip(
+                        ChartTooltip(
                             title: dayLabel(day),
                             value: UnitFormatter.formatDistance(distance, useMetric: useMetric),
                             onTap: hasRun ? {
@@ -726,10 +726,11 @@ struct MonthDetailView: View {
                         let cumulativeDistance = cumulativeDistanceAtDay(day)
                         let prevCumulativeDistance = previousMonthCumulativeDistanceAtDay(day)
                         let hasRun = canNavigateToDay(day)
-                        MonthChartTooltip(
+                        ChartTooltip(
                             title: dayLabel(day),
                             value: UnitFormatter.formatDistance(cumulativeDistance, useMetric: useMetric),
                             previousValue: prevCumulativeDistance > 0 ? UnitFormatter.formatDistance(prevCumulativeDistance, useMetric: useMetric) : nil,
+                            previousLabel: String(localized: "Prev month"),
                             onTap: hasRun ? {
                                 if let record = recordForDay(day) {
                                     navigationAction?.append(ScreenType.runDetail(record: record, user: userProfile))
@@ -801,71 +802,6 @@ struct RunningRecordRow: View {
     }
 }
 
-/// 月詳細チャート用ツールチップ
-private struct MonthChartTooltip: View {
-    let title: String
-    let value: String
-    var previousValue: String?
-    var onTap: (() -> Void)?
-
-    private var isTappable: Bool {
-        onTap != nil
-    }
-
-    var body: some View {
-        HStack(spacing: 4) {
-            VStack(spacing: 2) {
-                Text(title)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                Text(value)
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                if let previousValue {
-                    HStack(spacing: 2) {
-                        Text("Prev month")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                        Text(previousValue)
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
-
-            if isTappable {
-                Image(systemName: "chevron.right")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(isTappable ? AnyShapeStyle(.thinMaterial) : AnyShapeStyle(.ultraThinMaterial), in: RoundedRectangle(cornerRadius: 6))
-        .contentShape(RoundedRectangle(cornerRadius: 6))
-        .onTapGesture {
-            onTap?()
-        }
-    }
-}
-
-/// 当月グラフの終点に表示する点滅ドット
-private struct PulsingDot: View {
-    @State private var phase = false
-
-    private let brightColor = Color(red: 1.5, green: 0.4, blue: 0.4) // HDR対応の明るい色
-
-    var body: some View {
-        Circle()
-            .fill(phase ? brightColor : Color.accentColor)
-            .frame(width: 6, height: 6)
-            .onAppear {
-                withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
-                    phase = true
-                }
-            }
-    }
-}
 
 #Preview {
     NavigationStack {
