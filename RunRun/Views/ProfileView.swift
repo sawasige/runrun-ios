@@ -439,7 +439,7 @@ struct ProfileView: View {
                             } : nil
                         )
                         .position(x: position.x, y: position.y)
-                        .transition(.scale.combined(with: .opacity))
+                        .transition(.opacity)
                     }
                 }
             }

@@ -405,7 +405,7 @@ struct YearDetailView: View {
                             } : nil
                         )
                         .position(x: position.x, y: position.y)
-                        .transition(.scale.combined(with: .opacity))
+                        .transition(.opacity)
                     }
                 }
             }
@@ -569,7 +569,7 @@ struct YearDetailView: View {
                             } : nil
                         )
                         .position(x: position.x, y: position.y)
-                        .transition(.scale.combined(with: .opacity))
+                        .transition(.opacity)
                     }
                 }
             }
