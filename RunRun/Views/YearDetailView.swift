@@ -451,6 +451,17 @@ struct YearDetailView: View {
                 .foregroundStyle(Color.secondary)
                 .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5, 3]))
             }
+
+            // 当年の場合、最後（今日）に点滅する点を表示
+            if isCurrentYear, let lastPoint = viewModel.cumulativeDistanceData.last {
+                PointMark(
+                    x: .value(String(localized: "Day"), lastPoint.dayOfYear),
+                    y: .value(String(localized: "Distance"), UnitFormatter.convertDistance(lastPoint.distance, useMetric: useMetric))
+                )
+                .symbol {
+                    YearPulsingDot()
+                }
+            }
         }
         .chartXScale(domain: 1...365)
         .chartXAxis {
@@ -622,6 +633,24 @@ private struct YearChartTooltip: View {
         .onTapGesture {
             onTap?()
         }
+    }
+}
+
+/// 当年グラフの終点に表示する点滅ドット
+private struct YearPulsingDot: View {
+    @State private var phase = false
+
+    private let brightColor = Color(red: 1.5, green: 0.4, blue: 0.4) // HDR対応の明るい色
+
+    var body: some View {
+        Circle()
+            .fill(phase ? brightColor : Color.accentColor)
+            .frame(width: 6, height: 6)
+            .onAppear {
+                withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
+                    phase = true
+                }
+            }
     }
 }
 
