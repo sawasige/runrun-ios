@@ -20,7 +20,6 @@ struct ProfileView: View {
 
     // チャートタップ状態
     @State private var selectedYear: Int?
-    @State private var draggingYear: Int?
     @State private var tooltipPosition: CGPoint?
     private let hapticFeedback = UIImpactFeedbackGenerator(style: .light)
 
@@ -353,9 +352,6 @@ struct ProfileView: View {
 
     // MARK: - Views
 
-    private var highlightedYear: Int? {
-        draggingYear ?? selectedYear
-    }
 
     private var sortedYearlyStats: [YearlyStats] {
         yearlyStats.suffix(12).sorted { $0.year < $1.year }
@@ -364,7 +360,7 @@ struct ProfileView: View {
     private var yearlyChart: some View {
         Chart(sortedYearlyStats) { stats in
             // ハイライト
-            if highlightedYear == stats.year {
+            if selectedYear == stats.year {
                 RectangleMark(
                     x: .value(String(localized: "Year"), stats.shortFormattedYear)
                 )
@@ -386,75 +382,41 @@ struct ProfileView: View {
         .chartYAxisLabel(UnitFormatter.distanceUnit(useMetric: useMetric))
         .chartOverlay { proxy in
             GeometryReader { geometry in
-                let bounds = geometry.frame(in: .local)
                 ZStack(alignment: .topLeading) {
-                    Rectangle()
-                        .fill(.clear)
+                    Color.clear
                         .contentShape(Rectangle())
-                        .gesture(
-                            DragGesture(minimumDistance: 0)
-                                .onChanged { value in
-                                    guard bounds.contains(value.location) else {
-                                        draggingYear = nil
-                                        return
-                                    }
-                                    guard let yearLabel: String = proxy.value(atX: value.location.x) else {
-                                        draggingYear = nil
-                                        return
-                                    }
-                                    guard let stats = sortedYearlyStats.first(where: { $0.shortFormattedYear == yearLabel }),
-                                          stats.runCount > 0 else {
-                                        draggingYear = nil
-                                        return
-                                    }
-                                    if draggingYear != stats.year {
-                                        draggingYear = stats.year
-                                        hapticFeedback.impactOccurred()
-                                    }
-                                    if let xPos = proxy.position(forX: stats.shortFormattedYear) {
-                                        tooltipPosition = CGPoint(x: xPos, y: 8)
-                                    }
-                                }
-                                .onEnded { value in
-                                    defer { draggingYear = nil }
+                        .onTapGesture { location in
+                            guard let yearLabel: String = proxy.value(atX: location.x) else {
+                                selectedYear = nil
+                                tooltipPosition = nil
+                                return
+                            }
+                            guard let stats = sortedYearlyStats.first(where: { $0.shortFormattedYear == yearLabel }) else {
+                                selectedYear = nil
+                                tooltipPosition = nil
+                                return
+                            }
 
-                                    guard bounds.contains(value.location) else {
-                                        selectedYear = nil
-                                        tooltipPosition = nil
-                                        return
-                                    }
-                                    guard let yearLabel: String = proxy.value(atX: value.location.x) else {
-                                        selectedYear = nil
-                                        tooltipPosition = nil
-                                        return
-                                    }
-                                    guard let stats = sortedYearlyStats.first(where: { $0.shortFormattedYear == yearLabel }),
-                                          stats.runCount > 0 else {
-                                        selectedYear = nil
-                                        tooltipPosition = nil
-                                        return
-                                    }
-
-                                    if selectedYear == stats.year {
-                                        navigationAction?.append(ScreenType.yearDetail(user: user, initialYear: stats.year))
-                                        selectedYear = nil
-                                        tooltipPosition = nil
-                                    } else {
-                                        selectedYear = stats.year
-                                        if let xPos = proxy.position(forX: stats.shortFormattedYear) {
-                                            tooltipPosition = CGPoint(x: xPos, y: 8)
-                                        }
-                                    }
-                                }
-                        )
+                            selectedYear = stats.year
+                            hapticFeedback.impactOccurred()
+                            if let xPos = proxy.position(forX: stats.shortFormattedYear) {
+                                tooltipPosition = CGPoint(x: xPos, y: 8)
+                            }
+                        }
 
                     // ツールチップ
-                    if let year = highlightedYear,
+                    if let year = selectedYear,
                        let position = tooltipPosition,
                        let stats = sortedYearlyStats.first(where: { $0.year == year }) {
+                        let canNavigate = stats.runCount > 0
                         ProfileChartTooltip(
                             title: stats.shortFormattedYear,
-                            value: stats.formattedTotalDistance(useMetric: useMetric)
+                            value: stats.formattedTotalDistance(useMetric: useMetric),
+                            onTap: canNavigate ? {
+                                navigationAction?.append(ScreenType.yearDetail(user: user, initialYear: stats.year))
+                                selectedYear = nil
+                                tooltipPosition = nil
+                            } : nil
                         )
                         .position(x: position.x, y: position.y)
                     }
@@ -740,19 +702,36 @@ private struct YearlyStatsRow: View {
 private struct ProfileChartTooltip: View {
     let title: String
     let value: String
+    var onTap: (() -> Void)?
+
+    private var isTappable: Bool {
+        onTap != nil
+    }
 
     var body: some View {
-        VStack(spacing: 2) {
-            Text(title)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-            Text(value)
-                .font(.caption)
-                .fontWeight(.semibold)
+        HStack(spacing: 4) {
+            VStack(spacing: 2) {
+                Text(title)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                Text(value)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+            }
+
+            if isTappable {
+                Image(systemName: "chevron.right")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
+        .background(isTappable ? AnyShapeStyle(.thinMaterial) : AnyShapeStyle(.ultraThinMaterial), in: RoundedRectangle(cornerRadius: 6))
+        .contentShape(RoundedRectangle(cornerRadius: 6))
+        .onTapGesture {
+            onTap?()
+        }
     }
 }
 
