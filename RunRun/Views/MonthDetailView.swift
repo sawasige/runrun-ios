@@ -488,6 +488,16 @@ struct MonthDetailView: View {
             }
         }
         .contentMargins(.top, 0)
+        .onScrollGeometryChange(for: CGFloat.self) { geo in
+            geo.contentOffset.y
+        } action: { _, _ in
+            if selectedDay != nil {
+                withAnimation(.easeOut(duration: 0.15)) {
+                    selectedDay = nil
+                    tooltipPosition = nil
+                }
+            }
+        }
     }
 
     @ViewBuilder

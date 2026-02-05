@@ -142,6 +142,16 @@ struct YearDetailView: View {
                 }
             }
             .listStyle(.insetGrouped)
+            .onScrollGeometryChange(for: CGFloat.self) { geo in
+                geo.contentOffset.y
+            } action: { _, _ in
+                if selectedMonth != nil {
+                    withAnimation(.easeOut(duration: 0.15)) {
+                        selectedMonth = nil
+                        tooltipPosition = nil
+                    }
+                }
+            }
 
             if !viewModel.isLoading && viewModel.error == nil && !viewModel.monthlyStats.isEmpty {
                 yearNavigationButtons

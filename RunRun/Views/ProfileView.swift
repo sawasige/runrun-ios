@@ -296,6 +296,16 @@ struct ProfileView: View {
                 friendSection
             }
         }
+        .onScrollGeometryChange(for: CGFloat.self) { geo in
+            geo.contentOffset.y
+        } action: { _, _ in
+            if selectedYear != nil {
+                withAnimation(.easeOut(duration: 0.15)) {
+                    selectedYear = nil
+                    tooltipPosition = nil
+                }
+            }
+        }
         .navigationTitle("Profile")
         .navigationBarTitleDisplayMode(.large)
         .analyticsScreen("Profile")
