@@ -667,6 +667,17 @@ struct MonthDetailView: View {
                 .foregroundStyle(Color.secondary)
                 .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5, 3]))
             }
+
+            // 当月の場合、最後（今日）に点滅する点を表示
+            if isCurrentMonth, let lastPoint = expandedCumulativeData.last {
+                PointMark(
+                    x: .value(String(localized: "Day"), lastPoint.x),
+                    y: .value(String(localized: "Distance"), UnitFormatter.convertDistance(lastPoint.y, useMetric: useMetric))
+                )
+                .symbol {
+                    PulsingDot()
+                }
+            }
         }
         .chartXScale(domain: 1...32)
         .chartXAxis {
@@ -835,6 +846,24 @@ private struct MonthChartTooltip: View {
         .onTapGesture {
             onTap?()
         }
+    }
+}
+
+/// 当月グラフの終点に表示する点滅ドット
+private struct PulsingDot: View {
+    @State private var phase = false
+
+    private let brightColor = Color(red: 1.5, green: 0.4, blue: 0.4) // HDR対応の明るい色
+
+    var body: some View {
+        Circle()
+            .fill(phase ? brightColor : Color.accentColor)
+            .frame(width: 6, height: 6)
+            .onAppear {
+                withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
+                    phase = true
+                }
+            }
     }
 }
 
