@@ -359,14 +359,6 @@ struct ProfileView: View {
 
     private var yearlyChart: some View {
         Chart(sortedYearlyStats) { stats in
-            // ハイライト
-            if selectedYear == stats.year {
-                RectangleMark(
-                    x: .value(String(localized: "Year"), stats.shortFormattedYear)
-                )
-                .foregroundStyle(Color.accentColor.opacity(0.15))
-            }
-
             BarMark(
                 x: .value(String(localized: "Year"), stats.shortFormattedYear),
                 y: .value(String(localized: "Distance"), stats.chartDistance(useMetric: useMetric))
@@ -382,7 +374,20 @@ struct ProfileView: View {
         .chartYAxisLabel(UnitFormatter.distanceUnit(useMetric: useMetric))
         .chartOverlay { proxy in
             GeometryReader { geometry in
+                let plotFrame = proxy.plotFrame.map { geometry[$0] }
                 ZStack(alignment: .topLeading) {
+                    // ハイライト矩形
+                    if let year = selectedYear,
+                       let stats = sortedYearlyStats.first(where: { $0.year == year }),
+                       let xPos = proxy.position(forX: stats.shortFormattedYear),
+                       let plotArea = plotFrame {
+                        let categoryWidth = plotArea.width / CGFloat(sortedYearlyStats.count)
+                        Rectangle()
+                            .fill(Color.accentColor.opacity(0.15))
+                            .frame(width: categoryWidth, height: plotArea.height)
+                            .position(x: xPos, y: plotArea.minY + plotArea.height / 2)
+                    }
+
                     Color.clear
                         .contentShape(Rectangle())
                         .onTapGesture { location in
@@ -438,6 +443,7 @@ struct ProfileView: View {
                                 }
                             } : nil
                         )
+                        .id("yearlyChartTooltip")
                         .position(x: position.x, y: position.y)
                         .transition(.opacity)
                     }

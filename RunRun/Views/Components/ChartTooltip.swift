@@ -18,9 +18,11 @@ struct ChartTooltip: View {
                 Text(title)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
+                    .contentTransition(.identity)
                 Text(value)
                     .font(.caption)
                     .fontWeight(.semibold)
+                    .contentTransition(.identity)
                 if let previousValue, let previousLabel {
                     HStack(spacing: 2) {
                         Text(previousLabel)
@@ -29,6 +31,7 @@ struct ChartTooltip: View {
                         Text(previousValue)
                             .font(.caption2)
                             .foregroundStyle(.secondary)
+                            .contentTransition(.identity)
                     }
                 }
             }

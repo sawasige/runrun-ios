@@ -540,9 +540,11 @@ struct MonthDetailView: View {
         return Chart {
             // タップ中または選択中の日エリアをハイライト
             if let day = highlightedDay,
-               let highlightDate = calendar.date(from: DateComponents(year: viewModel.year, month: viewModel.month, day: day)) {
+               let startDate = calendar.date(from: DateComponents(year: viewModel.year, month: viewModel.month, day: day)),
+               let endDate = calendar.date(byAdding: .day, value: 1, to: startDate) {
                 RectangleMark(
-                    x: .value(String(localized: "Day"), highlightDate, unit: .day)
+                    xStart: .value("Start", startDate),
+                    xEnd: .value("End", endDate)
                 )
                 .foregroundStyle(Color.accentColor.opacity(0.15))
             }
@@ -576,6 +578,18 @@ struct MonthDetailView: View {
                     Color.clear
                         .contentShape(Rectangle())
                         .onTapGesture { location in
+                            // グラフ領域外のタップは無視
+                            if let plotFrame = proxy.plotFrame {
+                                let plotArea = geometry[plotFrame]
+                                guard plotArea.contains(location) else {
+                                    withAnimation(.easeOut(duration: 0.15)) {
+                                        selectedDay = nil
+                                        tooltipPosition = nil
+                                    }
+                                    return
+                                }
+                            }
+
                             guard let date: Date = proxy.value(atX: location.x) else {
                                 withAnimation(.easeOut(duration: 0.15)) {
                                     selectedDay = nil
@@ -632,6 +646,7 @@ struct MonthDetailView: View {
                                 }
                             } : nil
                         )
+                        .id("dailyChartTooltip")
                         .position(x: position.x, y: position.y)
                         .transition(.opacity)
                     }
@@ -710,6 +725,18 @@ struct MonthDetailView: View {
                     Color.clear
                         .contentShape(Rectangle())
                         .onTapGesture { location in
+                            // グラフ領域外のタップは無視
+                            if let plotFrame = proxy.plotFrame {
+                                let plotArea = geometry[plotFrame]
+                                guard plotArea.contains(location) else {
+                                    withAnimation(.easeOut(duration: 0.15)) {
+                                        selectedDay = nil
+                                        tooltipPosition = nil
+                                    }
+                                    return
+                                }
+                            }
+
                             guard let dayValue: Double = proxy.value(atX: location.x) else {
                                 withAnimation(.easeOut(duration: 0.15)) {
                                     selectedDay = nil
@@ -758,6 +785,7 @@ struct MonthDetailView: View {
                                 }
                             } : nil
                         )
+                        .id("cumulativeChartTooltip")
                         .position(x: position.x, y: position.y)
                         .transition(.opacity)
                     }
