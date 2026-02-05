@@ -142,6 +142,16 @@ struct YearDetailView: View {
                 }
             }
             .listStyle(.insetGrouped)
+            .onScrollGeometryChange(for: CGFloat.self) { geo in
+                geo.contentOffset.y
+            } action: { _, _ in
+                if selectedMonth != nil {
+                    withAnimation(.easeOut(duration: 0.15)) {
+                        selectedMonth = nil
+                        tooltipPosition = nil
+                    }
+                }
+            }
 
             if !viewModel.isLoading && viewModel.error == nil && !viewModel.monthlyStats.isEmpty {
                 yearNavigationButtons
@@ -199,6 +209,11 @@ struct YearDetailView: View {
                     await viewModel.refresh()
                 }
             }
+        }
+        .onChange(of: viewModel.selectedYear) { _, _ in
+            // 年移動時に選択解除
+            selectedMonth = nil
+            tooltipPosition = nil
         }
     }
 
@@ -322,14 +337,6 @@ struct YearDetailView: View {
 
     private var monthlyChart: some View {
         Chart(viewModel.monthlyStats) { stats in
-            // タップ中または選択中の月エリアをハイライト
-            if selectedMonth == stats.month {
-                RectangleMark(
-                    x: .value(String(localized: "Month"), stats.shortMonthName)
-                )
-                .foregroundStyle(Color.accentColor.opacity(0.15))
-            }
-
             BarMark(
                 x: .value(String(localized: "Month"), stats.shortMonthName),
                 y: .value(String(localized: "Distance"), stats.chartDistance(useMetric: useMetric))
@@ -345,7 +352,20 @@ struct YearDetailView: View {
         .chartYAxisLabel(UnitFormatter.distanceUnit(useMetric: useMetric))
         .chartOverlay { proxy in
             GeometryReader { geometry in
+                let plotFrame = proxy.plotFrame.map { geometry[$0] }
                 ZStack(alignment: .topLeading) {
+                    // ハイライト矩形
+                    if let month = selectedMonth,
+                       let stats = viewModel.monthlyStats.first(where: { $0.month == month }),
+                       let xPos = proxy.position(forX: stats.shortMonthName),
+                       let plotArea = plotFrame {
+                        let categoryWidth = plotArea.width / CGFloat(viewModel.monthlyStats.count)
+                        Rectangle()
+                            .fill(Color.accentColor.opacity(0.15))
+                            .frame(width: categoryWidth, height: plotArea.height)
+                            .position(x: xPos, y: plotArea.minY + plotArea.height / 2)
+                    }
+
                     Color.clear
                         .contentShape(Rectangle())
                         .onTapGesture { location in
@@ -404,8 +424,9 @@ struct YearDetailView: View {
                                 }
                             } : nil
                         )
+                        .id("monthlyChartTooltip")
                         .position(x: position.x, y: position.y)
-                        .transition(.scale.combined(with: .opacity))
+                        .transition(.opacity)
                     }
                 }
             }
@@ -568,8 +589,9 @@ struct YearDetailView: View {
                                 }
                             } : nil
                         )
+                        .id("cumulativeChartTooltip")
                         .position(x: position.x, y: position.y)
-                        .transition(.scale.combined(with: .opacity))
+                        .transition(.opacity)
                     }
                 }
             }
