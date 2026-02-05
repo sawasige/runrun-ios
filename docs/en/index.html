@@ -88,29 +88,12 @@
             scroll-snap-type: x mandatory;
         }
 
-        .screenshots::before,
-        .screenshots::after {
-            content: '';
-            flex-shrink: 0;
-            width: calc((100vw - min(100vw, 900px)) / 2);
-        }
-
         .screenshots img {
             height: 480px;
             border-radius: 12px;
             flex-shrink: 0;
             box-shadow: 0 8px 32px rgba(0,0,0,0.08);
             scroll-snap-align: center;
-        }
-
-        @media (min-width: 900px) {
-            .screenshots {
-                justify-content: center;
-            }
-            .screenshots::before,
-            .screenshots::after {
-                display: none;
-            }
         }
 
         /* Intro */
