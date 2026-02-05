@@ -480,7 +480,7 @@ struct YearDetailView: View {
                                 return
                             }
                             let month = dayOfYearToMonth(Int(dayOfYear))
-                            guard let stats = viewModel.monthlyStats.first(where: { $0.month == month }) else {
+                            guard viewModel.monthlyStats.contains(where: { $0.month == month }) else {
                                 selectedMonth = nil
                                 tooltipPosition = nil
                                 return
