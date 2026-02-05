@@ -386,6 +386,16 @@ struct ProfileView: View {
                     Color.clear
                         .contentShape(Rectangle())
                         .onTapGesture { location in
+                            // グラフ領域外のタップは無視
+                            if let plotFrame = proxy.plotFrame {
+                                let plotArea = geometry[plotFrame]
+                                guard plotArea.contains(location) else {
+                                    selectedYear = nil
+                                    tooltipPosition = nil
+                                    return
+                                }
+                            }
+
                             guard let yearLabel: String = proxy.value(atX: location.x) else {
                                 selectedYear = nil
                                 tooltipPosition = nil
