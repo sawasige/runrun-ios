@@ -390,28 +390,36 @@ struct ProfileView: View {
                             if let plotFrame = proxy.plotFrame {
                                 let plotArea = geometry[plotFrame]
                                 guard plotArea.contains(location) else {
-                                    selectedYear = nil
-                                    tooltipPosition = nil
+                                    withAnimation(.easeOut(duration: 0.15)) {
+                                        selectedYear = nil
+                                        tooltipPosition = nil
+                                    }
                                     return
                                 }
                             }
 
                             guard let yearLabel: String = proxy.value(atX: location.x) else {
-                                selectedYear = nil
-                                tooltipPosition = nil
+                                withAnimation(.easeOut(duration: 0.15)) {
+                                    selectedYear = nil
+                                    tooltipPosition = nil
+                                }
                                 return
                             }
                             guard let stats = sortedYearlyStats.first(where: { $0.shortFormattedYear == yearLabel }) else {
-                                selectedYear = nil
-                                tooltipPosition = nil
+                                withAnimation(.easeOut(duration: 0.15)) {
+                                    selectedYear = nil
+                                    tooltipPosition = nil
+                                }
                                 return
                             }
 
-                            selectedYear = stats.year
-                            hapticFeedback.impactOccurred()
-                            if let xPos = proxy.position(forX: stats.shortFormattedYear) {
-                                tooltipPosition = CGPoint(x: xPos, y: 8)
+                            withAnimation(.easeOut(duration: 0.15)) {
+                                selectedYear = stats.year
+                                if let xPos = proxy.position(forX: stats.shortFormattedYear) {
+                                    tooltipPosition = CGPoint(x: xPos, y: 8)
+                                }
                             }
+                            hapticFeedback.impactOccurred()
                         }
 
                     // ツールチップ
@@ -424,11 +432,14 @@ struct ProfileView: View {
                             value: stats.formattedTotalDistance(useMetric: useMetric),
                             onTap: canNavigate ? {
                                 navigationAction?.append(ScreenType.yearDetail(user: user, initialYear: stats.year))
-                                selectedYear = nil
-                                tooltipPosition = nil
+                                withAnimation(.easeOut(duration: 0.15)) {
+                                    selectedYear = nil
+                                    tooltipPosition = nil
+                                }
                             } : nil
                         )
                         .position(x: position.x, y: position.y)
+                        .transition(.scale.combined(with: .opacity))
                     }
                 }
             }

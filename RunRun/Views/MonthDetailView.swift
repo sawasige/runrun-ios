@@ -577,8 +577,10 @@ struct MonthDetailView: View {
                         .contentShape(Rectangle())
                         .onTapGesture { location in
                             guard let date: Date = proxy.value(atX: location.x) else {
-                                selectedDay = nil
-                                tooltipPosition = nil
+                                withAnimation(.easeOut(duration: 0.15)) {
+                                    selectedDay = nil
+                                    tooltipPosition = nil
+                                }
                                 return
                             }
 
@@ -586,24 +588,30 @@ struct MonthDetailView: View {
                             let dateYear = calendar.component(.year, from: date)
                             let dateMonth = calendar.component(.month, from: date)
                             guard dateYear == viewModel.year && dateMonth == viewModel.month else {
-                                selectedDay = nil
-                                tooltipPosition = nil
+                                withAnimation(.easeOut(duration: 0.15)) {
+                                    selectedDay = nil
+                                    tooltipPosition = nil
+                                }
                                 return
                             }
 
                             let day = calendar.component(.day, from: date)
                             guard isValidDay(day) else {
-                                selectedDay = nil
-                                tooltipPosition = nil
+                                withAnimation(.easeOut(duration: 0.15)) {
+                                    selectedDay = nil
+                                    tooltipPosition = nil
+                                }
                                 return
                             }
 
-                            selectedDay = day
-                            hapticFeedback.impactOccurred()
-                            if let dayDate = calendar.date(from: DateComponents(year: viewModel.year, month: viewModel.month, day: day)),
-                               let xPos = proxy.position(forX: dayDate) {
-                                tooltipPosition = CGPoint(x: xPos, y: 8)
+                            withAnimation(.easeOut(duration: 0.15)) {
+                                selectedDay = day
+                                if let dayDate = calendar.date(from: DateComponents(year: viewModel.year, month: viewModel.month, day: day)),
+                                   let xPos = proxy.position(forX: dayDate) {
+                                    tooltipPosition = CGPoint(x: xPos, y: 8)
+                                }
                             }
+                            hapticFeedback.impactOccurred()
                         }
 
                     // ツールチップ表示
@@ -618,11 +626,14 @@ struct MonthDetailView: View {
                                 if let record = recordForDay(day) {
                                     navigationAction?.append(ScreenType.runDetail(record: record, user: userProfile))
                                 }
-                                selectedDay = nil
-                                tooltipPosition = nil
+                                withAnimation(.easeOut(duration: 0.15)) {
+                                    selectedDay = nil
+                                    tooltipPosition = nil
+                                }
                             } : nil
                         )
                         .position(x: position.x, y: position.y)
+                        .transition(.scale.combined(with: .opacity))
                     }
                 }
             }
@@ -700,24 +711,30 @@ struct MonthDetailView: View {
                         .contentShape(Rectangle())
                         .onTapGesture { location in
                             guard let dayValue: Double = proxy.value(atX: location.x) else {
-                                selectedDay = nil
-                                tooltipPosition = nil
+                                withAnimation(.easeOut(duration: 0.15)) {
+                                    selectedDay = nil
+                                    tooltipPosition = nil
+                                }
                                 return
                             }
                             let day = max(1, min(31, Int(dayValue)))
 
                             guard isValidDay(day) else {
-                                selectedDay = nil
-                                tooltipPosition = nil
+                                withAnimation(.easeOut(duration: 0.15)) {
+                                    selectedDay = nil
+                                    tooltipPosition = nil
+                                }
                                 return
                             }
 
-                            selectedDay = day
-                            hapticFeedback.impactOccurred()
-                            // 日の中央に配置（day + 0.5）
-                            if let xPos = proxy.position(forX: Double(day) + 0.5) {
-                                tooltipPosition = CGPoint(x: xPos, y: 8)
+                            withAnimation(.easeOut(duration: 0.15)) {
+                                selectedDay = day
+                                // 日の中央に配置（day + 0.5）
+                                if let xPos = proxy.position(forX: Double(day) + 0.5) {
+                                    tooltipPosition = CGPoint(x: xPos, y: 8)
+                                }
                             }
+                            hapticFeedback.impactOccurred()
                         }
 
                     // ツールチップ表示
@@ -735,11 +752,14 @@ struct MonthDetailView: View {
                                 if let record = recordForDay(day) {
                                     navigationAction?.append(ScreenType.runDetail(record: record, user: userProfile))
                                 }
-                                selectedDay = nil
-                                tooltipPosition = nil
+                                withAnimation(.easeOut(duration: 0.15)) {
+                                    selectedDay = nil
+                                    tooltipPosition = nil
+                                }
                             } : nil
                         )
                         .position(x: position.x, y: position.y)
+                        .transition(.scale.combined(with: .opacity))
                     }
                 }
             }
