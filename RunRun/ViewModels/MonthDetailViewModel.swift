@@ -11,6 +11,7 @@ final class MonthDetailViewModel: ObservableObject {
     @Published private(set) var month: Int
     @Published private(set) var oldestYear: Int?
     @Published private(set) var oldestMonth: Int?
+    @Published private(set) var monthlyGoal: RunningGoal?
 
     let userId: String
 
@@ -123,6 +124,7 @@ final class MonthDetailViewModel: ObservableObject {
             self.month = month
             records = MockDataProvider.monthDetailRecords
             previousMonthRecords = MockDataProvider.previousMonthDetailRecords
+            monthlyGoal = MockDataProvider.monthlyGoal
             isLoading = false
             return
         }
@@ -160,6 +162,14 @@ final class MonthDetailViewModel: ObservableObject {
                 oldestYear = calendar.component(.year, from: oldestRun.date)
                 oldestMonth = calendar.component(.month, from: oldestRun.date)
             }
+
+            // 目標は別途取得（エラーが発生しても他のデータは表示する）
+            do {
+                monthlyGoal = try await firestoreService.getMonthlyGoal(userId: userId, year: year, month: month)
+            } catch {
+                print("Failed to fetch monthly goal: \(error)")
+                monthlyGoal = nil
+            }
         } catch {
             self.error = error
         }
@@ -169,6 +179,41 @@ final class MonthDetailViewModel: ObservableObject {
 
     func loadRecords() async {
         await updateMonth(year: year, month: month)
+    }
+
+    func saveGoal(_ goal: RunningGoal) async {
+        do {
+            let savedGoal = try await firestoreService.setGoal(userId: userId, goal: goal)
+            monthlyGoal = savedGoal
+            AnalyticsService.logEvent("set_goal", parameters: [
+                "type": goal.type.rawValue,
+                "target_km": goal.targetDistanceKm
+            ])
+        } catch {
+            print("Failed to save goal: \(error)")
+        }
+    }
+
+    func deleteGoal() async {
+        guard let goalId = monthlyGoal?.id else { return }
+        do {
+            try await firestoreService.deleteGoal(userId: userId, goalId: goalId)
+            monthlyGoal = nil
+            AnalyticsService.logEvent("delete_goal", parameters: [
+                "type": "monthly"
+            ])
+        } catch {
+            print("Failed to delete goal: \(error)")
+        }
+    }
+
+    func getDefaultMonthlyDistance() async -> Double? {
+        do {
+            let latestGoal = try await firestoreService.getLatestMonthlyGoal(userId: userId)
+            return latestGoal?.targetDistanceKm
+        } catch {
+            return nil
+        }
     }
 
     private var previousYearMonth: (year: Int, month: Int) {

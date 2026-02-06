@@ -19,6 +19,8 @@ struct MonthDetailView: View {
     @State private var selectedDay: Int?
     @State private var draggingDay: Int?
     @State private var tooltipPosition: CGPoint?
+    @State private var showGoalSettings = false
+    @State private var defaultMonthlyDistance: Double?
     private let hapticFeedback = UIImpactFeedbackGenerator(style: .light)
 
     /// 現在ハイライトすべき日（ドラッグ中 or 選択中）
@@ -45,6 +47,18 @@ struct MonthDetailView: View {
         let calendar = Calendar.current
         return currentYear == calendar.component(.year, from: now) &&
                currentMonth == calendar.component(.month, from: now)
+    }
+
+    private var isCurrentOrFutureMonth: Bool {
+        let now = Date()
+        let calendar = Calendar.current
+        let nowYear = calendar.component(.year, from: now)
+        let nowMonth = calendar.component(.month, from: now)
+        return currentYear > nowYear || (currentYear == nowYear && currentMonth >= nowMonth)
+    }
+
+    private var canEditGoal: Bool {
+        isCurrentOrFutureMonth || DebugSettings.allowPastGoalEdit
     }
 
     private var formattedYear: String {
@@ -374,6 +388,21 @@ struct MonthDetailView: View {
                 isPresented: $showShareSettings
             )
         }
+        .sheet(isPresented: $showGoalSettings) {
+            GoalSettingsView(
+                goalType: .monthly,
+                year: currentYear,
+                month: currentMonth,
+                currentGoal: viewModel.monthlyGoal,
+                defaultDistanceKm: defaultMonthlyDistance,
+                onSave: { goal in
+                    Task { await viewModel.saveGoal(goal) }
+                },
+                onDelete: viewModel.monthlyGoal != nil ? {
+                    Task { await viewModel.deleteGoal() }
+                } : nil
+            )
+        }
         .task {
             await viewModel.onAppear()
             hasLoadedOnce = true
@@ -429,6 +458,37 @@ struct MonthDetailView: View {
                 Section("Distance Progress") {
                     cumulativeChart
                         .frame(height: 150)
+                }
+
+                // 目標セクション（自分のデータのみ、目標がある or 現在月以降の場合に表示）
+                if isOwnRecord && (viewModel.monthlyGoal != nil || canEditGoal) {
+                    Section("Goal") {
+                        if let goal = viewModel.monthlyGoal {
+                            GoalProgressView(
+                                currentDistance: viewModel.totalDistance,
+                                targetDistance: goal.targetDistanceKm,
+                                useMetric: useMetric
+                            )
+                            // 現在月以降のみ編集可能（デバッグモードでは常に可能）
+                            if canEditGoal {
+                                Button {
+                                    showGoalSettings = true
+                                } label: {
+                                    Label("Edit Goal", systemImage: "pencil")
+                                }
+                            }
+                        } else {
+                            // 現在月以降のみ目標設定可能（デバッグモードでは常に可能）
+                            Button {
+                                Task {
+                                    defaultMonthlyDistance = await viewModel.getDefaultMonthlyDistance()
+                                    showGoalSettings = true
+                                }
+                            } label: {
+                                Label("Set Goal", systemImage: "target")
+                            }
+                        }
+                    }
                 }
 
                 Section("Totals") {
@@ -713,6 +773,18 @@ struct MonthDetailView: View {
                 .symbol {
                     PulsingDot()
                 }
+            }
+
+            // 目標ライン
+            if let goal = viewModel.monthlyGoal {
+                RuleMark(y: .value(String(localized: "Goal"), goal.targetDistance(useMetric: useMetric)))
+                    .foregroundStyle(.green)
+                    .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5, 5]))
+                    .annotation(position: .trailing, alignment: .leading) {
+                        Text("Goal")
+                            .font(.caption2)
+                            .foregroundStyle(.green)
+                    }
             }
         }
         .chartXScale(domain: 1...32)

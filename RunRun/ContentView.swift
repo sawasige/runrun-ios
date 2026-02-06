@@ -372,6 +372,8 @@ struct ContentView: View {
             WeeklyStatsView(user: user)
         case .licenses:
             LicensesView()
+        case .goals:
+            GoalListView()
         }
     }
 }

@@ -487,4 +487,37 @@ struct MockDataProvider {
             )
         }
     }
+
+    // MARK: - 目標用
+
+    /// 年間目標（500km）
+    static var yearlyGoal: RunningGoal {
+        let calendar = Calendar.current
+        let currentYear = calendar.component(.year, from: Date())
+        return RunningGoal(
+            id: "mock-yearly-goal",
+            type: .yearly,
+            year: currentYear,
+            month: nil,
+            targetDistanceKm: 500,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+    }
+
+    /// 月間目標（100km）
+    static var monthlyGoal: RunningGoal {
+        let calendar = Calendar.current
+        let currentYear = calendar.component(.year, from: Date())
+        let currentMonth = calendar.component(.month, from: Date())
+        return RunningGoal(
+            id: "mock-monthly-goal",
+            type: .monthly,
+            year: currentYear,
+            month: currentMonth,
+            targetDistanceKm: 100,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+    }
 }
