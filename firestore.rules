@@ -12,6 +12,11 @@ service cloud.firestore {
         // 自分のリスト、または相手のリストから自分を削除する場合
         allow write: if request.auth.uid == userId || request.auth.uid == friendId;
       }
+
+      // 目標: 自分のみ読み書き可能
+      match /goals/{goalId} {
+        allow read, write: if request.auth.uid == userId;
+      }
     }
 
     // ラン記録: 自分のみ書き込み可能

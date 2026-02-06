@@ -11,6 +11,7 @@ final class YearDetailViewModel: ObservableObject {
     @Published private(set) var error: Error?
     @Published var selectedYear: Int
     @Published private(set) var oldestYear: Int?
+    @Published private(set) var yearlyGoal: RunningGoal?
 
     let userId: String
     private let firestoreService = FirestoreService.shared
@@ -183,6 +184,7 @@ final class YearDetailViewModel: ObservableObject {
             previousYearMonthlyStats = MockDataProvider.monthlyStats.filter { $0.year == year - 1 }
             yearlyRuns = MockDataProvider.yearDetailRecords
             previousYearRuns = MockDataProvider.previousYearDetailRecords
+            yearlyGoal = MockDataProvider.yearlyGoal
             isLoading = false
             return
         }
@@ -217,6 +219,14 @@ final class YearDetailViewModel: ObservableObject {
             if let oldestRun = oldestRun {
                 oldestYear = Calendar.current.component(.year, from: oldestRun.date)
             }
+
+            // 目標は別途取得（エラーが発生しても他のデータは表示する）
+            do {
+                yearlyGoal = try await firestoreService.getYearlyGoal(userId: userId, year: year)
+            } catch {
+                print("Failed to fetch yearly goal: \(error)")
+                yearlyGoal = nil
+            }
         } catch {
             self.error = error
         }
@@ -226,6 +236,41 @@ final class YearDetailViewModel: ObservableObject {
 
     func refresh() async {
         await updateYear(to: selectedYear)
+    }
+
+    func saveGoal(_ goal: RunningGoal) async {
+        do {
+            let savedGoal = try await firestoreService.setGoal(userId: userId, goal: goal)
+            yearlyGoal = savedGoal
+            AnalyticsService.logEvent("set_goal", parameters: [
+                "type": goal.type.rawValue,
+                "target_km": goal.targetDistanceKm
+            ])
+        } catch {
+            print("Failed to save goal: \(error)")
+        }
+    }
+
+    func deleteGoal() async {
+        guard let goalId = yearlyGoal?.id else { return }
+        do {
+            try await firestoreService.deleteGoal(userId: userId, goalId: goalId)
+            yearlyGoal = nil
+            AnalyticsService.logEvent("delete_goal", parameters: [
+                "type": "yearly"
+            ])
+        } catch {
+            print("Failed to delete goal: \(error)")
+        }
+    }
+
+    func getDefaultYearlyDistance() async -> Double? {
+        do {
+            let latestGoal = try await firestoreService.getLatestYearlyGoal(userId: userId)
+            return latestGoal?.targetDistanceKm
+        } catch {
+            return nil
+        }
     }
 
     private func aggregateToMonthlyStats(

@@ -8,4 +8,5 @@ enum ScreenType: Hashable {
     case runDetail(record: RunningRecord, user: UserProfile)
     case weeklyStats(user: UserProfile)
     case licenses
+    case goals
 }

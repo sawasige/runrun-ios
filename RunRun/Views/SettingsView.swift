@@ -64,6 +64,12 @@ struct SettingsView: View {
                     DistanceUnitPicker()
                 }
 
+                Section("Goals") {
+                    NavigationLink(value: ScreenType.goals) {
+                        Label("Goals", systemImage: "target")
+                    }
+                }
+
                 Section("Account") {
                     Button("Sign Out", role: .destructive) {
                         try? authService.signOut()
@@ -160,6 +166,7 @@ struct SettingsView: View {
                 #if DEBUG
                 Section(String(localized: "Debug", comment: "Debug section title")) {
                     DebugLoadDelayToggle()
+                    DebugPastGoalEditToggle()
 
                     Button("Send Test Notification") {
                         Task { await sendTestNotification() }
@@ -493,6 +500,17 @@ private struct DebugLoadDelayToggle: View {
                 }
             }
         }
+    }
+}
+
+private struct DebugPastGoalEditToggle: View {
+    @State private var isEnabled = DebugSettings.allowPastGoalEdit
+
+    var body: some View {
+        Toggle("Allow Past Goal Edit", isOn: $isEnabled)
+            .onChange(of: isEnabled) { _, newValue in
+                DebugSettings.allowPastGoalEdit = newValue
+            }
     }
 }
 #endif

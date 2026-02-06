@@ -13,6 +13,8 @@ struct YearDetailView: View {
     @State private var showShareSettings = false
     @State private var selectedMonth: Int?
     @State private var tooltipPosition: CGPoint?
+    @State private var showGoalSettings = false
+    @State private var defaultYearlyDistance: Double?
 
     private let hapticFeedback = UIImpactFeedbackGenerator(style: .light)
 
@@ -62,6 +64,10 @@ struct YearDetailView: View {
 
     private var currentYear: Int {
         Calendar.current.component(.year, from: Date())
+    }
+
+    private var canEditGoal: Bool {
+        viewModel.selectedYear >= currentYear || DebugSettings.allowPastGoalEdit
     }
 
     private var canGoToOldest: Bool {
@@ -194,6 +200,21 @@ struct YearDetailView: View {
                 isPresented: $showShareSettings
             )
         }
+        .sheet(isPresented: $showGoalSettings) {
+            GoalSettingsView(
+                goalType: .yearly,
+                year: viewModel.selectedYear,
+                month: nil,
+                currentGoal: viewModel.yearlyGoal,
+                defaultDistanceKm: defaultYearlyDistance,
+                onSave: { goal in
+                    Task { await viewModel.saveGoal(goal) }
+                },
+                onDelete: viewModel.yearlyGoal != nil ? {
+                    Task { await viewModel.deleteGoal() }
+                } : nil
+            )
+        }
         .task {
             await viewModel.onAppear()
         }
@@ -227,6 +248,37 @@ struct YearDetailView: View {
             Section("Distance Progress") {
                 cumulativeChart
                     .frame(height: 200)
+            }
+
+            // 目標セクション（自分のデータのみ、目標がある or 現在年以降の場合に表示）
+            if isOwnRecord && (viewModel.yearlyGoal != nil || canEditGoal) {
+                Section("Goal") {
+                    if let goal = viewModel.yearlyGoal {
+                        GoalProgressView(
+                            currentDistance: viewModel.totalYearlyDistance,
+                            targetDistance: goal.targetDistanceKm,
+                            useMetric: useMetric
+                        )
+                        // 現在年以降のみ編集可能（デバッグモードでは常に可能）
+                        if canEditGoal {
+                            Button {
+                                showGoalSettings = true
+                            } label: {
+                                Label("Edit Goal", systemImage: "pencil")
+                            }
+                        }
+                    } else {
+                        // 現在年以降のみ目標設定可能（デバッグモードでは常に可能）
+                        Button {
+                            Task {
+                                defaultYearlyDistance = await viewModel.getDefaultYearlyDistance()
+                                showGoalSettings = true
+                            }
+                        } label: {
+                            Label("Set Goal", systemImage: "target")
+                        }
+                    }
+                }
             }
 
             Section("Totals") {
@@ -504,6 +556,18 @@ struct YearDetailView: View {
                 .symbol {
                     PulsingDot()
                 }
+            }
+
+            // 目標ライン
+            if let goal = viewModel.yearlyGoal {
+                RuleMark(y: .value(String(localized: "Goal"), goal.targetDistance(useMetric: useMetric)))
+                    .foregroundStyle(.green)
+                    .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5, 5]))
+                    .annotation(position: .trailing, alignment: .leading) {
+                        Text("Goal")
+                            .font(.caption2)
+                            .foregroundStyle(.green)
+                    }
             }
         }
         .chartXScale(domain: 1...365)

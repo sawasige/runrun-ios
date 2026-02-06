@@ -12,6 +12,10 @@ enum DebugSettings {
     @UserDefaultsBacked(key: "debug.loadDelaySeconds", defaultValue: 2.0)
     static var loadDelaySeconds: Double
 
+    /// 過去の目標も編集可能にする
+    @UserDefaultsBacked(key: "debug.allowPastGoalEdit", defaultValue: false)
+    static var allowPastGoalEdit: Bool
+
     /// デバッグ用の遅延を適用
     static func applyLoadDelay() async {
         guard loadDelayEnabled else { return }
@@ -20,6 +24,7 @@ enum DebugSettings {
     #else
     static var loadDelayEnabled: Bool { false }
     static var loadDelaySeconds: Double { 0 }
+    static var allowPastGoalEdit: Bool { false }
     static func applyLoadDelay() async {}
     #endif
 }
