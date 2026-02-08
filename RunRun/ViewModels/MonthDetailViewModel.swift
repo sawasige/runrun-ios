@@ -207,15 +207,6 @@ final class MonthDetailViewModel: ObservableObject {
         }
     }
 
-    func getDefaultMonthlyDistance() async -> Double? {
-        do {
-            let latestGoal = try await firestoreService.getLatestMonthlyGoal(userId: userId)
-            return latestGoal?.targetDistanceKm
-        } catch {
-            print("[Goals] Failed to get latest monthly goal: \(error)")
-            return nil
-        }
-    }
 
     private var previousYearMonth: (year: Int, month: Int) {
         if month == 1 {
