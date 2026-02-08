@@ -32,6 +32,10 @@ struct GoalProgressView: View {
                 Text("Goal Progress", comment: "Goal progress section title")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                if showShimmer {
+                    LottieView(animationName: "running")
+                        .frame(width: 28, height: 28)
+                }
                 Spacer()
                 if isAchieved {
                     Image(systemName: "checkmark.circle.fill")
@@ -117,15 +121,20 @@ private struct ShimmerOverlay: View {
 
     @State private var startDate = Date()
 
-    private let shimmerGradient = LinearGradient(
-        stops: [
-            .init(color: .white.opacity(0), location: 0),
-            .init(color: .white.opacity(0.6), location: 0.8),
-            .init(color: .white.opacity(0), location: 0.81)
-        ],
-        startPoint: .leading,
-        endPoint: .trailing
-    )
+    /// HDR対応の明るい色（PulsingDotと同じ）
+    private let hdrBrightColor = Color(red: 1.5, green: 0.4, blue: 0.4)
+
+    private var shimmerGradient: LinearGradient {
+        LinearGradient(
+            stops: [
+                .init(color: hdrBrightColor.opacity(0), location: 0),
+                .init(color: hdrBrightColor, location: 0.8),
+                .init(color: hdrBrightColor.opacity(0), location: 0.81)
+            ],
+            startPoint: .leading,
+            endPoint: .trailing
+        )
+    }
 
     /// 加速度を考慮した移動距離を計算: x = v₀t + ½at²
     private func distanceTraveled(time: Double) -> CGFloat {
