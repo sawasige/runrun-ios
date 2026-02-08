@@ -168,6 +168,11 @@ struct GoalSettingsView: View {
         }
     }
 
+    /// 過去の目標がない場合のデフォルト値（単位設定に応じたキリの良い値）
+    private var fallbackDefaultValue: Double {
+        useMetric ? 100.0 : 60.0
+    }
+
     private func loadDefaultDistance() async {
         guard targetDistanceValue == nil else {
             isLoading = false
@@ -181,10 +186,15 @@ struct GoalSettingsView: View {
             } else {
                 latestGoal = try await firestoreService.getLatestYearlyGoal(userId: userId)
             }
-            let defaultKm = latestGoal?.targetDistanceKm ?? 100.0
-            targetDistanceValue = UnitFormatter.convertDistance(defaultKm, useMetric: useMetric)
+            if let latestGoal = latestGoal {
+                // 過去の目標がある場合は変換して使用
+                targetDistanceValue = UnitFormatter.convertDistance(latestGoal.targetDistanceKm, useMetric: useMetric)
+            } else {
+                // 過去の目標がない場合はキリの良いデフォルト値
+                targetDistanceValue = fallbackDefaultValue
+            }
         } catch {
-            targetDistanceValue = UnitFormatter.convertDistance(100.0, useMetric: useMetric)
+            targetDistanceValue = fallbackDefaultValue
         }
         isLoading = false
     }
