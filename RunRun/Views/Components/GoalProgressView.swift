@@ -21,9 +21,14 @@ struct GoalProgressView: View {
         Int(progress * 100)
     }
 
-    /// シマーアニメーションを表示するかどうか
+    /// ランニングアイコンを表示するかどうか（当月/当年で未達成）
+    private var showRunningIcon: Bool {
+        isCurrentPeriod && !isAchieved
+    }
+
+    /// シマーアニメーションを表示するかどうか（進捗がある場合のみ）
     private var showShimmer: Bool {
-        isCurrentPeriod && !isAchieved && progress > 0
+        showRunningIcon && progress > 0
     }
 
     /// 進捗バーの色
@@ -40,7 +45,7 @@ struct GoalProgressView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 12) {
-                if showShimmer {
+                if showRunningIcon {
                     LottieRunningIcon()
                 }
 
