@@ -8,6 +8,7 @@ struct TimelineView: View {
     @State private var monthlyDistance: Double = 0
     @State private var monthlyRunCount: Int = 0
     @State private var monthlyRecords: [RunningRecord] = []
+    @State private var showGoalSettings = false
 
     let userProfile: UserProfile
 
@@ -91,6 +92,23 @@ struct TimelineView: View {
                 await viewModel.refresh()
             }
         }
+        .sheet(isPresented: $showGoalSettings) {
+            let calendar = Calendar.current
+            let now = Date()
+            GoalSettingsView(
+                goalType: .monthly,
+                year: calendar.component(.year, from: now),
+                month: calendar.component(.month, from: now),
+                currentGoal: viewModel.monthlyGoal,
+                userId: viewModel.userId,
+                onSave: { goal in
+                    Task { await viewModel.saveGoal(goal) }
+                },
+                onDelete: viewModel.monthlyGoal != nil ? {
+                    Task { await viewModel.deleteGoal() }
+                } : nil
+            )
+        }
     }
 
     private var expandedHeaderView: some View {
@@ -119,16 +137,24 @@ struct TimelineView: View {
                 }
             )
 
-            // 今月のサマリ（タップで月詳細へ）
-            NavigationLink(value: ScreenType.monthDetail(
-                user: userProfile,
-                year: Calendar.current.component(.year, from: Date()),
-                month: Calendar.current.component(.month, from: Date())
-            )) {
-                monthSummaryStats
+            // 今月のサマリカード
+            VStack(spacing: 0) {
+                // タップで月詳細へ
+                NavigationLink(value: ScreenType.monthDetail(
+                    user: userProfile,
+                    year: Calendar.current.component(.year, from: Date()),
+                    month: Calendar.current.component(.month, from: Date())
+                )) {
+                    monthSummaryStats
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("timeline_month_summary")
+
+                // 月目標セクション（NavigationLinkの外）
+                goalSection
             }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("timeline_month_summary")
+            .background(Color(.secondarySystemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
 
         }
         .padding(.horizontal)
@@ -152,51 +178,88 @@ struct TimelineView: View {
             // 中央: ミニカレンダー
             MiniCalendarView(records: monthlyRecords)
 
-            Divider()
-
-            // 下部: 距離と回数
-            HStack(spacing: 0) {
-                // 距離
-                VStack(spacing: 2) {
-                    Text("Distance")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                    HStack(alignment: .firstTextBaseline, spacing: 2) {
-                        Text(UnitFormatter.formatDistanceValue(monthlyDistance, useMetric: useMetricUnits, decimals: 1))
-                            .font(.title3)
-                            .fontWeight(.bold)
-                            .foregroundStyle(.primary)
-                        Text(UnitFormatter.distanceUnit(useMetric: useMetricUnits))
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-
+            // 目標がない時のみ距離と回数を表示
+            if viewModel.monthlyGoal == nil {
                 Divider()
-                    .frame(height: 30)
 
-                // 回数
-                VStack(spacing: 2) {
-                    Text("Runs")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                    HStack(alignment: .firstTextBaseline, spacing: 2) {
-                        Text("\(monthlyRunCount)")
-                            .font(.title3)
-                            .fontWeight(.bold)
-                            .foregroundStyle(.primary)
-                        Text("runs")
+                // 下部: 距離と回数
+                HStack(spacing: 0) {
+                    // 距離
+                    VStack(spacing: 2) {
+                        Text("Distance")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
+                        HStack(alignment: .firstTextBaseline, spacing: 2) {
+                            Text(UnitFormatter.formatDistanceValue(monthlyDistance, useMetric: useMetricUnits, decimals: 1))
+                                .font(.title3)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.primary)
+                            Text(UnitFormatter.distanceUnit(useMetric: useMetricUnits))
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
                     }
+                    .frame(maxWidth: .infinity)
+
+                    Divider()
+                        .frame(height: 30)
+
+                    // 回数
+                    VStack(spacing: 2) {
+                        Text("Runs")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        HStack(alignment: .firstTextBaseline, spacing: 2) {
+                            Text("\(monthlyRunCount)")
+                                .font(.title3)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.primary)
+                            Text("runs")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
                 }
-                .frame(maxWidth: .infinity)
             }
         }
         .padding(12)
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    @ViewBuilder
+    private var goalSection: some View {
+        VStack(spacing: 8) {
+            Divider()
+                .padding(.horizontal, 12)
+
+            if let goal = viewModel.monthlyGoal {
+                GoalProgressView(
+                    currentDistance: monthlyDistance,
+                    targetDistance: goal.targetDistanceKm,
+                    useMetric: useMetricUnits,
+                    isCurrentPeriod: true,
+                    onEdit: { showGoalSettings = true }
+                )
+                .padding(.horizontal, 12)
+                .padding(.bottom, 12)
+            } else {
+                Button {
+                    showGoalSettings = true
+                } label: {
+                    HStack {
+                        Image(systemName: "target")
+                            .foregroundStyle(.secondary)
+                        Text("Set Goal", comment: "Set goal button in timeline")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                    }
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 12)
+                .padding(.bottom, 12)
+            }
+        }
     }
 
     private func loadMonthlySummary() async {
@@ -226,6 +289,9 @@ struct TimelineView: View {
         } catch {
             print("Failed to load monthly summary: \(error)")
         }
+
+        // 月目標を取得
+        await viewModel.loadMonthlyGoal()
     }
 
     private var loadingView: some View {

@@ -20,6 +20,8 @@ name: interop-ios-for-google-sdks, nameSpecified: InteropForGoogle, owner: googl
 
 name: leveldb, nameSpecified: leveldb, owner: firebase, version: 1.22.5, source: https://github.com/firebase/leveldb
 
+name: lottie-ios, nameSpecified: Lottie, owner: airbnb, version: 4.6.0, source: https://github.com/airbnb/lottie-ios
+
 name: nanopb, nameSpecified: nanopb, owner: firebase, version: 2.30910.0, source: https://github.com/firebase/nanopb
 
 name: promises, nameSpecified: Promises, owner: google, version: 2.4.0, source: https://github.com/google/promises
@@ -47,6 +49,8 @@ name: gtm-session-fetcher, nameSpecified: gtm-session-fetcher, owner: google, ve
 name: interop-ios-for-google-sdks, nameSpecified: InteropForGoogle, owner: google, version: 101.0.0, source: https://github.com/google/interop-ios-for-google-sdks
 
 name: leveldb, nameSpecified: leveldb, owner: firebase, version: 1.22.5, source: https://github.com/firebase/leveldb
+
+name: lottie-ios, nameSpecified: Lottie, owner: airbnb, version: 4.6.0, source: https://github.com/airbnb/lottie-ios
 
 name: nanopb, nameSpecified: nanopb, owner: firebase, version: 2.30910.0, source: https://github.com/firebase/nanopb
 
