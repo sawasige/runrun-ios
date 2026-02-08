@@ -26,20 +26,49 @@ struct GoalProgressView: View {
         isCurrentPeriod && !isAchieved && progress > 0
     }
 
+    /// 進捗バーの色
+    private var progressBarTint: Color {
+        if isAchieved {
+            return .green
+        } else if isCurrentPeriod {
+            return .accentColor
+        } else {
+            return .secondary
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("Goal Progress", comment: "Goal progress section title")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+            HStack(alignment: .top, spacing: 12) {
                 if showShimmer {
                     LottieRunningIcon()
                 }
-                Spacer()
-                if isAchieved {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Goal Progress", comment: "Goal progress section title")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+
+                    HStack(alignment: .firstTextBaseline, spacing: 4) {
+                        Text(UnitFormatter.formatDistance(currentDistance, useMetric: useMetric, decimals: 1))
+                            .font(.title2)
+                            .fontWeight(.bold)
+                        Text("/")
+                            .foregroundStyle(.secondary)
+                        Text(UnitFormatter.formatDistance(targetDistance, useMetric: useMetric, decimals: 1))
+                            .foregroundStyle(.secondary)
+                        Text("(\(progressPercentage)%)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
+
+                Spacer()
+
+                if isAchieved {
+                    LottieTrophyIcon()
+                }
+
                 if let onEdit {
                     Button {
                         onEdit()
@@ -53,22 +82,9 @@ struct GoalProgressView: View {
                 }
             }
 
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text(UnitFormatter.formatDistance(currentDistance, useMetric: useMetric, decimals: 1))
-                    .font(.title2)
-                    .fontWeight(.bold)
-                Text("/")
-                    .foregroundStyle(.secondary)
-                Text(UnitFormatter.formatDistance(targetDistance, useMetric: useMetric, decimals: 1))
-                    .foregroundStyle(.secondary)
-                Text("(\(progressPercentage)%)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
             ShimmerProgressBar(
                 progress: min(progress, 1.0),
-                tint: isAchieved ? .green : .accentColor,
+                tint: progressBarTint,
                 showShimmer: showShimmer
             )
         }
@@ -196,8 +212,16 @@ private struct LottieRunningIcon: View {
 
     var body: some View {
         LottieView(animationName: "running")
-            .frame(width: 28, height: 28)
+            .frame(width: 60, height: 60)
             .colorInvert(colorScheme == .dark)
+    }
+}
+
+/// トロフィーアイコン（ゴール達成時）
+private struct LottieTrophyIcon: View {
+    var body: some View {
+        LottieView(animationName: "trophy")
+            .frame(width: 60, height: 60)
     }
 }
 
