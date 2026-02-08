@@ -1,9 +1,12 @@
 Thank you for using RunRun!
 
 【New Features】
-・Tap charts to navigate to detail screens
-・Pulsing dot at the end of cumulative distance charts
+・Set monthly and yearly distance goals
+・View current month's goal progress on Timeline
+・Trophy animation when goals are achieved
+・Shimmer animation on progress bars
 
 【Improvements】
-・Improved search experience on Friends screen
-・Unified chart interactions and stability enhancements
+・Added animations to chart highlights and tooltips
+・Show calendar and stats even for months with no records
+・Auto-hide tooltips when scrolling charts
