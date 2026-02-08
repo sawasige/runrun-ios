@@ -331,8 +331,6 @@ struct MonthDetailView: View {
             Group {
                 if let error = viewModel.error {
                     errorView(error: error)
-                } else if hasLoadedOnce && viewModel.records.isEmpty {
-                    emptyView
                 } else {
                     recordsList
                 }
@@ -521,11 +519,16 @@ struct MonthDetailView: View {
                 }
 
                 Section("Running Records") {
-                    ForEach(Array(viewModel.records.enumerated()), id: \.element.id) { index, record in
-                        NavigationLink(value: ScreenType.runDetail(record: record, user: userProfile)) {
-                            RunningRecordRow(record: record)
+                    if viewModel.records.isEmpty {
+                        Text("No running records for this month", comment: "Empty state for month records")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(Array(viewModel.records.enumerated()), id: \.element.id) { index, record in
+                            NavigationLink(value: ScreenType.runDetail(record: record, user: userProfile)) {
+                                RunningRecordRow(record: record)
+                            }
+                            .accessibilityIdentifier(index == 0 ? "first_run_row" : "run_row_\(index)")
                         }
-                        .accessibilityIdentifier(index == 0 ? "first_run_row" : "run_row_\(index)")
                     }
                 }
             }
@@ -863,16 +866,6 @@ struct MonthDetailView: View {
                     }
                 }
             }
-        }
-    }
-
-    private var emptyView: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "figure.run")
-                .font(.system(size: 50))
-                .foregroundStyle(.secondary)
-            Text("No running records for this month")
-                .foregroundStyle(.secondary)
         }
     }
 
