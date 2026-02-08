@@ -270,6 +270,7 @@ struct TimelineView: View {
             monthlyDistance = 68.5
             monthlyRunCount = 12
             monthlyRecords = MockDataProvider.monthDetailRecords
+            await viewModel.loadMonthlyGoal()
             return
         }
 

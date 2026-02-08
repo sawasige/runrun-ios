@@ -99,23 +99,16 @@ final class TimelineViewModel: ObservableObject {
     // MARK: - Monthly Goal
 
     func loadMonthlyGoal() async {
+        // スクリーンショットモードではモックデータを使用
+        if ScreenshotMode.isEnabled {
+            monthlyGoal = MockDataProvider.monthlyGoal
+            return
+        }
+
         let calendar = Calendar.current
         let now = Date()
         let year = calendar.component(.year, from: now)
         let month = calendar.component(.month, from: now)
-
-        // スクリーンショットモードではモックデータを使用
-        if ScreenshotMode.isEnabled {
-            monthlyGoal = RunningGoal(
-                type: .monthly,
-                year: year,
-                month: month,
-                targetDistanceKm: 100,
-                createdAt: Date(),
-                updatedAt: Date()
-            )
-            return
-        }
 
         do {
             monthlyGoal = try await firestoreService.getMonthlyGoal(
