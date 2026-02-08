@@ -20,7 +20,6 @@ struct MonthDetailView: View {
     @State private var draggingDay: Int?
     @State private var tooltipPosition: CGPoint?
     @State private var showGoalSettings = false
-    @State private var defaultMonthlyDistance: Double?
     private let hapticFeedback = UIImpactFeedbackGenerator(style: .light)
 
     /// 現在ハイライトすべき日（ドラッグ中 or 選択中）
@@ -394,7 +393,7 @@ struct MonthDetailView: View {
                 year: currentYear,
                 month: currentMonth,
                 currentGoal: viewModel.monthlyGoal,
-                defaultDistanceKm: defaultMonthlyDistance,
+                userId: viewModel.userId,
                 onSave: { goal in
                     Task { await viewModel.saveGoal(goal) }
                 },
@@ -473,10 +472,7 @@ struct MonthDetailView: View {
                         } else {
                             // 現在月以降のみ目標設定可能（デバッグモードでは常に可能）
                             Button {
-                                Task {
-                                    defaultMonthlyDistance = await viewModel.getDefaultMonthlyDistance()
-                                    showGoalSettings = true
-                                }
+                                showGoalSettings = true
                             } label: {
                                 Label("Set Goal", systemImage: "target")
                             }
@@ -773,7 +769,7 @@ struct MonthDetailView: View {
                 RuleMark(y: .value(String(localized: "Goal"), goal.targetDistance(useMetric: useMetric)))
                     .foregroundStyle(.green)
                     .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5, 5]))
-                    .annotation(position: .trailing, alignment: .leading) {
+                    .annotation(position: .overlay, alignment: .bottomLeading) {
                         Text("Goal")
                             .font(.caption2)
                             .foregroundStyle(.green)

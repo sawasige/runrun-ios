@@ -12,8 +12,6 @@ struct GoalListView: View {
     @State private var editingYear: Int = Calendar.current.component(.year, from: Date())
     @State private var editingMonth: Int? = Calendar.current.component(.month, from: Date())
     @State private var editingGoal: RunningGoal?
-    @State private var defaultMonthlyDistance: Double?
-    @State private var defaultYearlyDistance: Double?
 
     private let firestoreService = FirestoreService.shared
 
@@ -84,19 +82,21 @@ struct GoalListView: View {
             await loadGoals()
         }
         .sheet(isPresented: $showingGoalSettings) {
-            GoalSettingsView(
-                goalType: editingGoalType,
-                year: editingYear,
-                month: editingMonth,
-                currentGoal: editingGoal,
-                defaultDistanceKm: editingGoalType == .monthly ? defaultMonthlyDistance : defaultYearlyDistance,
-                onSave: { goal in
-                    Task { await saveGoal(goal) }
-                },
-                onDelete: editingGoal != nil ? {
-                    Task { await deleteGoal(editingGoal!) }
-                } : nil
-            )
+            if let userId = userId {
+                GoalSettingsView(
+                    goalType: editingGoalType,
+                    year: editingYear,
+                    month: editingMonth,
+                    currentGoal: editingGoal,
+                    userId: userId,
+                    onSave: { goal in
+                        Task { await saveGoal(goal) }
+                    },
+                    onDelete: editingGoal != nil ? {
+                        Task { await deleteGoal(editingGoal!) }
+                    } : nil
+                )
+            }
         }
     }
 
@@ -109,18 +109,12 @@ struct GoalListView: View {
             // 現在の月間・年間目標を取得
             async let monthlyGoalTask = firestoreService.getMonthlyGoal(userId: userId, year: currentYear, month: currentMonth)
             async let yearlyGoalTask = firestoreService.getYearlyGoal(userId: userId, year: currentYear)
-            async let defaultMonthlyTask = firestoreService.getLatestMonthlyGoal(userId: userId)
-            async let defaultYearlyTask = firestoreService.getLatestYearlyGoal(userId: userId)
 
             let monthlyGoal = try await monthlyGoalTask
             let yearlyGoal = try await yearlyGoalTask
-            let latestMonthly = try await defaultMonthlyTask
-            let latestYearly = try await defaultYearlyTask
 
             monthlyGoals = monthlyGoal.map { [$0] } ?? []
             yearlyGoals = yearlyGoal.map { [$0] } ?? []
-            defaultMonthlyDistance = latestMonthly?.targetDistanceKm
-            defaultYearlyDistance = latestYearly?.targetDistanceKm
         } catch {
             print("Failed to load goals: \(error)")
         }
