@@ -108,8 +108,10 @@ private struct ShimmerProgressBar: View {
 private struct ShimmerOverlay: View {
     /// シマーの固定幅（ポイント）
     private let shimmerWidth: CGFloat = 40
-    /// シマーの移動速度（ポイント/秒）
-    private let shimmerSpeed: CGFloat = 50
+    /// シマーの初速（ポイント/秒）
+    private let initialSpeed: CGFloat = 50
+    /// シマーの加速度（ポイント/秒²）
+    private let acceleration: CGFloat = 30
     /// シマーの発生間隔（秒）- 線グラフの点滅と同期
     private let shimmerInterval: Double = 2.4
 
@@ -125,18 +127,21 @@ private struct ShimmerOverlay: View {
         endPoint: .trailing
     )
 
+    /// 加速度を考慮した移動距離を計算: x = v₀t + ½at²
+    private func distanceTraveled(time: Double) -> CGFloat {
+        let t = CGFloat(time)
+        return initialSpeed * t + 0.5 * acceleration * t * t
+    }
+
     /// 表示中のシマーのオフセット一覧を計算
     private func visibleShimmerOffsets(for width: CGFloat, elapsed: Double) -> [CGFloat] {
         var offsets: [CGFloat] = []
 
-        // シマーが画面を横断するのにかかる時間
-        let travelDuration = (width + shimmerWidth) / shimmerSpeed
-
         // 現在のシマーのインデックス（何番目のシマーが発生したか）
         let currentShimmerIndex = Int(elapsed / shimmerInterval)
 
-        // 最大でいくつのシマーが同時に表示されうるか
-        let maxVisibleShimmers = Int(ceil(travelDuration / shimmerInterval)) + 1
+        // 最大でいくつのシマーが同時に表示されうるか（余裕を持って計算）
+        let maxVisibleShimmers = max(5, Int(ceil(Double(width) / Double(initialSpeed) / shimmerInterval)) + 2)
 
         // 現在表示される可能性のあるシマーをチェック
         for i in max(0, currentShimmerIndex - maxVisibleShimmers)...currentShimmerIndex {
@@ -147,8 +152,8 @@ private struct ShimmerOverlay: View {
             // まだ発生していない
             if shimmerElapsed < 0 { continue }
 
-            // シマーの現在位置
-            let offsetX = -shimmerWidth + shimmerElapsed * shimmerSpeed
+            // シマーの現在位置（加速度込み）
+            let offsetX = -shimmerWidth + distanceTraveled(time: shimmerElapsed)
 
             // 画面内にいるかチェック
             if offsetX >= -shimmerWidth && offsetX <= width {
