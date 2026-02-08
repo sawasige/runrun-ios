@@ -17,7 +17,7 @@ struct MockDataProvider {
     static var currentUser: UserProfile {
         UserProfile(
             id: currentUserId,
-            displayName: isEnglish ? "John Smith" : "山田 太郎",
+            displayName: isEnglish ? "runrun_john" : "runrun_taro",
             email: nil,
             iconName: "figure.run",
             avatarURL: nil,
@@ -36,33 +36,33 @@ struct MockDataProvider {
         let now = Date()
         return [
             // 今日
-            TimelineRun(id: "run-1", date: now.addingTimeInterval(-1800), distanceKm: 5.23, durationSeconds: 1650, userId: "user-1", displayName: name("佐藤 健", "Mike Johnson"), avatarURL: nil, iconName: "figure.run", caloriesBurned: 320, averageHeartRate: 152),
-            TimelineRun(id: "run-2", date: now.addingTimeInterval(-5400), distanceKm: 10.5, durationSeconds: 3300, userId: "user-2", displayName: name("鈴木 花子", "Sarah Williams"), avatarURL: nil, iconName: "hare.fill", caloriesBurned: 650, averageHeartRate: 145),
+            TimelineRun(id: "run-1", date: now.addingTimeInterval(-1800), distanceKm: 5.23, durationSeconds: 1650, userId: "user-1", displayName: name("朝ラン派", "morning_miles"), avatarURL: nil, iconName: "figure.run", caloriesBurned: 320, averageHeartRate: 152),
+            TimelineRun(id: "run-2", date: now.addingTimeInterval(-5400), distanceKm: 10.5, durationSeconds: 3300, userId: "user-2", displayName: name("hana_5km", "sarahw_runs"), avatarURL: nil, iconName: "hare.fill", caloriesBurned: 650, averageHeartRate: 145),
             TimelineRun(id: "run-3", date: now.addingTimeInterval(-10800), distanceKm: 7.8, durationSeconds: 2700, userId: currentUserId, displayName: currentUser.displayName, avatarURL: nil, iconName: "figure.run", caloriesBurned: 480, averageHeartRate: 148),
             // 昨日
-            TimelineRun(id: "run-4", date: now.addingTimeInterval(-86400 - 3600), distanceKm: 3.2, durationSeconds: 1080, userId: "user-3", displayName: name("高橋 誠", "David Brown"), avatarURL: nil, iconName: "bolt.fill", caloriesBurned: 195, averageHeartRate: 138),
-            TimelineRun(id: "run-5", date: now.addingTimeInterval(-86400 - 10800), distanceKm: 8.1, durationSeconds: 2580, userId: "user-4", displayName: name("中村 愛", "Emily Davis"), avatarURL: nil, iconName: "heart.fill", caloriesBurned: 510, averageHeartRate: 155),
-            TimelineRun(id: "run-6", date: now.addingTimeInterval(-86400 - 18000), distanceKm: 6.5, durationSeconds: 2100, userId: "user-5", displayName: name("松本 翔", "Chris Miller"), avatarURL: nil, iconName: "flame.fill", caloriesBurned: 410, averageHeartRate: 148),
+            TimelineRun(id: "run-4", date: now.addingTimeInterval(-86400 - 3600), distanceKm: 3.2, durationSeconds: 1080, userId: "user-3", displayName: name("皇居ランナー", "trail_dave"), avatarURL: nil, iconName: "bolt.fill", caloriesBurned: 195, averageHeartRate: 138),
+            TimelineRun(id: "run-5", date: now.addingTimeInterval(-86400 - 10800), distanceKm: 8.1, durationSeconds: 2580, userId: "user-4", displayName: name("あいらん🏃‍♀️", "em_runner"), avatarURL: nil, iconName: "heart.fill", caloriesBurned: 510, averageHeartRate: 155),
+            TimelineRun(id: "run-6", date: now.addingTimeInterval(-86400 - 18000), distanceKm: 6.5, durationSeconds: 2100, userId: "user-5", displayName: name("sho_sub3.5", "chris42k"), avatarURL: nil, iconName: "flame.fill", caloriesBurned: 410, averageHeartRate: 148),
             // 2日前
-            TimelineRun(id: "run-7", date: now.addingTimeInterval(-172800 - 7200), distanceKm: 12.3, durationSeconds: 4020, userId: "user-6", displayName: name("井上 真央", "Jessica Wilson"), avatarURL: nil, iconName: "star.fill", caloriesBurned: 780, averageHeartRate: 142),
-            TimelineRun(id: "run-8", date: now.addingTimeInterval(-172800 - 14400), distanceKm: 4.8, durationSeconds: 1560, userId: "user-7", displayName: name("木村 拓也", "Ryan Taylor"), avatarURL: nil, iconName: "mountain.2.fill", caloriesBurned: 300, averageHeartRate: 140),
-            TimelineRun(id: "run-9", date: now.addingTimeInterval(-172800 - 21600), distanceKm: 9.2, durationSeconds: 2940, userId: "user-8", displayName: name("斉藤 美穂", "Amanda Anderson"), avatarURL: nil, iconName: "figure.run", caloriesBurned: 580, averageHeartRate: 150),
+            TimelineRun(id: "run-7", date: now.addingTimeInterval(-172800 - 7200), distanceKm: 12.3, durationSeconds: 4020, userId: "user-6", displayName: name("週末10k", "jess_jogs"), avatarURL: nil, iconName: "star.fill", caloriesBurned: 780, averageHeartRate: 142),
+            TimelineRun(id: "run-8", date: now.addingTimeInterval(-172800 - 14400), distanceKm: 4.8, durationSeconds: 1560, userId: "user-7", displayName: name("takuya1985", "ry_runs"), avatarURL: nil, iconName: "mountain.2.fill", caloriesBurned: 300, averageHeartRate: 140),
+            TimelineRun(id: "run-9", date: now.addingTimeInterval(-172800 - 21600), distanceKm: 9.2, durationSeconds: 2940, userId: "user-8", displayName: name("miho_jogger", "mandy_pace"), avatarURL: nil, iconName: "figure.run", caloriesBurned: 580, averageHeartRate: 150),
             // 3日前
-            TimelineRun(id: "run-10", date: now.addingTimeInterval(-259200 - 3600), distanceKm: 5.5, durationSeconds: 1800, userId: "user-9", displayName: name("森田 康平", "Kevin Thomas"), avatarURL: nil, iconName: "bolt.fill", caloriesBurned: 345, averageHeartRate: 144),
+            TimelineRun(id: "run-10", date: now.addingTimeInterval(-259200 - 3600), distanceKm: 5.5, durationSeconds: 1800, userId: "user-9", displayName: name("k.morita", "kev_strava"), avatarURL: nil, iconName: "bolt.fill", caloriesBurned: 345, averageHeartRate: 144),
             TimelineRun(id: "run-11", date: now.addingTimeInterval(-259200 - 10800), distanceKm: 7.0, durationSeconds: 2310, userId: currentUserId, displayName: currentUser.displayName, avatarURL: nil, iconName: "figure.run", caloriesBurned: 440, averageHeartRate: 146),
-            TimelineRun(id: "run-12", date: now.addingTimeInterval(-259200 - 18000), distanceKm: 4.2, durationSeconds: 1380, userId: "user-10", displayName: name("藤井 沙織", "Lauren Martinez"), avatarURL: nil, iconName: "heart.fill", caloriesBurned: 265, averageHeartRate: 138),
+            TimelineRun(id: "run-12", date: now.addingTimeInterval(-259200 - 18000), distanceKm: 4.2, durationSeconds: 1380, userId: "user-10", displayName: name("さおりんご", "lmartinez"), avatarURL: nil, iconName: "heart.fill", caloriesBurned: 265, averageHeartRate: 138),
             // 4日前
-            TimelineRun(id: "run-13", date: now.addingTimeInterval(-345600 - 7200), distanceKm: 15.0, durationSeconds: 4800, userId: "user-11", displayName: name("西村 大地", "Daniel Garcia"), avatarURL: nil, iconName: "hare.fill", caloriesBurned: 950, averageHeartRate: 152),
-            TimelineRun(id: "run-14", date: now.addingTimeInterval(-345600 - 14400), distanceKm: 6.8, durationSeconds: 2200, userId: "user-12", displayName: name("山口 理恵", "Rachel Lee"), avatarURL: nil, iconName: "star.fill", caloriesBurned: 425, averageHeartRate: 142),
+            TimelineRun(id: "run-13", date: now.addingTimeInterval(-345600 - 7200), distanceKm: 15.0, durationSeconds: 4800, userId: "user-11", displayName: name("daichi_ultra", "danny_5am"), avatarURL: nil, iconName: "hare.fill", caloriesBurned: 950, averageHeartRate: 152),
+            TimelineRun(id: "run-14", date: now.addingTimeInterval(-345600 - 14400), distanceKm: 6.8, durationSeconds: 2200, userId: "user-12", displayName: name("rie_yoga_run", "rlee_nyc"), avatarURL: nil, iconName: "star.fill", caloriesBurned: 425, averageHeartRate: 142),
             // 5日前
-            TimelineRun(id: "run-15", date: now.addingTimeInterval(-432000 - 3600), distanceKm: 8.5, durationSeconds: 2720, userId: "user-13", displayName: name("清水 隆司", "Brandon Clark"), avatarURL: nil, iconName: "flame.fill", caloriesBurned: 535, averageHeartRate: 148),
-            TimelineRun(id: "run-16", date: now.addingTimeInterval(-432000 - 10800), distanceKm: 5.0, durationSeconds: 1650, userId: "user-14", displayName: name("長谷川 由美", "Megan White"), avatarURL: nil, iconName: "figure.run", caloriesBurned: 315, averageHeartRate: 140),
+            TimelineRun(id: "run-15", date: now.addingTimeInterval(-432000 - 3600), distanceKm: 8.5, durationSeconds: 2720, userId: "user-13", displayName: name("しみしみ", "b.clark"), avatarURL: nil, iconName: "flame.fill", caloriesBurned: 535, averageHeartRate: 148),
+            TimelineRun(id: "run-16", date: now.addingTimeInterval(-432000 - 10800), distanceKm: 5.0, durationSeconds: 1650, userId: "user-14", displayName: name("yumi_slow", "meg_w"), avatarURL: nil, iconName: "figure.run", caloriesBurned: 315, averageHeartRate: 140),
             TimelineRun(id: "run-17", date: now.addingTimeInterval(-432000 - 18000), distanceKm: 11.2, durationSeconds: 3640, userId: currentUserId, displayName: currentUser.displayName, avatarURL: nil, iconName: "figure.run", caloriesBurned: 705, averageHeartRate: 150),
             // 6日前
-            TimelineRun(id: "run-18", date: now.addingTimeInterval(-518400 - 7200), distanceKm: 3.8, durationSeconds: 1260, userId: "user-15", displayName: name("岡田 健一", "Justin Harris"), avatarURL: nil, iconName: "bolt.fill", caloriesBurned: 240, averageHeartRate: 136),
-            TimelineRun(id: "run-19", date: now.addingTimeInterval(-518400 - 14400), distanceKm: 7.5, durationSeconds: 2475, userId: "user-16", displayName: name("前田 あかり", "Nicole Robinson"), avatarURL: nil, iconName: "heart.fill", caloriesBurned: 470, averageHeartRate: 144),
+            TimelineRun(id: "run-18", date: now.addingTimeInterval(-518400 - 7200), distanceKm: 3.8, durationSeconds: 1260, userId: "user-15", displayName: name("おかけん", "justinH_"), avatarURL: nil, iconName: "bolt.fill", caloriesBurned: 240, averageHeartRate: 136),
+            TimelineRun(id: "run-19", date: now.addingTimeInterval(-518400 - 14400), distanceKm: 7.5, durationSeconds: 2475, userId: "user-16", displayName: name("akari_3776", "nikki.r"), avatarURL: nil, iconName: "heart.fill", caloriesBurned: 470, averageHeartRate: 144),
             // 7日前
-            TimelineRun(id: "run-20", date: now.addingTimeInterval(-604800 - 3600), distanceKm: 6.2, durationSeconds: 2046, userId: "user-17", displayName: name("石田 誠司", "Andrew Lewis"), avatarURL: nil, iconName: "mountain.2.fill", caloriesBurned: 390, averageHeartRate: 142),
+            TimelineRun(id: "run-20", date: now.addingTimeInterval(-604800 - 3600), distanceKm: 6.2, durationSeconds: 2046, userId: "user-17", displayName: name("seiji_run", "drewruns"), avatarURL: nil, iconName: "mountain.2.fill", caloriesBurned: 390, averageHeartRate: 142),
         ]
     }
 
@@ -112,26 +112,26 @@ struct MockDataProvider {
 
     static var leaderboardUsers: [UserProfile] {
         [
-            UserProfile(id: "leader-1", displayName: name("田中 一郎", "James Wilson"), email: nil, iconName: "hare.fill", totalDistanceKm: 245.8, totalRuns: 42),
-            UserProfile(id: "leader-2", displayName: name("山本 さくら", "Emma Thompson"), email: nil, iconName: "flame.fill", totalDistanceKm: 228.3, totalRuns: 38),
-            UserProfile(id: "leader-3", displayName: name("佐藤 健太", "Michael Brown"), email: nil, iconName: "bolt.fill", totalDistanceKm: 215.6, totalRuns: 36),
-            UserProfile(id: "leader-4", displayName: name("鈴木 美穂", "Olivia Davis"), email: nil, iconName: "star.fill", totalDistanceKm: 198.2, totalRuns: 34),
-            UserProfile(id: "leader-5", displayName: name("高橋 大輔", "William Johnson"), email: nil, iconName: "figure.run", totalDistanceKm: 185.3, totalRuns: 32),
+            UserProfile(id: "leader-1", displayName: name("毎日5k", "jw_marathon"), email: nil, iconName: "hare.fill", totalDistanceKm: 245.8, totalRuns: 42),
+            UserProfile(id: "leader-2", displayName: name("sakura_pb更新中", "emma.t"), email: nil, iconName: "flame.fill", totalDistanceKm: 228.3, totalRuns: 38),
+            UserProfile(id: "leader-3", displayName: name("kenta_箱根", "mike_b_runs"), email: nil, iconName: "bolt.fill", totalDistanceKm: 215.6, totalRuns: 36),
+            UserProfile(id: "leader-4", displayName: name("miporin", "liv.runs"), email: nil, iconName: "star.fill", totalDistanceKm: 198.2, totalRuns: 34),
+            UserProfile(id: "leader-5", displayName: name("dice_run", "will_j"), email: nil, iconName: "figure.run", totalDistanceKm: 185.3, totalRuns: 32),
             UserProfile(id: currentUserId, displayName: currentUser.displayName, email: nil, iconName: "figure.run", totalDistanceKm: 156.8, totalRuns: 28),
-            UserProfile(id: "leader-7", displayName: name("伊藤 翔太", "Alexander Miller"), email: nil, iconName: "heart.fill", totalDistanceKm: 148.5, totalRuns: 26),
-            UserProfile(id: "leader-8", displayName: name("渡辺 愛", "Sophia Garcia"), email: nil, iconName: "flame.fill", totalDistanceKm: 142.1, totalRuns: 24),
-            UserProfile(id: "leader-9", displayName: name("小林 誠", "Benjamin Martinez"), email: nil, iconName: "hare.fill", totalDistanceKm: 135.7, totalRuns: 23),
-            UserProfile(id: "leader-10", displayName: name("加藤 由美", "Isabella Anderson"), email: nil, iconName: "star.fill", totalDistanceKm: 128.5, totalRuns: 22),
-            UserProfile(id: "leader-11", displayName: name("吉田 隆司", "Ethan Taylor"), email: nil, iconName: "mountain.2.fill", totalDistanceKm: 121.3, totalRuns: 21),
-            UserProfile(id: "leader-12", displayName: name("山口 恵子", "Charlotte Thomas"), email: nil, iconName: "bolt.fill", totalDistanceKm: 115.2, totalRuns: 20),
-            UserProfile(id: "leader-13", displayName: name("松本 拓也", "Mason Moore"), email: nil, iconName: "figure.run", totalDistanceKm: 108.8, totalRuns: 19),
-            UserProfile(id: "leader-14", displayName: name("井上 沙織", "Amelia Jackson"), email: nil, iconName: "heart.fill", totalDistanceKm: 102.4, totalRuns: 18),
-            UserProfile(id: "leader-15", displayName: name("木村 康平", "Lucas White"), email: nil, iconName: "flame.fill", totalDistanceKm: 96.1, totalRuns: 17),
-            UserProfile(id: "leader-16", displayName: name("斉藤 あかり", "Harper Harris"), email: nil, iconName: "hare.fill", totalDistanceKm: 89.7, totalRuns: 16),
-            UserProfile(id: "leader-17", displayName: name("清水 大地", "Noah Martin"), email: nil, iconName: "star.fill", totalDistanceKm: 83.4, totalRuns: 15),
-            UserProfile(id: "leader-18", displayName: name("森田 理恵", "Evelyn Thompson"), email: nil, iconName: "mountain.2.fill", totalDistanceKm: 77.2, totalRuns: 14),
-            UserProfile(id: "leader-19", displayName: name("藤井 健一", "Liam Robinson"), email: nil, iconName: "bolt.fill", totalDistanceKm: 71.0, totalRuns: 13),
-            UserProfile(id: "leader-20", displayName: name("西村 美咲", "Ava Clark"), email: nil, iconName: "figure.run", totalDistanceKm: 65.3, totalRuns: 12),
+            UserProfile(id: "leader-7", displayName: name("shota_ito", "alex.m"), email: nil, iconName: "heart.fill", totalDistanceKm: 148.5, totalRuns: 26),
+            UserProfile(id: "leader-8", displayName: name("ai_watanabe", "sophieg"), email: nil, iconName: "flame.fill", totalDistanceKm: 142.1, totalRuns: 24),
+            UserProfile(id: "leader-9", displayName: name("makoto_k", "ben_mtz"), email: nil, iconName: "hare.fill", totalDistanceKm: 135.7, totalRuns: 23),
+            UserProfile(id: "leader-10", displayName: name("yuuumi", "bella_runs"), email: nil, iconName: "star.fill", totalDistanceKm: 128.5, totalRuns: 22),
+            UserProfile(id: "leader-11", displayName: name("t.yoshida", "ethan.t"), email: nil, iconName: "mountain.2.fill", totalDistanceKm: 121.3, totalRuns: 21),
+            UserProfile(id: "leader-12", displayName: name("keikoy", "charlie_t"), email: nil, iconName: "bolt.fill", totalDistanceKm: 115.2, totalRuns: 20),
+            UserProfile(id: "leader-13", displayName: name("taku.m", "mason_m"), email: nil, iconName: "figure.run", totalDistanceKm: 108.8, totalRuns: 19),
+            UserProfile(id: "leader-14", displayName: name("saori_i", "amelia.j"), email: nil, iconName: "heart.fill", totalDistanceKm: 102.4, totalRuns: 18),
+            UserProfile(id: "leader-15", displayName: name("kohei_k", "lucas.w"), email: nil, iconName: "flame.fill", totalDistanceKm: 96.1, totalRuns: 17),
+            UserProfile(id: "leader-16", displayName: name("akr_saitou", "harper_h"), email: nil, iconName: "hare.fill", totalDistanceKm: 89.7, totalRuns: 16),
+            UserProfile(id: "leader-17", displayName: name("d_shimizu", "noah.m"), email: nil, iconName: "star.fill", totalDistanceKm: 83.4, totalRuns: 15),
+            UserProfile(id: "leader-18", displayName: name("rie_morita", "evelyn_t"), email: nil, iconName: "mountain.2.fill", totalDistanceKm: 77.2, totalRuns: 14),
+            UserProfile(id: "leader-19", displayName: name("fujii_k1", "liam.r"), email: nil, iconName: "bolt.fill", totalDistanceKm: 71.0, totalRuns: 13),
+            UserProfile(id: "leader-20", displayName: name("misaki_n", "ava.c"), email: nil, iconName: "figure.run", totalDistanceKm: 65.3, totalRuns: 12),
         ]
     }
 
@@ -490,32 +490,41 @@ struct MockDataProvider {
 
     // MARK: - 目標用
 
-    /// 年間目標（500km）
+    /// ユーザーの単位設定を取得
+    private static var useMetric: Bool {
+        UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
+    }
+
+    /// 年間目標（km: 500km, マイル: 300mi）
     static var yearlyGoal: RunningGoal {
         let calendar = Calendar.current
         let currentYear = calendar.component(.year, from: Date())
+        // マイル設定の場合は300マイル（約482.8km）、km設定の場合は500km
+        let targetKm = useMetric ? 500.0 : 300.0 * 1.60934
         return RunningGoal(
             id: "mock-yearly-goal",
             type: .yearly,
             year: currentYear,
             month: nil,
-            targetDistanceKm: 500,
+            targetDistanceKm: targetKm,
             createdAt: Date(),
             updatedAt: Date()
         )
     }
 
-    /// 月間目標（100km）
+    /// 月間目標（km: 100km, マイル: 60mi）
     static var monthlyGoal: RunningGoal {
         let calendar = Calendar.current
         let currentYear = calendar.component(.year, from: Date())
         let currentMonth = calendar.component(.month, from: Date())
+        // マイル設定の場合は60マイル（約96.6km）、km設定の場合は100km
+        let targetKm = useMetric ? 100.0 : 60.0 * 1.60934
         return RunningGoal(
             id: "mock-monthly-goal",
             type: .monthly,
             year: currentYear,
             month: currentMonth,
-            targetDistanceKm: 100,
+            targetDistanceKm: targetKm,
             createdAt: Date(),
             updatedAt: Date()
         )
