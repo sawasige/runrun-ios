@@ -66,22 +66,29 @@ extension FirestoreService {
     }
 
     /// 直近の月間目標を取得（デフォルト値用）
+    /// 年月の降順で最も新しい期間の目標を返す
     func getLatestMonthlyGoal(userId: String) async throws -> RunningGoal? {
         let snapshot = try await goalsCollection(userId: userId)
             .whereField("type", isEqualTo: RunningGoal.GoalType.monthly.rawValue)
-            .order(by: "updatedAt", descending: true)
+            .order(by: "year", descending: true)
+            .order(by: "month", descending: true)
             .limit(to: 1)
             .getDocuments()
 
         guard let doc = snapshot.documents.first else { return nil }
-        return goalFromDocument(doc)
+        let goal = goalFromDocument(doc)
+        #if DEBUG
+        print("[Goals] Latest monthly goal: \(goal?.year ?? 0)/\(goal?.month ?? 0) = \(goal?.targetDistanceKm ?? 0)km")
+        #endif
+        return goal
     }
 
     /// 直近の年間目標を取得（デフォルト値用）
+    /// 年の降順で最も新しい年の目標を返す
     func getLatestYearlyGoal(userId: String) async throws -> RunningGoal? {
         let snapshot = try await goalsCollection(userId: userId)
             .whereField("type", isEqualTo: RunningGoal.GoalType.yearly.rawValue)
-            .order(by: "updatedAt", descending: true)
+            .order(by: "year", descending: true)
             .limit(to: 1)
             .getDocuments()
 

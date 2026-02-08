@@ -5,6 +5,7 @@ struct GoalProgressView: View {
     let currentDistance: Double
     let targetDistance: Double
     let useMetric: Bool
+    var onEdit: (() -> Void)?
 
     private var progress: Double {
         guard targetDistance > 0 else { return 0 }
@@ -29,6 +30,16 @@ struct GoalProgressView: View {
                 if isAchieved {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.green)
+                }
+                if let onEdit {
+                    Button {
+                        onEdit()
+                    } label: {
+                        Image(systemName: "pencil")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
 

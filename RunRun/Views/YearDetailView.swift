@@ -257,16 +257,9 @@ struct YearDetailView: View {
                         GoalProgressView(
                             currentDistance: viewModel.totalYearlyDistance,
                             targetDistance: goal.targetDistanceKm,
-                            useMetric: useMetric
+                            useMetric: useMetric,
+                            onEdit: canEditGoal ? { showGoalSettings = true } : nil
                         )
-                        // 現在年以降のみ編集可能（デバッグモードでは常に可能）
-                        if canEditGoal {
-                            Button {
-                                showGoalSettings = true
-                            } label: {
-                                Label("Edit Goal", systemImage: "pencil")
-                            }
-                        }
                     } else {
                         // 現在年以降のみ目標設定可能（デバッグモードでは常に可能）
                         Button {
