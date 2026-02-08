@@ -9,6 +9,7 @@ final class TimelineViewModel: ObservableObject {
     @Published private(set) var isLoadingMore = false
     @Published private(set) var error: Error?
     @Published private(set) var hasMore = true
+    @Published private(set) var monthlyGoal: RunningGoal?
 
     let userId: String
     private let firestoreService = FirestoreService.shared
@@ -93,5 +94,63 @@ final class TimelineViewModel: ObservableObject {
         }
 
         isLoadingMore = false
+    }
+
+    // MARK: - Monthly Goal
+
+    func loadMonthlyGoal() async {
+        let calendar = Calendar.current
+        let now = Date()
+        let year = calendar.component(.year, from: now)
+        let month = calendar.component(.month, from: now)
+
+        // スクリーンショットモードではモックデータを使用
+        if ScreenshotMode.isEnabled {
+            monthlyGoal = RunningGoal(
+                type: .monthly,
+                year: year,
+                month: month,
+                targetDistanceKm: 100,
+                createdAt: Date(),
+                updatedAt: Date()
+            )
+            return
+        }
+
+        do {
+            monthlyGoal = try await firestoreService.getMonthlyGoal(
+                userId: userId,
+                year: year,
+                month: month
+            )
+        } catch {
+            print("Failed to load monthly goal: \(error)")
+        }
+    }
+
+    func saveGoal(_ goal: RunningGoal) async {
+        do {
+            let savedGoal = try await firestoreService.setGoal(userId: userId, goal: goal)
+            monthlyGoal = savedGoal
+            AnalyticsService.logEvent("set_goal", parameters: [
+                "type": goal.type.rawValue,
+                "target_km": goal.targetDistanceKm
+            ])
+        } catch {
+            print("Failed to save goal: \(error)")
+        }
+    }
+
+    func deleteGoal() async {
+        guard let goalId = monthlyGoal?.id else { return }
+        do {
+            try await firestoreService.deleteGoal(userId: userId, goalId: goalId)
+            monthlyGoal = nil
+            AnalyticsService.logEvent("delete_goal", parameters: [
+                "type": "monthly"
+            ])
+        } catch {
+            print("Failed to delete goal: \(error)")
+        }
     }
 }
