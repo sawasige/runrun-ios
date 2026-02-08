@@ -181,10 +181,17 @@ struct GoalSettingsView: View {
 
         do {
             let latestGoal: RunningGoal?
-            if goalType == .monthly {
-                latestGoal = try await firestoreService.getLatestMonthlyGoal(userId: userId)
+            if goalType == .monthly, let month = month {
+                latestGoal = try await firestoreService.getLatestMonthlyGoal(
+                    userId: userId,
+                    beforeYear: year,
+                    beforeMonth: month
+                )
             } else {
-                latestGoal = try await firestoreService.getLatestYearlyGoal(userId: userId)
+                latestGoal = try await firestoreService.getLatestYearlyGoal(
+                    userId: userId,
+                    beforeYear: year
+                )
             }
             if let latestGoal = latestGoal {
                 // 過去の目標がある場合は変換して使用

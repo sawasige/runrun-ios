@@ -65,29 +65,41 @@ extension FirestoreService {
         try await goalsCollection(userId: userId).document(goalId).delete()
     }
 
-    /// 直近の月間目標を取得（デフォルト値用）
-    /// 年月の降順で最も新しい期間の目標を返す
-    func getLatestMonthlyGoal(userId: String) async throws -> RunningGoal? {
+    /// 指定期間より前の直近の月間目標を取得（デフォルト値用）
+    /// - Parameters:
+    ///   - userId: ユーザーID
+    ///   - beforeYear: この年より前、または同年でbeforeMonthより前の目標を検索
+    ///   - beforeMonth: この月より前の目標を検索
+    func getLatestMonthlyGoal(userId: String, beforeYear: Int, beforeMonth: Int) async throws -> RunningGoal? {
+        // Firestoreの制約上、OR条件は使えないため複数件取得してフィルタ
         let snapshot = try await goalsCollection(userId: userId)
             .whereField("type", isEqualTo: RunningGoal.GoalType.monthly.rawValue)
             .order(by: "year", descending: true)
             .order(by: "month", descending: true)
-            .limit(to: 1)
+            .limit(to: 12)  // 最大1年分
             .getDocuments()
 
-        guard let doc = snapshot.documents.first else { return nil }
-        let goal = goalFromDocument(doc)
+        let goal = snapshot.documents
+            .compactMap { goalFromDocument($0) }
+            .first { goal in
+                guard let month = goal.month else { return false }
+                return goal.year < beforeYear || (goal.year == beforeYear && month < beforeMonth)
+            }
+
         #if DEBUG
-        print("[Goals] Latest monthly goal: \(goal?.year ?? 0)/\(goal?.month ?? 0) = \(goal?.targetDistanceKm ?? 0)km")
+        print("[Goals] Latest monthly goal before \(beforeYear)/\(beforeMonth): \(goal?.year ?? 0)/\(goal?.month ?? 0) = \(goal?.targetDistanceKm ?? 0)km")
         #endif
         return goal
     }
 
-    /// 直近の年間目標を取得（デフォルト値用）
-    /// 年の降順で最も新しい年の目標を返す
-    func getLatestYearlyGoal(userId: String) async throws -> RunningGoal? {
+    /// 指定年より前の直近の年間目標を取得（デフォルト値用）
+    /// - Parameters:
+    ///   - userId: ユーザーID
+    ///   - beforeYear: この年より前の目標を検索
+    func getLatestYearlyGoal(userId: String, beforeYear: Int) async throws -> RunningGoal? {
         let snapshot = try await goalsCollection(userId: userId)
             .whereField("type", isEqualTo: RunningGoal.GoalType.yearly.rawValue)
+            .whereField("year", isLessThan: beforeYear)
             .order(by: "year", descending: true)
             .limit(to: 1)
             .getDocuments()

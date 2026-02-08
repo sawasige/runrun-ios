@@ -264,15 +264,6 @@ final class YearDetailViewModel: ObservableObject {
         }
     }
 
-    func getDefaultYearlyDistance() async -> Double? {
-        do {
-            let latestGoal = try await firestoreService.getLatestYearlyGoal(userId: userId)
-            return latestGoal?.targetDistanceKm
-        } catch {
-            print("[Goals] Failed to get latest yearly goal: \(error)")
-            return nil
-        }
-    }
 
     private func aggregateToMonthlyStats(
         runs: [(date: Date, distanceKm: Double, durationSeconds: TimeInterval, caloriesBurned: Double?)],
