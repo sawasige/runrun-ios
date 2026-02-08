@@ -257,6 +257,7 @@ struct YearDetailView: View {
                             currentDistance: viewModel.totalYearlyDistance,
                             targetDistance: goal.targetDistanceKm,
                             useMetric: useMetric,
+                            isCurrentPeriod: isCurrentYear,
                             onEdit: canEditGoal ? { showGoalSettings = true } : nil
                         )
                     } else {

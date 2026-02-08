@@ -467,6 +467,7 @@ struct MonthDetailView: View {
                                 currentDistance: viewModel.totalDistance,
                                 targetDistance: goal.targetDistanceKm,
                                 useMetric: useMetric,
+                                isCurrentPeriod: isCurrentMonth,
                                 onEdit: canEditGoal ? { showGoalSettings = true } : nil
                             )
                         } else {
