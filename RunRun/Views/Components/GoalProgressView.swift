@@ -110,32 +110,10 @@ private struct ShimmerOverlay: View {
     private let shimmerWidth: CGFloat = 40
     /// シマーの移動速度（ポイント/秒）
     private let shimmerSpeed: CGFloat = 50
-    /// シマー間の待機時間（秒）
-    private let pauseDuration: Double = 1.0
+    /// シマーの発生間隔（秒）- 線グラフの点滅と同期
+    private let shimmerInterval: Double = 2.4
 
     @State private var startDate = Date()
-
-    /// アニメーションの1サイクル時間
-    private func cycleDuration(for width: CGFloat) -> Double {
-        let animationDuration = (width + shimmerWidth) / shimmerSpeed
-        return animationDuration + pauseDuration
-    }
-
-    /// 現在のオフセットを計算
-    private func offsetX(for width: CGFloat, elapsed: Double) -> CGFloat {
-        let cycle = cycleDuration(for: width)
-        let phase = elapsed.truncatingRemainder(dividingBy: cycle)
-        let animationDuration = (width + shimmerWidth) / shimmerSpeed
-
-        if phase < animationDuration {
-            // アニメーション中
-            let progress = phase / animationDuration
-            return -shimmerWidth + (width + shimmerWidth) * progress
-        } else {
-            // 待機中（画面外）
-            return -shimmerWidth
-        }
-    }
 
     private let shimmerGradient = LinearGradient(
         stops: [
@@ -147,13 +125,50 @@ private struct ShimmerOverlay: View {
         endPoint: .trailing
     )
 
+    /// 表示中のシマーのオフセット一覧を計算
+    private func visibleShimmerOffsets(for width: CGFloat, elapsed: Double) -> [CGFloat] {
+        var offsets: [CGFloat] = []
+
+        // シマーが画面を横断するのにかかる時間
+        let travelDuration = (width + shimmerWidth) / shimmerSpeed
+
+        // 現在のシマーのインデックス（何番目のシマーが発生したか）
+        let currentShimmerIndex = Int(elapsed / shimmerInterval)
+
+        // 最大でいくつのシマーが同時に表示されうるか
+        let maxVisibleShimmers = Int(ceil(travelDuration / shimmerInterval)) + 1
+
+        // 現在表示される可能性のあるシマーをチェック
+        for i in max(0, currentShimmerIndex - maxVisibleShimmers)...currentShimmerIndex {
+            // このシマーが発生してからの経過時間
+            let shimmerStartTime = Double(i) * shimmerInterval
+            let shimmerElapsed = elapsed - shimmerStartTime
+
+            // まだ発生していない
+            if shimmerElapsed < 0 { continue }
+
+            // シマーの現在位置
+            let offsetX = -shimmerWidth + shimmerElapsed * shimmerSpeed
+
+            // 画面内にいるかチェック
+            if offsetX >= -shimmerWidth && offsetX <= width {
+                offsets.append(offsetX)
+            }
+        }
+
+        return offsets
+    }
+
     var body: some View {
         SwiftUI.TimelineView(.animation) { timeline in
             let elapsed = timeline.date.timeIntervalSince(startDate)
             GeometryReader { geometry in
-                shimmerGradient
-                    .frame(width: shimmerWidth)
-                    .offset(x: offsetX(for: geometry.size.width, elapsed: elapsed))
+                let offsets = visibleShimmerOffsets(for: geometry.size.width, elapsed: elapsed)
+                ForEach(Array(offsets.enumerated()), id: \.offset) { _, offsetX in
+                    shimmerGradient
+                        .frame(width: shimmerWidth)
+                        .offset(x: offsetX)
+                }
             }
         }
         .onAppear {
