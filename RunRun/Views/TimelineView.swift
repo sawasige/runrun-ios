@@ -148,6 +148,7 @@ struct TimelineView: View {
                     monthSummaryStats
                 }
                 .buttonStyle(.plain)
+                .contentShape(Rectangle())
                 .accessibilityIdentifier("timeline_month_summary")
 
                 // 月目標セクション（NavigationLinkの外）
@@ -224,6 +225,7 @@ struct TimelineView: View {
             }
         }
         .padding(12)
+        .contentShape(Rectangle())
     }
 
     @ViewBuilder
