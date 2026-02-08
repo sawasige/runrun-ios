@@ -29,7 +29,6 @@ struct LottieView: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: UIView, context: Context) {
-        // アニメーションビューを取得して再生状態を確認
         if let animationView = uiView.subviews.first as? LottieAnimationView {
             if !animationView.isAnimationPlaying {
                 animationView.play()

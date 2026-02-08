@@ -33,8 +33,7 @@ struct GoalProgressView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 if showShimmer {
-                    LottieView(animationName: "running")
-                        .frame(width: 28, height: 28)
+                    LottieRunningIcon()
                 }
                 Spacer()
                 if isAchieved {
@@ -187,6 +186,28 @@ private struct ShimmerOverlay: View {
         }
         .onAppear {
             startDate = Date()
+        }
+    }
+}
+
+/// ダークモード対応のランニングアイコン
+private struct LottieRunningIcon: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        LottieView(animationName: "running")
+            .frame(width: 28, height: 28)
+            .colorInvert(colorScheme == .dark)
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func colorInvert(_ condition: Bool) -> some View {
+        if condition {
+            self.colorInvert()
+        } else {
+            self
         }
     }
 }
