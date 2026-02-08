@@ -14,7 +14,6 @@ struct YearDetailView: View {
     @State private var selectedMonth: Int?
     @State private var tooltipPosition: CGPoint?
     @State private var showGoalSettings = false
-    @State private var defaultYearlyDistance: Double?
 
     private let hapticFeedback = UIImpactFeedbackGenerator(style: .light)
 
@@ -206,7 +205,7 @@ struct YearDetailView: View {
                 year: viewModel.selectedYear,
                 month: nil,
                 currentGoal: viewModel.yearlyGoal,
-                defaultDistanceKm: defaultYearlyDistance,
+                userId: viewModel.userId,
                 onSave: { goal in
                     Task { await viewModel.saveGoal(goal) }
                 },
@@ -263,10 +262,7 @@ struct YearDetailView: View {
                     } else {
                         // 現在年以降のみ目標設定可能（デバッグモードでは常に可能）
                         Button {
-                            Task {
-                                defaultYearlyDistance = await viewModel.getDefaultYearlyDistance()
-                                showGoalSettings = true
-                            }
+                            showGoalSettings = true
                         } label: {
                             Label("Set Goal", systemImage: "target")
                         }
@@ -556,7 +552,7 @@ struct YearDetailView: View {
                 RuleMark(y: .value(String(localized: "Goal"), goal.targetDistance(useMetric: useMetric)))
                     .foregroundStyle(.green)
                     .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5, 5]))
-                    .annotation(position: .trailing, alignment: .leading) {
+                    .annotation(position: .overlay, alignment: .bottomLeading) {
                         Text("Goal")
                             .font(.caption2)
                             .foregroundStyle(.green)

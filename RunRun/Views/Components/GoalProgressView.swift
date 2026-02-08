@@ -40,6 +40,7 @@ struct GoalProgressView: View {
                             .foregroundStyle(.secondary)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel(Text("Edit Goal", comment: "Edit goal button accessibility label"))
                 }
             }
 

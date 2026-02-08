@@ -212,6 +212,7 @@ final class MonthDetailViewModel: ObservableObject {
             let latestGoal = try await firestoreService.getLatestMonthlyGoal(userId: userId)
             return latestGoal?.targetDistanceKm
         } catch {
+            print("[Goals] Failed to get latest monthly goal: \(error)")
             return nil
         }
     }

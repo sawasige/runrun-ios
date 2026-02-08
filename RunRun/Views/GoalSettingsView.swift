@@ -6,15 +6,17 @@ struct GoalSettingsView: View {
     let year: Int
     let month: Int?
     let currentGoal: RunningGoal?
+    let userId: String
     let onSave: (RunningGoal) -> Void
     let onDelete: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
     @AppStorage("units.distance") private var useMetric = UnitFormatter.defaultUseMetric
 
-    @State private var targetDistanceValue: Double
+    @State private var targetDistanceValue: Double?
     @State private var isSaving = false
     @State private var showingDeleteConfirmation = false
+    @State private var isLoading = true
 
     private let firestoreService = FirestoreService.shared
 
@@ -23,7 +25,7 @@ struct GoalSettingsView: View {
         year: Int,
         month: Int? = nil,
         currentGoal: RunningGoal? = nil,
-        defaultDistanceKm: Double? = nil,
+        userId: String,
         onSave: @escaping (RunningGoal) -> Void,
         onDelete: (() -> Void)? = nil
     ) {
@@ -31,12 +33,15 @@ struct GoalSettingsView: View {
         self.year = year
         self.month = month
         self.currentGoal = currentGoal
+        self.userId = userId
         self.onSave = onSave
         self.onDelete = onDelete
 
-        // 初期値: 現在の目標 > デフォルト値 > 100km
-        let initialKm = currentGoal?.targetDistanceKm ?? defaultDistanceKm ?? 100.0
-        _targetDistanceValue = State(initialValue: UnitFormatter.convertDistance(initialKm, useMetric: UnitFormatter.defaultUseMetric))
+        // 編集時は現在の目標値を使用、新規作成時はonAppearでフェッチ
+        if let currentGoal = currentGoal {
+            _targetDistanceValue = State(initialValue: UnitFormatter.convertDistance(currentGoal.targetDistanceKm, useMetric: UnitFormatter.defaultUseMetric))
+            _isLoading = State(initialValue: false)
+        }
     }
 
     private var title: String {
@@ -70,10 +75,11 @@ struct GoalSettingsView: View {
 
     /// 入力値をkmに変換
     private var targetDistanceKm: Double {
+        let value = targetDistanceValue ?? 100
         if useMetric {
-            return targetDistanceValue
+            return value
         } else {
-            return targetDistanceValue * UnitFormatter.milesToKm
+            return value * UnitFormatter.milesToKm
         }
     }
 
@@ -93,16 +99,28 @@ struct GoalSettingsView: View {
                     HStack {
                         Text("Target Distance", comment: "Goal target distance label")
                         Spacer()
-                        TextField("", value: $targetDistanceValue, format: .number.precision(.fractionLength(1)).grouping(.never))
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 80)
-                        Text(UnitFormatter.distanceUnit(useMetric: useMetric))
-                            .foregroundStyle(.secondary)
+                        if isLoading {
+                            ProgressView()
+                        } else {
+                            TextField("", value: Binding(
+                                get: { targetDistanceValue ?? 100 },
+                                set: { targetDistanceValue = $0 }
+                            ), format: .number.precision(.fractionLength(1)).grouping(.never))
+                                .keyboardType(.decimalPad)
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 80)
+                            Text(UnitFormatter.distanceUnit(useMetric: useMetric))
+                                .foregroundStyle(.secondary)
+                        }
                     }
 
-                    Stepper(value: $targetDistanceValue, in: 1...10000, step: useMetric ? 10 : 5) {
-                        EmptyView()
+                    if !isLoading {
+                        Stepper(value: Binding(
+                            get: { targetDistanceValue ?? 100 },
+                            set: { targetDistanceValue = $0 }
+                        ), in: 1...10000, step: useMetric ? 10 : 5) {
+                            EmptyView()
+                        }
                     }
                 }
 
@@ -132,7 +150,7 @@ struct GoalSettingsView: View {
                     Button("Save") {
                         saveGoal()
                     }
-                    .disabled(targetDistanceValue <= 0 || isSaving)
+                    .disabled(isLoading || (targetDistanceValue ?? 0) <= 0 || isSaving)
                 }
             }
             .alert("Delete Goal?", isPresented: $showingDeleteConfirmation) {
@@ -144,7 +162,31 @@ struct GoalSettingsView: View {
             } message: {
                 Text("This goal will be permanently deleted.")
             }
+            .task {
+                await loadDefaultDistance()
+            }
         }
+    }
+
+    private func loadDefaultDistance() async {
+        guard targetDistanceValue == nil else {
+            isLoading = false
+            return
+        }
+
+        do {
+            let latestGoal: RunningGoal?
+            if goalType == .monthly {
+                latestGoal = try await firestoreService.getLatestMonthlyGoal(userId: userId)
+            } else {
+                latestGoal = try await firestoreService.getLatestYearlyGoal(userId: userId)
+            }
+            let defaultKm = latestGoal?.targetDistanceKm ?? 100.0
+            targetDistanceValue = UnitFormatter.convertDistance(defaultKm, useMetric: useMetric)
+        } catch {
+            targetDistanceValue = UnitFormatter.convertDistance(100.0, useMetric: useMetric)
+        }
+        isLoading = false
     }
 
     private func saveGoal() {
@@ -171,7 +213,7 @@ struct GoalSettingsView: View {
         year: 2026,
         month: 2,
         currentGoal: nil,
-        defaultDistanceKm: 100,
+        userId: "preview-user",
         onSave: { _ in }
     )
 }
