@@ -65,19 +65,127 @@ gh workflow run "Release to App Store"
 
 ### App Store アセット更新
 
-スクリーンショットやメタデータの更新はローカルで実行してください（CI実行は時間がかかるため）。
+#### スクリーンショットの仕組み
+
+アプリを`--screenshots`フラグ付きで起動すると**スクリーンショットモード**になり、`MockDataProvider`のモックデータで全画面が表示される（Firebase不要）。
+
+- 自動撮影テスト: `RunRunUITests/ScreenshotTests.swift`
+- 撮影設定: `fastlane/Snapfile`
+- 対象デバイス: iPhone 17 Pro Max, iPad Pro 13-inch (M5)
+- 対象言語: ja, en-US
+
+**自動撮影される画面（6画面）:**
+
+| # | snapshot名 | 画面 |
+|---|-----------|------|
+| 01 | Timeline | ホーム（タイムライン） |
+| 02 | Records | 年間記録 |
+| 03 | MonthDetail | 月の詳細 |
+| 04 | RunDetail | ラン詳細（地図付き） |
+| 05 | FullMap | 全画面地図 |
+| 06 | Leaderboard | ランキング |
+
+#### ウィジェットスクリーンショット（手動）
+
+ウィジェットはUIテストで撮影できないため手動で用意し、以下に配置:
+
+```
+fastlane/screenshots-manual/
+├── ja/
+│   ├── iPhone 17 Pro Max-07_Widget1.png
+│   ├── iPhone 17 Pro Max-08_Widget2.png
+│   ├── iPad Pro 13-inch (M5)-07_Widget1.png
+│   └── iPad Pro 13-inch (M5)-08_Widget2.png
+└── en-US/
+    └── （同構成）
+```
+
+ファイル名規則: `{デバイス名}-{番号}_{名前}.png`
+
+#### フレーム追加
+
+`frameit`でデバイスフレームとテキストオーバーレイを追加し、App Store用の画像を生成:
+
+- フレーム設定: `fastlane/screenshots/Framefile.json`
+- キーワード: `fastlane/screenshots/{lang}/keyword.strings`
+- タイトル: `fastlane/screenshots/{lang}/title.strings`
+- 背景画像: `fastlane/screenshots/background.png`
+- フォント: `fastlane/screenshots/fonts/`
+
+後処理としてImageMagickでアルファチャンネルを除去し、pngquantで圧縮（80-95%）。
+
+#### コマンド一覧
 
 ```bash
-# スクリーンショット撮影
-bundle exec fastlane screenshots
+# 全工程（撮影→手動コピー→フレーム追加→プレビュー生成）
+bundle exec fastlane ios marketing_screenshots
 
-# フレーム追加
-bundle exec fastlane add_frames
+# フレーム追加のみ（撮影済みの場合）
+bundle exec fastlane ios add_frames
+
+# プレビュー確認
+open fastlane/screenshots/framed_preview.html
 
 # App Store Connectにアップロード
-bundle exec fastlane upload_screenshots
-bundle exec fastlane upload_metadata
+bundle exec fastlane ios upload_screenshots
+
+# メタデータ+スクショをアップロード
+bundle exec fastlane ios upload_metadata
+
+# メタデータのみ（スクショ除外）
+bundle exec fastlane ios upload_metadata skip_screenshots:true
+
+# App Store Connectからダウンロード
+bundle exec fastlane ios download_metadata
 ```
+
+#### スクリーンショットを追加・変更する場合
+
+1. `RunRunUITests/ScreenshotTests.swift` を編集（画面遷移を追加）
+2. `fastlane/screenshots/{ja,en-US}/keyword.strings` にキーワード追加
+3. `fastlane/screenshots/{ja,en-US}/title.strings` にタイトル追加
+4. `bundle exec fastlane ios marketing_screenshots` で全工程を実行
+
+#### メタデータ
+
+App Storeのテキスト情報は `fastlane/metadata/` に保存:
+
+```
+fastlane/metadata/
+├── ja/                    # 日本語
+│   ├── description.txt    # アプリ説明文
+│   ├── release_notes.txt  # リリースノート
+│   ├── keywords.txt       # 検索キーワード
+│   ├── subtitle.txt       # サブタイトル
+│   └── ...
+└── en-US/                 # 英語
+    └── （同構成）
+```
+
+#### ランディングページ（docs/）
+
+GitHub Pagesで自動デプロイ（mainブランチへのpush時、`docs/`変更で発火）。
+
+```
+docs/          # 日本語ページ
+docs/en/       # 英語ページ
+```
+
+スクリーンショット更新後にランディングページのアセットも更新:
+
+```bash
+./scripts/update-landing-assets.sh
+```
+
+このスクリプトは `fastlane/screenshots/` のframed画像を `docs/assets/` と `docs/en/assets/` にコピーする。
+
+#### 必要なツール
+
+| ツール | 用途 | インストール |
+|-------|------|------------|
+| Ruby + bundler | Fastlane実行 | `gem install bundler && bundle install` |
+| ImageMagick | アルファチャンネル除去 | `brew install imagemagick` |
+| pngquant | PNG圧縮 | `brew install pngquant` |
 
 ### 年1回の証明書・プロファイル更新手順
 

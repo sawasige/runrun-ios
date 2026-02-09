@@ -245,6 +245,52 @@ firebase deploy --only firestore:indexes
 4. Signing & Capabilities で「HealthKit」「Sign in with Apple」「Background Modes」「App Groups」を追加
 5. Firebase SDKをSwift Package Managerで追加
 
+## Screenshots & App Store Metadata
+
+### スクリーンショット撮影
+
+`--screenshots`フラグでアプリを起動するとスクリーンショットモードになり、`MockDataProvider`のモックデータで全画面が表示される。
+
+#### 自動撮影
+- テストファイル: `RunRunUITests/ScreenshotTests.swift`
+- 撮影設定: `fastlane/Snapfile`（デバイス・言語）
+- 画面一覧: 01_Timeline, 02_Records, 03_MonthDetail, 04_RunDetail, 05_FullMap, 06_Leaderboard
+
+#### ウィジェット（手動）
+- 配置先: `fastlane/screenshots-manual/{ja,en-US}/`
+- ファイル名: `{デバイス名}-{番号}_{名前}.png`
+
+#### フレーム・テキスト
+- フレーム設定: `fastlane/screenshots/Framefile.json`
+- キーワード: `fastlane/screenshots/{lang}/keyword.strings`
+- タイトル: `fastlane/screenshots/{lang}/title.strings`
+- 背景画像: `fastlane/screenshots/background.png`
+
+#### Fastlaneレーン一覧
+
+| レーン | 説明 |
+|-------|------|
+| `marketing_screenshots` | 全工程（撮影→手動コピー→フレーム追加） |
+| `add_frames` | フレーム追加+圧縮+プレビュー生成 |
+| `upload_screenshots` | スクショのみApp Store Connectにアップロード |
+| `upload_metadata` | メタデータ+スクショをアップロード |
+| `download_metadata` | App Store Connectからダウンロード |
+| `generate_preview` | プレビューHTML生成 |
+
+### メタデータ
+
+App Storeのテキスト情報は `fastlane/metadata/{ja,en-US}/` に保存:
+- `description.txt` - アプリ説明文
+- `release_notes.txt` - リリースノート
+- `keywords.txt` - 検索キーワード
+- `subtitle.txt` - サブタイトル
+
+### ランディングページ
+
+- 日本語: `docs/`、英語: `docs/en/`
+- GitHub Pagesで自動デプロイ（mainへのpush時、docs/変更で発火）
+- スクショ更新時: `./scripts/update-landing-assets.sh` でframed画像をdocs/assets/にコピー
+
 ## Git Workflow
 
 ### ブランチ戦略
