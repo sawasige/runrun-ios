@@ -344,7 +344,7 @@ struct TimelineView: View {
                         let isOwn = run.userId == viewModel.userId
                         let profile = isOwn ? userProfile : run.toUserProfile()
                         NavigationLink(value: ScreenType.runDetail(record: run.toRunningRecord(), user: profile)) {
-                            TimelineRunRow(run: run)
+                            TimelineRunRow(run: run, isOwnRun: isOwn)
                         }
                         .buttonStyle(.plain)
                     }
@@ -388,7 +388,10 @@ struct TimelineView: View {
 
 private struct TimelineRunRow: View {
     let run: TimelineRun
+    let isOwnRun: Bool
     @AppStorage("units.distance") private var useMetricUnits = UnitFormatter.defaultUseMetric
+
+    @State private var route: SimplifiedRoute?
 
     private var paceSecondsPerKm: Double? {
         guard run.distanceKm > 0 else { return nil }
@@ -396,43 +399,60 @@ private struct TimelineRunRow: View {
     }
 
     var body: some View {
-        HStack(spacing: 12) {
-            ProfileAvatarView(iconName: run.iconName, avatarURL: run.avatarURL, size: 40)
+        VStack(spacing: 8) {
+            HStack(spacing: 12) {
+                ProfileAvatarView(iconName: run.iconName, avatarURL: run.avatarURL, size: 40)
 
-            // 左側: 名前と時間・ペース
-            VStack(alignment: .leading, spacing: 2) {
-                Text(run.displayName)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
+                // 左側: 名前と時間・ペース
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(run.displayName)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
 
-                // 時間とペース（控えめに）
-                HStack(spacing: 6) {
-                    Text(run.formattedDuration)
-                    Text("·")
-                    Text(UnitFormatter.formatPaceValue(secondsPerKm: paceSecondsPerKm, useMetric: useMetricUnits))
-                    Text(UnitFormatter.paceUnit(useMetric: useMetricUnits))
-                        .foregroundStyle(.tertiary)
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
-            // 右側: 距離（ヒーロー表示）
-            HStack(alignment: .firstTextBaseline, spacing: 2) {
-                Text(UnitFormatter.formatDistanceValue(run.distanceKm, useMetric: useMetricUnits, decimals: 2))
-                    .font(.headline)
-                    .fontWeight(.bold)
-                    .monospacedDigit()
-                Text(UnitFormatter.distanceUnit(useMetric: useMetricUnits))
+                    // 時間とペース（控えめに）
+                    HStack(spacing: 6) {
+                        Text(run.formattedDuration)
+                        Text("·")
+                        Text(UnitFormatter.formatPaceValue(secondsPerKm: paceSecondsPerKm, useMetric: useMetricUnits))
+                        Text(UnitFormatter.paceUnit(useMetric: useMetricUnits))
+                            .foregroundStyle(.tertiary)
+                    }
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                // 右側: 距離（ヒーロー表示）
+                HStack(alignment: .firstTextBaseline, spacing: 2) {
+                    Text(UnitFormatter.formatDistanceValue(run.distanceKm, useMetric: useMetricUnits, decimals: 2))
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .monospacedDigit()
+                    Text(UnitFormatter.distanceUnit(useMetric: useMetricUnits))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
             }
 
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
+            // 自分のランのみルートサムネイル表示
+            if isOwnRun {
+                RouteThumbnailView(route: route)
+                    .task(id: run.id) {
+                        if ScreenshotMode.isEnabled {
+                            route = MockDataProvider.simplifiedRoute
+                        } else {
+                            route = await RouteCacheService.shared.route(
+                                for: run.date,
+                                userId: run.userId
+                            )
+                        }
+                    }
+            }
         }
         .padding(.vertical, 12)
         .padding(.horizontal, 4)
