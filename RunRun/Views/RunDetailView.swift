@@ -284,20 +284,46 @@ struct RunDetailView: View {
                 // 地図セクション（自分の記録かつルートがある場合のみ）
                 if isOwnRecord && !routeCoordinates.isEmpty {
                     Section {
-                        ZStack(alignment: .bottomTrailing) {
+                        ZStack {
                             mapContent(isExpanded: false)
                                 .allowsHitTesting(false)
 
-                            Button {
-                                showFullScreenMap = true
-                            } label: {
-                                Image(systemName: "arrow.up.left.and.arrow.down.right")
-                                    .font(.caption)
-                                    .padding(8)
-                                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
+                            // 地名ラベル（左上）
+                            if let locationName = record.farthestLocationName {
+                                VStack {
+                                    HStack {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "mappin")
+                                            Text(locationName)
+                                        }
+                                        .font(.caption)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
+                                        Spacer()
+                                    }
+                                    Spacer()
+                                }
+                                .padding(8)
+                            }
+
+                            // 拡大ボタン（右下）
+                            VStack {
+                                Spacer()
+                                HStack {
+                                    Spacer()
+                                    Button {
+                                        showFullScreenMap = true
+                                    } label: {
+                                        Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                            .font(.caption)
+                                            .padding(8)
+                                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
+                                    }
+                                    .accessibilityIdentifier("expand_map_button")
+                                }
                             }
                             .padding(8)
-                            .accessibilityIdentifier("expand_map_button")
                         }
                         .frame(height: 250)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -582,8 +608,29 @@ struct RunDetailView: View {
             }
         }
 
+        // 地名がなければオンデマンドで取得
+        await updateFarthestLocationNameIfNeeded()
+
         // Firestoreの詳細データを補完
         await updateFirestoreDetailsIfNeeded(details: details)
+    }
+
+    /// 地名がなければルートデータから最遠地点の地名を取得してFirestoreに保存
+    private func updateFarthestLocationNameIfNeeded() async {
+        guard isOwnRecord else { return }
+        guard record.farthestLocationName == nil && !routeLocations.isEmpty else { return }
+
+        let name = await HealthKitService.findFarthestLocationName(from: routeLocations)
+        guard let name else { return }
+
+        record.farthestLocationName = name
+        _ = try? await firestoreService.updateRunDetails(
+            userId: userId,
+            date: record.date,
+            distanceKm: record.distanceInKilometers,
+            details: (nil, nil, nil, nil, nil, nil),
+            farthestLocationName: name
+        )
     }
 
     /// Firestoreの詳細データが不足している場合、HealthKitから取得したデータで補完

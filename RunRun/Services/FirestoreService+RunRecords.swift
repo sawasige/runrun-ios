@@ -7,32 +7,41 @@ extension FirestoreService {
     @discardableResult
     func syncRunRecords(
         userId: String,
-        records: [RunningRecord],
-        onProgress: ((Int, Int) -> Void)? = nil
+        records: [RunningRecord]
     ) async throws -> Int {
         guard !records.isEmpty else { return 0 }
 
-        for (index, record) in records.enumerated() {
-            var data: [String: Any] = [
-                "userId": userId,
-                "date": record.date,
-                "distanceKm": record.distanceInKilometers,
-                "durationSeconds": record.durationInSeconds,
-                "paceSecondsPerKm": record.averagePacePerKilometer ?? 0,
-                "syncedAt": Date()
-            ]
+        // WriteBatchで最大500件ずつまとめて書き込み
+        let batchLimit = 500
+        for batchStart in stride(from: 0, to: records.count, by: batchLimit) {
+            let batchEnd = min(batchStart + batchLimit, records.count)
+            let batch = db.batch()
 
-            // 詳細データ（nilでなければ保存）
-            if let hr = record.averageHeartRate { data["averageHeartRate"] = hr }
-            if let hr = record.maxHeartRate { data["maxHeartRate"] = hr }
-            if let hr = record.minHeartRate { data["minHeartRate"] = hr }
-            if let cal = record.caloriesBurned { data["caloriesBurned"] = cal }
-            if let cad = record.cadence { data["cadence"] = cad }
-            if let stride = record.strideLength { data["strideLength"] = stride }
-            if let steps = record.stepCount { data["stepCount"] = steps }
+            for i in batchStart..<batchEnd {
+                let record = records[i]
+                var data: [String: Any] = [
+                    "userId": userId,
+                    "date": record.date,
+                    "distanceKm": record.distanceInKilometers,
+                    "durationSeconds": record.durationInSeconds,
+                    "paceSecondsPerKm": record.averagePacePerKilometer ?? 0,
+                    "syncedAt": Date()
+                ]
 
-            _ = try await runsCollection.addDocument(data: data)
-            onProgress?(index + 1, records.count)
+                if let hr = record.averageHeartRate { data["averageHeartRate"] = hr }
+                if let hr = record.maxHeartRate { data["maxHeartRate"] = hr }
+                if let hr = record.minHeartRate { data["minHeartRate"] = hr }
+                if let cal = record.caloriesBurned { data["caloriesBurned"] = cal }
+                if let cad = record.cadence { data["cadence"] = cad }
+                if let stride = record.strideLength { data["strideLength"] = stride }
+                if let steps = record.stepCount { data["stepCount"] = steps }
+                if let loc = record.farthestLocationName { data["farthestLocationName"] = loc }
+
+                let docRef = runsCollection.document()
+                batch.setData(data, forDocument: docRef)
+            }
+
+            try await batch.commit()
         }
 
         return records.count
@@ -79,7 +88,8 @@ extension FirestoreService {
                 minHeartRate: data["minHeartRate"] as? Double,
                 cadence: data["cadence"] as? Double,
                 strideLength: data["strideLength"] as? Double,
-                stepCount: data["stepCount"] as? Int
+                stepCount: data["stepCount"] as? Int,
+                farthestLocationName: data["farthestLocationName"] as? String
             )
         }
     }
@@ -141,7 +151,8 @@ extension FirestoreService {
             cadence: Double?,
             strideLength: Double?,
             stepCount: Int?
-        )
+        ),
+        farthestLocationName: String? = nil
     ) async throws -> Bool {
         // 日時と距離でドキュメントを特定（60秒以内、100m以内）
         let snapshot = try await runsCollection
@@ -181,6 +192,9 @@ extension FirestoreService {
         }
         if existingData["stepCount"] == nil, let value = details.stepCount {
             updateData["stepCount"] = value
+        }
+        if existingData["farthestLocationName"] == nil, let value = farthestLocationName {
+            updateData["farthestLocationName"] = value
         }
 
         // 更新が必要なフィールドがなければ終了

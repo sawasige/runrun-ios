@@ -4,8 +4,8 @@ import MapKit
 /// タイムライン用のMapKitベースのルートサムネイル表示
 struct RouteThumbnailView: View {
     let route: SimplifiedRoute?
-    var maxWidth: CGFloat = 400
-    var aspectRatio: CGFloat = 16 / 10
+    var maxWidth: CGFloat = .infinity
+    var maxHeight: CGFloat = 250
     var strokeWidth: CGFloat = 3
 
     @Environment(\.colorScheme) private var colorScheme
@@ -18,8 +18,8 @@ struct RouteThumbnailView: View {
 
     var body: some View {
         GeometryReader { geometry in
-            let width = min(geometry.size.width, maxWidth)
-            let height = width / aspectRatio
+            let width = geometry.size.width
+            let height = geometry.size.height
             let size = CGSize(width: width, height: height)
 
             ZStack {
@@ -52,7 +52,7 @@ struct RouteThumbnailView: View {
                 await generateSnapshot(route: route, size: size)
             }
         }
-        .aspectRatio(aspectRatio, contentMode: .fit)
+        .frame(height: maxHeight)
         .frame(maxWidth: maxWidth)
     }
 

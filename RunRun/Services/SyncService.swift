@@ -2,6 +2,7 @@ import Foundation
 import Combine
 import HealthKit
 import UIKit
+import CoreLocation
 import FirebaseCrashlytics
 
 enum SyncPhase: Equatable {
@@ -151,7 +152,7 @@ final class SyncService: ObservableObject {
                     phase = .syncing(current: index + 1, total: newWorkouts.count)
                 }
 
-                // Firestoreに同期
+                // Firestoreに同期（WriteBatchで500件ずつ一括書き込み）
                 let count = try await firestoreService.syncRunRecords(
                     userId: userId,
                     records: detailedRecords
@@ -160,6 +161,30 @@ final class SyncService: ObservableObject {
                 phase = .completed(count: count)
                 if count > 0 {
                     lastSyncedAt = Date()
+
+                    // 最新10件のみバックグラウンドで地名を取得してFirestoreに保存
+                    let geocodeLimit = 10
+                    let geocodeWorkouts = Array(newWorkouts.prefix(geocodeLimit))
+                    let geocodeRecords = Array(detailedRecords.prefix(geocodeLimit))
+                    let fs = self.firestoreService
+                    Task.detached(priority: .utility) {
+                        for (i, workout) in geocodeWorkouts.enumerated() {
+                            // CLGeocoderのレート制限対策（2件目以降は2秒待つ）
+                            if i > 0 {
+                                try? await Task.sleep(for: .seconds(2))
+                            }
+                            let locations = await healthKit.fetchWorkoutRoute(for: workout)
+                            guard let name = await HealthKitService.findFarthestLocationName(from: locations) else { continue }
+                            let rec = geocodeRecords[i]
+                            _ = try? await fs.updateRunDetails(
+                                userId: userId,
+                                date: rec.date,
+                                distanceKm: rec.distanceInKilometers,
+                                details: (nil, nil, nil, nil, nil, nil),
+                                farthestLocationName: name
+                            )
+                        }
+                    }
 
                     // バックグラウンドで同期した場合は通知を送信
                     let isBackground = UIApplication.shared.applicationState != .active
