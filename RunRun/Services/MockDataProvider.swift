@@ -490,6 +490,47 @@ struct MockDataProvider {
 
     // MARK: - 目標用
 
+    // MARK: - ルートサムネイル用
+
+    /// スクリーンショット用の簡略化されたルート（皇居一周）
+    static var simplifiedRoute: SimplifiedRoute {
+        let coordinates: [SimplifiedRoute.Coordinate] = [
+            // 竹橋付近スタート
+            .init(latitude: 35.6908, longitude: 139.7561),
+            .init(latitude: 35.6895, longitude: 139.7538),
+            .init(latitude: 35.6888, longitude: 139.7500),
+            // 北の丸公園横
+            .init(latitude: 35.6880, longitude: 139.7478),
+            .init(latitude: 35.6865, longitude: 139.7448),
+            // 千鳥ヶ淵
+            .init(latitude: 35.6839, longitude: 139.7443),
+            .init(latitude: 35.6809, longitude: 139.7454),
+            .init(latitude: 35.6787, longitude: 139.7482),
+            // 半蔵門
+            .init(latitude: 35.6778, longitude: 139.7490),
+            .init(latitude: 35.6774, longitude: 139.7511),
+            .init(latitude: 35.6781, longitude: 139.7534),
+            // 桜田門〜二重橋
+            .init(latitude: 35.6771, longitude: 139.7556),
+            .init(latitude: 35.6786, longitude: 139.7567),
+            .init(latitude: 35.6816, longitude: 139.7588),
+            // 大手門方面
+            .init(latitude: 35.6847, longitude: 139.7603),
+            // ゴール（竹橋付近）
+            .init(latitude: 35.6880, longitude: 139.7610),
+            .init(latitude: 35.6899, longitude: 139.7598),
+        ]
+
+        let boundingBox = SimplifiedRoute.BoundingBox(
+            minLat: 35.6771,
+            maxLat: 35.6908,
+            minLon: 139.7443,
+            maxLon: 139.7610
+        )
+
+        return SimplifiedRoute(coordinates: coordinates, boundingBox: boundingBox)
+    }
+
     /// ユーザーの単位設定を取得
     private static var useMetric: Bool {
         UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
