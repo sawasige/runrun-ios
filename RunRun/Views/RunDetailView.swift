@@ -330,6 +330,17 @@ struct RunDetailView: View {
                         .listRowInsets(EdgeInsets())
                         .listRowBackground(Color.clear)
                     }
+                } else if let locationName = record.farthestLocationName {
+                    // 地図なし（フレンドのラン等）でも地名は表示
+                    Section {
+                        HStack(spacing: 4) {
+                            Image(systemName: "mappin")
+                            Text(locationName)
+                            Spacer()
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    }
                 }
 
                 // 心拍数セクション（Firestoreから取得）
