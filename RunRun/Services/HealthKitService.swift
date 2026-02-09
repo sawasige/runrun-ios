@@ -523,6 +523,9 @@ final class HealthKitService: Sendable {
         guard locations.count >= 2, let start = locations.first else { return nil }
         guard let farthest = locations.max(by: { $0.distance(from: start) < $1.distance(from: start) }) else { return nil }
 
+        // 最遠地点が1km以内のランはプライバシー保護のため地名を取得しない
+        guard farthest.distance(from: start) >= 1000 else { return nil }
+
         do {
             let placemarks = try await CLGeocoder().reverseGeocodeLocation(farthest)
             guard let placemark = placemarks.first else { return nil }
