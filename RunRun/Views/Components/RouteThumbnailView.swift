@@ -44,7 +44,7 @@ struct RouteThumbnailView: View {
                 }
             }
             .frame(width: width, height: height)
-            .task(id: route) {
+            .task(id: SnapshotKey(route: route, colorScheme: colorScheme)) {
                 guard let route = route, !route.coordinates.isEmpty else {
                     snapshotImage = nil
                     return
@@ -141,6 +141,14 @@ struct RouteThumbnailView: View {
 
         return UIGraphicsGetImageFromCurrentImageContext() ?? image
     }
+}
+
+// MARK: - Snapshot Key
+
+/// taskのidとして使用するキー（routeとcolorSchemeの両方を監視）
+private struct SnapshotKey: Equatable {
+    let route: SimplifiedRoute?
+    let colorScheme: ColorScheme
 }
 
 #Preview("With Route") {
