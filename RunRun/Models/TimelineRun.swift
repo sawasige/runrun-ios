@@ -19,6 +19,9 @@ struct TimelineRun: Identifiable {
     var strideLength: Double?
     var stepCount: Int?
 
+    // 最遠地点の地名
+    var farthestLocationName: String?
+
     func formattedDistance(useMetric: Bool) -> String {
         UnitFormatter.formatDistance(distanceKm, useMetric: useMetric)
     }
@@ -58,7 +61,8 @@ struct TimelineRun: Identifiable {
             minHeartRate: minHeartRate,
             cadence: cadence,
             strideLength: strideLength,
-            stepCount: stepCount
+            stepCount: stepCount,
+            farthestLocationName: farthestLocationName
         )
     }
 

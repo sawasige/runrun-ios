@@ -17,6 +17,9 @@ struct RunningRecord: Identifiable, Equatable, Hashable {
     var strideLength: Double?   // メートル
     var stepCount: Int?
 
+    // 最遠地点の地名
+    var farthestLocationName: String?
+
     /// HealthKitデータからの初期化用
     init(
         id: UUID,
@@ -29,7 +32,8 @@ struct RunningRecord: Identifiable, Equatable, Hashable {
         minHeartRate: Double? = nil,
         cadence: Double? = nil,
         strideLength: Double? = nil,
-        stepCount: Int? = nil
+        stepCount: Int? = nil,
+        farthestLocationName: String? = nil
     ) {
         self.id = id
         self.date = date
@@ -42,6 +46,7 @@ struct RunningRecord: Identifiable, Equatable, Hashable {
         self.cadence = cadence
         self.strideLength = strideLength
         self.stepCount = stepCount
+        self.farthestLocationName = farthestLocationName
     }
 
     /// Firestoreデータからの初期化用
@@ -55,7 +60,8 @@ struct RunningRecord: Identifiable, Equatable, Hashable {
         minHeartRate: Double? = nil,
         cadence: Double? = nil,
         strideLength: Double? = nil,
-        stepCount: Int? = nil
+        stepCount: Int? = nil,
+        farthestLocationName: String? = nil
     ) {
         self.id = UUID()
         self.date = date
@@ -68,6 +74,7 @@ struct RunningRecord: Identifiable, Equatable, Hashable {
         self.cadence = cadence
         self.strideLength = strideLength
         self.stepCount = stepCount
+        self.farthestLocationName = farthestLocationName
     }
 
     var distanceInKilometers: Double {

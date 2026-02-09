@@ -35,7 +35,8 @@ extension FirestoreService {
                 minHeartRate: data["minHeartRate"] as? Double,
                 cadence: data["cadence"] as? Double,
                 strideLength: data["strideLength"] as? Double,
-                stepCount: data["stepCount"] as? Int
+                stepCount: data["stepCount"] as? Int,
+                farthestLocationName: data["farthestLocationName"] as? String
             )
         }
     }
@@ -71,7 +72,8 @@ extension FirestoreService {
                 minHeartRate: data["minHeartRate"] as? Double,
                 cadence: data["cadence"] as? Double,
                 strideLength: data["strideLength"] as? Double,
-                stepCount: data["stepCount"] as? Int
+                stepCount: data["stepCount"] as? Int,
+                farthestLocationName: data["farthestLocationName"] as? String
             )
         }
     }
@@ -127,7 +129,8 @@ extension FirestoreService {
             minHeartRate: data["minHeartRate"] as? Double,
             cadence: data["cadence"] as? Double,
             strideLength: data["strideLength"] as? Double,
-            stepCount: data["stepCount"] as? Int
+            stepCount: data["stepCount"] as? Int,
+            farthestLocationName: data["farthestLocationName"] as? String
         )
     }
 
@@ -158,7 +161,8 @@ extension FirestoreService {
             minHeartRate: data["minHeartRate"] as? Double,
             cadence: data["cadence"] as? Double,
             strideLength: data["strideLength"] as? Double,
-            stepCount: data["stepCount"] as? Int
+            stepCount: data["stepCount"] as? Int,
+            farthestLocationName: data["farthestLocationName"] as? String
         )
     }
 
@@ -189,7 +193,8 @@ extension FirestoreService {
             minHeartRate: data["minHeartRate"] as? Double,
             cadence: data["cadence"] as? Double,
             strideLength: data["strideLength"] as? Double,
-            stepCount: data["stepCount"] as? Int
+            stepCount: data["stepCount"] as? Int,
+            farthestLocationName: data["farthestLocationName"] as? String
         )
     }
 }
@@ -318,7 +323,8 @@ extension FirestoreService {
                     minHeartRate: data["minHeartRate"] as? Double,
                     cadence: data["cadence"] as? Double,
                     strideLength: data["strideLength"] as? Double,
-                    stepCount: data["stepCount"] as? Int
+                    stepCount: data["stepCount"] as? Int,
+                    farthestLocationName: data["farthestLocationName"] as? String
                 ))
             }
 

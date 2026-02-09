@@ -1,5 +1,5 @@
 import Foundation
-import HealthKit
+@preconcurrency import HealthKit
 import CoreLocation
 
 enum HealthKitError: LocalizedError {
@@ -20,7 +20,11 @@ enum HealthKitError: LocalizedError {
 }
 
 final class HealthKitService: Sendable {
-    private let healthStore = HKHealthStore()
+    private let healthStore: HKHealthStore
+
+    nonisolated init() {
+        healthStore = HKHealthStore()
+    }
 
     var isAvailable: Bool {
         HKHealthStore.isHealthDataAvailable()
@@ -509,6 +513,25 @@ final class HealthKitService: Sendable {
             }
 
             return enrichedSplit
+        }
+    }
+
+    // MARK: - Farthest Location Name
+
+    /// スタート地点から最も遠い地点の地名を逆ジオコーディングで取得
+    static func findFarthestLocationName(from locations: [CLLocation]) async -> String? {
+        guard locations.count >= 2, let start = locations.first else { return nil }
+        guard let farthest = locations.max(by: { $0.distance(from: start) < $1.distance(from: start) }) else { return nil }
+
+        do {
+            let placemarks = try await CLGeocoder().reverseGeocodeLocation(farthest)
+            guard let placemark = placemarks.first else { return nil }
+            if let sub = placemark.subLocality, let loc = placemark.locality {
+                return "\(sub), \(loc)"
+            }
+            return placemark.subLocality ?? placemark.locality
+        } catch {
+            return nil
         }
     }
 

@@ -439,6 +439,17 @@ private struct TimelineRunRow: View {
                     .foregroundStyle(.tertiary)
             }
 
+            // 地名表示（ルートサムネイルの上）
+            if let locationName = run.farthestLocationName {
+                HStack(spacing: 4) {
+                    Image(systemName: "mappin")
+                    Text(locationName)
+                    Spacer()
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+
             // 自分のランのみルートサムネイル表示
             if isOwnRun {
                 RouteThumbnailView(route: route)
