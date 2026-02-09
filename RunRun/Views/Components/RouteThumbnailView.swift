@@ -91,6 +91,7 @@ struct RouteThumbnailView: View {
         options.mapType = .standard
         options.showsBuildings = false
         options.pointOfInterestFilter = .includingAll // 地名を表示
+        options.traitCollection = UITraitCollection(userInterfaceStyle: colorScheme == .dark ? .dark : .light)
 
         let snapshotter = MKMapSnapshotter(options: options)
 
