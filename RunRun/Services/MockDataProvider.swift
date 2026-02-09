@@ -22,7 +22,7 @@ struct MockDataProvider {
             iconName: "figure.run",
             avatarURL: nil,
             totalDistanceKm: 156.8,
-            totalRuns: 28
+            totalRuns: 15
         )
     }
 
@@ -112,26 +112,26 @@ struct MockDataProvider {
 
     static var leaderboardUsers: [UserProfile] {
         [
-            UserProfile(id: "leader-1", displayName: name("毎日5k", "jw_marathon"), email: nil, iconName: "hare.fill", totalDistanceKm: 245.8, totalRuns: 42),
-            UserProfile(id: "leader-2", displayName: name("sakura_pb更新中", "emma.t"), email: nil, iconName: "flame.fill", totalDistanceKm: 228.3, totalRuns: 38),
-            UserProfile(id: "leader-3", displayName: name("kenta_箱根", "mike_b_runs"), email: nil, iconName: "bolt.fill", totalDistanceKm: 215.6, totalRuns: 36),
-            UserProfile(id: "leader-4", displayName: name("miporin", "liv.runs"), email: nil, iconName: "star.fill", totalDistanceKm: 198.2, totalRuns: 34),
-            UserProfile(id: "leader-5", displayName: name("dice_run", "will_j"), email: nil, iconName: "figure.run", totalDistanceKm: 185.3, totalRuns: 32),
-            UserProfile(id: currentUserId, displayName: currentUser.displayName, email: nil, iconName: "figure.run", totalDistanceKm: 156.8, totalRuns: 28),
-            UserProfile(id: "leader-7", displayName: name("shota_ito", "alex.m"), email: nil, iconName: "heart.fill", totalDistanceKm: 148.5, totalRuns: 26),
-            UserProfile(id: "leader-8", displayName: name("ai_watanabe", "sophieg"), email: nil, iconName: "flame.fill", totalDistanceKm: 142.1, totalRuns: 24),
-            UserProfile(id: "leader-9", displayName: name("makoto_k", "ben_mtz"), email: nil, iconName: "hare.fill", totalDistanceKm: 135.7, totalRuns: 23),
-            UserProfile(id: "leader-10", displayName: name("yuuumi", "bella_runs"), email: nil, iconName: "star.fill", totalDistanceKm: 128.5, totalRuns: 22),
-            UserProfile(id: "leader-11", displayName: name("t.yoshida", "ethan.t"), email: nil, iconName: "mountain.2.fill", totalDistanceKm: 121.3, totalRuns: 21),
-            UserProfile(id: "leader-12", displayName: name("keikoy", "charlie_t"), email: nil, iconName: "bolt.fill", totalDistanceKm: 115.2, totalRuns: 20),
-            UserProfile(id: "leader-13", displayName: name("taku.m", "mason_m"), email: nil, iconName: "figure.run", totalDistanceKm: 108.8, totalRuns: 19),
-            UserProfile(id: "leader-14", displayName: name("saori_i", "amelia.j"), email: nil, iconName: "heart.fill", totalDistanceKm: 102.4, totalRuns: 18),
-            UserProfile(id: "leader-15", displayName: name("kohei_k", "lucas.w"), email: nil, iconName: "flame.fill", totalDistanceKm: 96.1, totalRuns: 17),
-            UserProfile(id: "leader-16", displayName: name("akr_saitou", "harper_h"), email: nil, iconName: "hare.fill", totalDistanceKm: 89.7, totalRuns: 16),
-            UserProfile(id: "leader-17", displayName: name("d_shimizu", "noah.m"), email: nil, iconName: "star.fill", totalDistanceKm: 83.4, totalRuns: 15),
-            UserProfile(id: "leader-18", displayName: name("rie_morita", "evelyn_t"), email: nil, iconName: "mountain.2.fill", totalDistanceKm: 77.2, totalRuns: 14),
-            UserProfile(id: "leader-19", displayName: name("fujii_k1", "liam.r"), email: nil, iconName: "bolt.fill", totalDistanceKm: 71.0, totalRuns: 13),
-            UserProfile(id: "leader-20", displayName: name("misaki_n", "ava.c"), email: nil, iconName: "figure.run", totalDistanceKm: 65.3, totalRuns: 12),
+            UserProfile(id: "leader-1", displayName: name("毎日5k", "jw_marathon"), email: nil, iconName: "hare.fill", totalDistanceKm: 245.8, totalRuns: 25),
+            UserProfile(id: "leader-2", displayName: name("sakura_pb更新中", "emma.t"), email: nil, iconName: "flame.fill", totalDistanceKm: 228.3, totalRuns: 23),
+            UserProfile(id: "leader-3", displayName: name("kenta_箱根", "mike_b_runs"), email: nil, iconName: "bolt.fill", totalDistanceKm: 215.6, totalRuns: 21),
+            UserProfile(id: "leader-4", displayName: name("miporin", "liv.runs"), email: nil, iconName: "star.fill", totalDistanceKm: 198.2, totalRuns: 19),
+            UserProfile(id: "leader-5", displayName: name("dice_run", "will_j"), email: nil, iconName: "figure.run", totalDistanceKm: 185.3, totalRuns: 18),
+            UserProfile(id: currentUserId, displayName: currentUser.displayName, email: nil, iconName: "figure.run", totalDistanceKm: 156.8, totalRuns: 15),
+            UserProfile(id: "leader-7", displayName: name("shota_ito", "alex.m"), email: nil, iconName: "heart.fill", totalDistanceKm: 148.5, totalRuns: 14),
+            UserProfile(id: "leader-8", displayName: name("ai_watanabe", "sophieg"), email: nil, iconName: "flame.fill", totalDistanceKm: 142.1, totalRuns: 13),
+            UserProfile(id: "leader-9", displayName: name("makoto_k", "ben_mtz"), email: nil, iconName: "hare.fill", totalDistanceKm: 135.7, totalRuns: 12),
+            UserProfile(id: "leader-10", displayName: name("yuuumi", "bella_runs"), email: nil, iconName: "star.fill", totalDistanceKm: 128.5, totalRuns: 12),
+            UserProfile(id: "leader-11", displayName: name("t.yoshida", "ethan.t"), email: nil, iconName: "mountain.2.fill", totalDistanceKm: 121.3, totalRuns: 11),
+            UserProfile(id: "leader-12", displayName: name("keikoy", "charlie_t"), email: nil, iconName: "bolt.fill", totalDistanceKm: 115.2, totalRuns: 10),
+            UserProfile(id: "leader-13", displayName: name("taku.m", "mason_m"), email: nil, iconName: "figure.run", totalDistanceKm: 108.8, totalRuns: 10),
+            UserProfile(id: "leader-14", displayName: name("saori_i", "amelia.j"), email: nil, iconName: "heart.fill", totalDistanceKm: 102.4, totalRuns: 9),
+            UserProfile(id: "leader-15", displayName: name("kohei_k", "lucas.w"), email: nil, iconName: "flame.fill", totalDistanceKm: 96.1, totalRuns: 9),
+            UserProfile(id: "leader-16", displayName: name("akr_saitou", "harper_h"), email: nil, iconName: "hare.fill", totalDistanceKm: 89.7, totalRuns: 8),
+            UserProfile(id: "leader-17", displayName: name("d_shimizu", "noah.m"), email: nil, iconName: "star.fill", totalDistanceKm: 83.4, totalRuns: 8),
+            UserProfile(id: "leader-18", displayName: name("rie_morita", "evelyn_t"), email: nil, iconName: "mountain.2.fill", totalDistanceKm: 77.2, totalRuns: 7),
+            UserProfile(id: "leader-19", displayName: name("fujii_k1", "liam.r"), email: nil, iconName: "bolt.fill", totalDistanceKm: 71.0, totalRuns: 7),
+            UserProfile(id: "leader-20", displayName: name("misaki_n", "ava.c"), email: nil, iconName: "figure.run", totalDistanceKm: 65.3, totalRuns: 6),
         ]
     }
 
