@@ -43,17 +43,13 @@ struct GoalProgressView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 2) {
             HStack(alignment: .top, spacing: 12) {
                 if showRunningIcon {
                     LottieRunningIcon()
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Goal Progress", comment: "Goal progress section title")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-
                     HStack(alignment: .firstTextBaseline, spacing: 4) {
                         Text(UnitFormatter.formatDistance(currentDistance, useMetric: useMetric, decimals: 1))
                             .font(.title2)
@@ -61,9 +57,6 @@ struct GoalProgressView: View {
                         Text("/")
                             .foregroundStyle(.secondary)
                         Text(UnitFormatter.formatDistance(targetDistance, useMetric: useMetric, decimals: 1))
-                            .foregroundStyle(.secondary)
-                        Text("(\(progressPercentage)%)")
-                            .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -90,7 +83,8 @@ struct GoalProgressView: View {
             ShimmerProgressBar(
                 progress: min(progress, 1.0),
                 tint: progressBarTint,
-                showShimmer: showShimmer
+                showShimmer: showShimmer,
+                percentage: progressPercentage
             )
         }
         .padding(.vertical, 4)
@@ -102,11 +96,28 @@ private struct ShimmerProgressBar: View {
     let progress: Double
     let tint: Color
     let showShimmer: Bool
+    let percentage: Int
+
+    private let barHeight: CGFloat = 6
+    private let labelHeight: CGFloat = 20
+
+    @State private var animatedProgress: Double = 0
 
     var body: some View {
         GeometryReader { geometry in
-            let progressWidth = geometry.size.width * progress
+            let animatedWidth = geometry.size.width * animatedProgress
 
+            // 達成率ラベル（進捗バーの右端上部）
+            Text("\(Int(animatedProgress * 100))%")
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundStyle(percentage >= 100 ? .green : .secondary)
+                .position(
+                    x: max(20, min(animatedWidth, geometry.size.width - 20)),
+                    y: labelHeight / 2
+                )
+
+            // プログレスバー
             ZStack(alignment: .leading) {
                 // 背景
                 Capsule()
@@ -115,16 +126,28 @@ private struct ShimmerProgressBar: View {
                 // 進捗バー + シマー
                 Capsule()
                     .fill(tint)
-                    .frame(width: progressWidth)
+                    .frame(width: animatedWidth)
                     .overlay {
-                        if showShimmer && progressWidth > 0 {
+                        if showShimmer && animatedWidth > 0 {
                             ShimmerOverlay()
                                 .clipShape(Capsule())
                         }
                     }
             }
+            .frame(height: barHeight)
+            .offset(y: labelHeight)
         }
-        .frame(height: 4)
+        .frame(height: barHeight + labelHeight)
+        .onAppear {
+            withAnimation(.easeOut(duration: 1.0).delay(0.4)) {
+                animatedProgress = progress
+            }
+        }
+        .onChange(of: progress) { _, newValue in
+            withAnimation(.easeOut(duration: 0.5)) {
+                animatedProgress = newValue
+            }
+        }
     }
 }
 
