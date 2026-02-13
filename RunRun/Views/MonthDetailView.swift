@@ -15,17 +15,12 @@ struct MonthDetailView: View {
     @State private var showShareSettings = false
     @State private var showNavBarTitle = false
 
-    // チャートタップ状態
+    // チャートタップ・ドラッグ状態
     @State private var selectedDay: Int?
-    @State private var draggingDay: Int?
     @State private var tooltipPosition: CGPoint?
     @State private var showGoalSettings = false
+    @State private var isDraggingChart = false
     private let hapticFeedback = UIImpactFeedbackGenerator(style: .light)
-
-    /// 現在ハイライトすべき日（ドラッグ中 or 選択中）
-    private var highlightedDay: Int? {
-        draggingDay ?? selectedDay
-    }
 
     private var isOwnRecord: Bool {
         if ScreenshotMode.isEnabled {
@@ -541,6 +536,7 @@ struct MonthDetailView: View {
             }
         }
         .contentMargins(.top, 0)
+        .scrollDisabled(isDraggingChart)
         .onScrollGeometryChange(for: CGFloat.self) { geo in
             geo.contentOffset.y
         } action: { _, _ in
@@ -602,7 +598,7 @@ struct MonthDetailView: View {
 
         return Chart {
             // タップ中または選択中の日エリアをハイライト
-            if let day = highlightedDay,
+            if let day = selectedDay,
                let startDate = calendar.date(from: DateComponents(year: viewModel.year, month: viewModel.month, day: day)),
                let endDate = calendar.date(byAdding: .day, value: 1, to: startDate) {
                 RectangleMark(
@@ -640,55 +636,80 @@ struct MonthDetailView: View {
                 ZStack(alignment: .topLeading) {
                     Color.clear
                         .contentShape(Rectangle())
-                        .onTapGesture { location in
-                            // グラフ領域外のタップは無視
-                            if let plotFrame = proxy.plotFrame {
-                                let plotArea = geometry[plotFrame]
-                                guard plotArea.contains(location) else {
-                                    withAnimation(.easeOut(duration: 0.15)) {
-                                        selectedDay = nil
-                                        tooltipPosition = nil
+                        .overlay {
+                            ChartGestureOverlay(
+                                onTap: { location in
+                                    if let plotFrame = proxy.plotFrame {
+                                        let plotArea = geometry[plotFrame]
+                                        guard plotArea.contains(location) else {
+                                            withAnimation(.easeOut(duration: 0.15)) {
+                                                selectedDay = nil
+                                                tooltipPosition = nil
+                                            }
+                                            return
+                                        }
                                     }
-                                    return
-                                }
-                            }
 
-                            guard let date: Date = proxy.value(atX: location.x) else {
-                                withAnimation(.easeOut(duration: 0.15)) {
-                                    selectedDay = nil
-                                    tooltipPosition = nil
-                                }
-                                return
-                            }
+                                    guard let date: Date = proxy.value(atX: location.x) else {
+                                        withAnimation(.easeOut(duration: 0.15)) {
+                                            selectedDay = nil
+                                            tooltipPosition = nil
+                                        }
+                                        return
+                                    }
 
-                            // 表示月内の日付かチェック
-                            let dateYear = calendar.component(.year, from: date)
-                            let dateMonth = calendar.component(.month, from: date)
-                            guard dateYear == viewModel.year && dateMonth == viewModel.month else {
-                                withAnimation(.easeOut(duration: 0.15)) {
-                                    selectedDay = nil
-                                    tooltipPosition = nil
-                                }
-                                return
-                            }
+                                    let dateYear = calendar.component(.year, from: date)
+                                    let dateMonth = calendar.component(.month, from: date)
+                                    guard dateYear == viewModel.year && dateMonth == viewModel.month else {
+                                        withAnimation(.easeOut(duration: 0.15)) {
+                                            selectedDay = nil
+                                            tooltipPosition = nil
+                                        }
+                                        return
+                                    }
 
-                            let day = calendar.component(.day, from: date)
-                            guard isValidDay(day) else {
-                                withAnimation(.easeOut(duration: 0.15)) {
-                                    selectedDay = nil
-                                    tooltipPosition = nil
-                                }
-                                return
-                            }
+                                    let day = calendar.component(.day, from: date)
+                                    guard isValidDay(day) else {
+                                        withAnimation(.easeOut(duration: 0.15)) {
+                                            selectedDay = nil
+                                            tooltipPosition = nil
+                                        }
+                                        return
+                                    }
+                                    guard day != selectedDay else { return }
 
-                            withAnimation(.easeOut(duration: 0.15)) {
-                                selectedDay = day
-                                if let dayDate = calendar.date(from: DateComponents(year: viewModel.year, month: viewModel.month, day: day)),
-                                   let xPos = proxy.position(forX: dayDate) {
-                                    tooltipPosition = CGPoint(x: xPos, y: 8)
+                                    withAnimation(.easeOut(duration: 0.15)) {
+                                        selectedDay = day
+                                        if let dayDate = calendar.date(from: DateComponents(year: viewModel.year, month: viewModel.month, day: day)),
+                                           let xPos = proxy.position(forX: dayDate) {
+                                            tooltipPosition = CGPoint(x: xPos, y: 8)
+                                        }
+                                    }
+                                    hapticFeedback.impactOccurred()
+                                },
+                                onDragChanged: { location in
+                                    isDraggingChart = true
+                                    guard let date: Date = proxy.value(atX: location.x) else { return }
+                                    let dateYear = calendar.component(.year, from: date)
+                                    let dateMonth = calendar.component(.month, from: date)
+                                    guard dateYear == viewModel.year && dateMonth == viewModel.month else { return }
+
+                                    let day = calendar.component(.day, from: date)
+                                    guard isValidDay(day), day != selectedDay else { return }
+
+                                    withAnimation(.easeOut(duration: 0.15)) {
+                                        selectedDay = day
+                                        if let dayDate = calendar.date(from: DateComponents(year: viewModel.year, month: viewModel.month, day: day)),
+                                           let xPos = proxy.position(forX: dayDate) {
+                                            tooltipPosition = CGPoint(x: xPos, y: 8)
+                                        }
+                                    }
+                                    hapticFeedback.impactOccurred()
+                                },
+                                onDragEnded: {
+                                    isDraggingChart = false
                                 }
-                            }
-                            hapticFeedback.impactOccurred()
+                            )
                         }
 
                     // ツールチップ表示
@@ -721,7 +742,7 @@ struct MonthDetailView: View {
     private var cumulativeChart: some View {
         Chart {
             // タップ中または選択中の日エリアをハイライト
-            if let day = highlightedDay {
+            if let day = selectedDay {
                 RectangleMark(
                     xStart: .value("Start", day),
                     xEnd: .value("End", day + 1)
@@ -799,44 +820,64 @@ struct MonthDetailView: View {
                 ZStack(alignment: .topLeading) {
                     Color.clear
                         .contentShape(Rectangle())
-                        .onTapGesture { location in
-                            // グラフ領域外のタップは無視
-                            if let plotFrame = proxy.plotFrame {
-                                let plotArea = geometry[plotFrame]
-                                guard plotArea.contains(location) else {
-                                    withAnimation(.easeOut(duration: 0.15)) {
-                                        selectedDay = nil
-                                        tooltipPosition = nil
+                        .overlay {
+                            ChartGestureOverlay(
+                                onTap: { location in
+                                    if let plotFrame = proxy.plotFrame {
+                                        let plotArea = geometry[plotFrame]
+                                        guard plotArea.contains(location) else {
+                                            withAnimation(.easeOut(duration: 0.15)) {
+                                                selectedDay = nil
+                                                tooltipPosition = nil
+                                            }
+                                            return
+                                        }
                                     }
-                                    return
-                                }
-                            }
 
-                            guard let dayValue: Double = proxy.value(atX: location.x) else {
-                                withAnimation(.easeOut(duration: 0.15)) {
-                                    selectedDay = nil
-                                    tooltipPosition = nil
-                                }
-                                return
-                            }
-                            let day = max(1, min(31, Int(dayValue)))
+                                    guard let dayValue: Double = proxy.value(atX: location.x) else {
+                                        withAnimation(.easeOut(duration: 0.15)) {
+                                            selectedDay = nil
+                                            tooltipPosition = nil
+                                        }
+                                        return
+                                    }
+                                    let day = max(1, min(31, Int(dayValue)))
 
-                            guard isValidDay(day) else {
-                                withAnimation(.easeOut(duration: 0.15)) {
-                                    selectedDay = nil
-                                    tooltipPosition = nil
-                                }
-                                return
-                            }
+                                    guard isValidDay(day) else {
+                                        withAnimation(.easeOut(duration: 0.15)) {
+                                            selectedDay = nil
+                                            tooltipPosition = nil
+                                        }
+                                        return
+                                    }
+                                    guard day != selectedDay else { return }
 
-                            withAnimation(.easeOut(duration: 0.15)) {
-                                selectedDay = day
-                                // 日の中央に配置（day + 0.5）
-                                if let xPos = proxy.position(forX: Double(day) + 0.5) {
-                                    tooltipPosition = CGPoint(x: xPos, y: 8)
+                                    withAnimation(.easeOut(duration: 0.15)) {
+                                        selectedDay = day
+                                        if let xPos = proxy.position(forX: Double(day) + 0.5) {
+                                            tooltipPosition = CGPoint(x: xPos, y: 8)
+                                        }
+                                    }
+                                    hapticFeedback.impactOccurred()
+                                },
+                                onDragChanged: { location in
+                                    isDraggingChart = true
+                                    guard let dayValue: Double = proxy.value(atX: location.x) else { return }
+                                    let day = max(1, min(31, Int(dayValue)))
+                                    guard isValidDay(day), day != selectedDay else { return }
+
+                                    withAnimation(.easeOut(duration: 0.15)) {
+                                        selectedDay = day
+                                        if let xPos = proxy.position(forX: Double(day) + 0.5) {
+                                            tooltipPosition = CGPoint(x: xPos, y: 8)
+                                        }
+                                    }
+                                    hapticFeedback.impactOccurred()
+                                },
+                                onDragEnded: {
+                                    isDraggingChart = false
                                 }
-                            }
-                            hapticFeedback.impactOccurred()
+                            )
                         }
 
                     // ツールチップ表示
@@ -915,6 +956,77 @@ struct RunningRecordRow: View {
     }
 }
 
+
+/// チャート上でタッチダウン選択と横ドラッグを処理するUIKitオーバーレイ
+/// 横ドラッグのみ認識し、縦スクロールはListに委譲する
+struct ChartGestureOverlay: UIViewRepresentable {
+    var onTap: (CGPoint) -> Void
+    var onDragChanged: (CGPoint) -> Void
+    var onDragEnded: () -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(parent: self)
+    }
+
+    func makeUIView(context: Context) -> ChartGestureView {
+        let view = ChartGestureView()
+        view.backgroundColor = .clear
+        view.coordinator = context.coordinator
+
+        let pan = UIPanGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handlePan(_:)))
+        pan.delegate = context.coordinator
+        view.addGestureRecognizer(pan)
+
+        return view
+    }
+
+    func updateUIView(_ uiView: ChartGestureView, context: Context) {
+        context.coordinator.parent = self
+    }
+
+    class Coordinator: NSObject, UIGestureRecognizerDelegate {
+        var parent: ChartGestureOverlay
+
+        init(parent: ChartGestureOverlay) {
+            self.parent = parent
+        }
+
+        /// 横方向のパンのみ認識（縦はスクロールに委譲）
+        func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+            guard let pan = gestureRecognizer as? UIPanGestureRecognizer else { return true }
+            let velocity = pan.velocity(in: pan.view)
+            return abs(velocity.x) > abs(velocity.y)
+        }
+
+        @objc func handlePan(_ gesture: UIPanGestureRecognizer) {
+            switch gesture.state {
+            case .began, .changed:
+                parent.onDragChanged(gesture.location(in: gesture.view))
+            case .ended, .cancelled, .failed:
+                parent.onDragEnded()
+            default:
+                break
+            }
+        }
+    }
+}
+
+/// タッチダウンで即座に反応するUIView
+class ChartGestureView: UIView {
+    weak var coordinator: ChartGestureOverlay.Coordinator?
+
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        super.touchesBegan(touches, with: event)
+        if let touch = touches.first {
+            coordinator?.parent.onTap(touch.location(in: self))
+        }
+    }
+
+    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+        super.touchesCancelled(touches, with: event)
+        coordinator?.parent.onDragEnded()
+    }
+}
 
 #Preview {
     NavigationStack {
