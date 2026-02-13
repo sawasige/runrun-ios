@@ -167,12 +167,12 @@ struct MonthDetailView: View {
         }
     }
 
-    /// 指定日の距離を取得（km）
+    /// 指定日の距離を取得（km）- 同日の全ランの合計
     private func distanceForDay(_ day: Int) -> Double {
-        if let record = recordForDay(day) {
-            return record.distanceInKilometers
-        }
-        return 0
+        let calendar = Calendar.current
+        return viewModel.records
+            .filter { calendar.component(.day, from: $0.date) == day }
+            .reduce(0) { $0 + $1.distanceInKilometers }
     }
 
     /// 指定日末時点の累計距離を取得（km）
