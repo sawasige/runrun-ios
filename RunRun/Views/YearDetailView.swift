@@ -14,6 +14,7 @@ struct YearDetailView: View {
     @State private var selectedMonth: Int?
     @State private var tooltipPosition: CGPoint?
     @State private var showGoalSettings = false
+    @State private var isDraggingChart = false
 
     private let hapticFeedback = UIImpactFeedbackGenerator(style: .light)
 
@@ -147,6 +148,7 @@ struct YearDetailView: View {
                 }
             }
             .listStyle(.insetGrouped)
+            .scrollDisabled(isDraggingChart)
             .onScrollGeometryChange(for: CGFloat.self) { geo in
                 geo.contentOffset.y
             } action: { _, _ in
@@ -410,41 +412,62 @@ struct YearDetailView: View {
 
                     Color.clear
                         .contentShape(Rectangle())
-                        .onTapGesture { location in
-                            // グラフ領域外のタップは無視
-                            if let plotFrame = proxy.plotFrame {
-                                let plotArea = geometry[plotFrame]
-                                guard plotArea.contains(location) else {
-                                    withAnimation(.easeOut(duration: 0.15)) {
-                                        selectedMonth = nil
-                                        tooltipPosition = nil
+                        .overlay {
+                            ChartGestureOverlay(
+                                onTap: { location in
+                                    if let plotFrame = proxy.plotFrame {
+                                        let plotArea = geometry[plotFrame]
+                                        guard plotArea.contains(location) else {
+                                            withAnimation(.easeOut(duration: 0.15)) {
+                                                selectedMonth = nil
+                                                tooltipPosition = nil
+                                            }
+                                            return
+                                        }
                                     }
-                                    return
-                                }
-                            }
 
-                            guard let monthName: String = proxy.value(atX: location.x) else {
-                                withAnimation(.easeOut(duration: 0.15)) {
-                                    selectedMonth = nil
-                                    tooltipPosition = nil
-                                }
-                                return
-                            }
-                            guard let stats = viewModel.monthlyStats.first(where: { $0.shortMonthName == monthName }) else {
-                                withAnimation(.easeOut(duration: 0.15)) {
-                                    selectedMonth = nil
-                                    tooltipPosition = nil
-                                }
-                                return
-                            }
+                                    guard let monthName: String = proxy.value(atX: location.x) else {
+                                        withAnimation(.easeOut(duration: 0.15)) {
+                                            selectedMonth = nil
+                                            tooltipPosition = nil
+                                        }
+                                        return
+                                    }
+                                    guard let stats = viewModel.monthlyStats.first(where: { $0.shortMonthName == monthName }) else {
+                                        withAnimation(.easeOut(duration: 0.15)) {
+                                            selectedMonth = nil
+                                            tooltipPosition = nil
+                                        }
+                                        return
+                                    }
+                                    guard stats.month != selectedMonth else { return }
 
-                            withAnimation(.easeOut(duration: 0.15)) {
-                                selectedMonth = stats.month
-                                if let xPos = proxy.position(forX: stats.shortMonthName) {
-                                    tooltipPosition = CGPoint(x: xPos, y: 8)
+                                    withAnimation(.easeOut(duration: 0.15)) {
+                                        selectedMonth = stats.month
+                                        if let xPos = proxy.position(forX: stats.shortMonthName) {
+                                            tooltipPosition = CGPoint(x: xPos, y: 8)
+                                        }
+                                    }
+                                    hapticFeedback.impactOccurred()
+                                },
+                                onDragChanged: { location in
+                                    isDraggingChart = true
+                                    guard let monthName: String = proxy.value(atX: location.x) else { return }
+                                    guard let stats = viewModel.monthlyStats.first(where: { $0.shortMonthName == monthName }),
+                                          stats.month != selectedMonth else { return }
+
+                                    withAnimation(.easeOut(duration: 0.15)) {
+                                        selectedMonth = stats.month
+                                        if let xPos = proxy.position(forX: stats.shortMonthName) {
+                                            tooltipPosition = CGPoint(x: xPos, y: 8)
+                                        }
+                                    }
+                                    hapticFeedback.impactOccurred()
+                                },
+                                onDragEnded: {
+                                    isDraggingChart = false
                                 }
-                            }
-                            hapticFeedback.impactOccurred()
+                            )
                         }
 
                     // ツールチップ表示
@@ -581,46 +604,70 @@ struct YearDetailView: View {
                 ZStack(alignment: .topLeading) {
                     Color.clear
                         .contentShape(Rectangle())
-                        .onTapGesture { location in
-                            // グラフ領域外のタップは無視
-                            if let plotFrame = proxy.plotFrame {
-                                let plotArea = geometry[plotFrame]
-                                guard plotArea.contains(location) else {
-                                    withAnimation(.easeOut(duration: 0.15)) {
-                                        selectedMonth = nil
-                                        tooltipPosition = nil
+                        .overlay {
+                            ChartGestureOverlay(
+                                onTap: { location in
+                                    if let plotFrame = proxy.plotFrame {
+                                        let plotArea = geometry[plotFrame]
+                                        guard plotArea.contains(location) else {
+                                            withAnimation(.easeOut(duration: 0.15)) {
+                                                selectedMonth = nil
+                                                tooltipPosition = nil
+                                            }
+                                            return
+                                        }
                                     }
-                                    return
-                                }
-                            }
 
-                            guard let dayOfYear: Double = proxy.value(atX: location.x) else {
-                                withAnimation(.easeOut(duration: 0.15)) {
-                                    selectedMonth = nil
-                                    tooltipPosition = nil
-                                }
-                                return
-                            }
-                            let month = dayOfYearToMonth(Int(dayOfYear))
-                            guard viewModel.monthlyStats.contains(where: { $0.month == month }) else {
-                                withAnimation(.easeOut(duration: 0.15)) {
-                                    selectedMonth = nil
-                                    tooltipPosition = nil
-                                }
-                                return
-                            }
+                                    guard let dayOfYear: Double = proxy.value(atX: location.x) else {
+                                        withAnimation(.easeOut(duration: 0.15)) {
+                                            selectedMonth = nil
+                                            tooltipPosition = nil
+                                        }
+                                        return
+                                    }
+                                    let month = dayOfYearToMonth(Int(dayOfYear))
+                                    guard viewModel.monthlyStats.contains(where: { $0.month == month }) else {
+                                        withAnimation(.easeOut(duration: 0.15)) {
+                                            selectedMonth = nil
+                                            tooltipPosition = nil
+                                        }
+                                        return
+                                    }
+                                    guard month != selectedMonth else { return }
 
-                            withAnimation(.easeOut(duration: 0.15)) {
-                                selectedMonth = month
-                                // 月の中央位置を計算
-                                let startDay = monthStartDays[month - 1]
-                                let endDay = month < 12 ? monthStartDays[month] - 1 : 365
-                                let midDay = (startDay + endDay) / 2
-                                if let xPos = proxy.position(forX: midDay) {
-                                    tooltipPosition = CGPoint(x: xPos, y: 8)
+                                    withAnimation(.easeOut(duration: 0.15)) {
+                                        selectedMonth = month
+                                        let startDay = monthStartDays[month - 1]
+                                        let endDay = month < 12 ? monthStartDays[month] - 1 : 365
+                                        let midDay = (startDay + endDay) / 2
+                                        if let xPos = proxy.position(forX: midDay) {
+                                            tooltipPosition = CGPoint(x: xPos, y: 8)
+                                        }
+                                    }
+                                    hapticFeedback.impactOccurred()
+                                },
+                                onDragChanged: { location in
+                                    isDraggingChart = true
+                                    guard let dayOfYear: Double = proxy.value(atX: location.x) else { return }
+                                    let month = dayOfYearToMonth(Int(dayOfYear))
+                                    guard viewModel.monthlyStats.contains(where: { $0.month == month }),
+                                          month != selectedMonth else { return }
+
+                                    withAnimation(.easeOut(duration: 0.15)) {
+                                        selectedMonth = month
+                                        let startDay = monthStartDays[month - 1]
+                                        let endDay = month < 12 ? monthStartDays[month] - 1 : 365
+                                        let midDay = (startDay + endDay) / 2
+                                        if let xPos = proxy.position(forX: midDay) {
+                                            tooltipPosition = CGPoint(x: xPos, y: 8)
+                                        }
+                                    }
+                                    hapticFeedback.impactOccurred()
+                                },
+                                onDragEnded: {
+                                    isDraggingChart = false
                                 }
-                            }
-                            hapticFeedback.impactOccurred()
+                            )
                         }
 
                     // ツールチップ表示
