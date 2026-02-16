@@ -105,9 +105,12 @@ final class SyncService: ObservableObject {
             phase = .fetching
 
             // HealthKitのデータ取得をバックグラウンドで実行（UIブロック防止）
-            let workouts = try await Task.detached(priority: .userInitiated) {
+            let rawWorkouts = try await Task.detached(priority: .userInitiated) {
                 try await self.healthKitService.fetchAllRawRunningWorkouts()
             }.value
+
+            // HealthKitの重複ワークアウトを排除（サードパーティアプリによる重複対策）
+            let workouts = Self.deduplicateWorkouts(rawWorkouts)
 
             // 基本情報だけでRunningRecordを作成（差分チェック用）
             let basicRecords = workouts.map { workout in
@@ -248,16 +251,28 @@ final class SyncService: ObservableObject {
             }.value
             async let firestoreRunsTask = firestoreService.getUserRunsWithIds(userId: userId)
 
-            let workouts = try await healthKitWorkoutsTask
+            let rawWorkouts = try await healthKitWorkoutsTask
             let firestoreRuns = try await firestoreRunsTask
+
+            // HealthKitの重複ワークアウトを排除（サードパーティアプリによる重複対策）
+            let workouts = Self.deduplicateWorkouts(rawWorkouts)
 
             // HealthKitのワークアウトを基本情報に変換
             let healthKitRecords = workouts.map { workout in
                 (date: workout.startDate, distanceKm: (workout.totalDistance?.doubleValue(for: .meter()) ?? 0) / 1000)
             }
 
+            // Firestore側の重複を検出して削除
+            let duplicateIds = Self.findDuplicateDocumentIds(firestoreRuns)
+            if !duplicateIds.isEmpty {
+                deletedCount += try await firestoreService.deleteRuns(documentIds: duplicateIds)
+            }
+
+            // 重複削除後のFirestoreデータで差分計算するため、残ったレコードのみ使用
+            let remainingFirestoreRuns = firestoreRuns.filter { !duplicateIds.contains($0.id) }
+
             // 削除対象: Firestoreにあって、HealthKitにないもの
-            let toDelete = firestoreRuns.filter { firestoreRun in
+            let toDelete = remainingFirestoreRuns.filter { firestoreRun in
                 !healthKitRecords.contains { healthKitRecord in
                     abs(healthKitRecord.date.timeIntervalSince(firestoreRun.date)) < 60 &&
                     abs(healthKitRecord.distanceKm - firestoreRun.distanceKm) < 0.1
@@ -267,7 +282,7 @@ final class SyncService: ObservableObject {
             // 追加対象: HealthKitにあって、Firestoreにないもの
             let toAddWorkouts = workouts.filter { workout in
                 let workoutDistanceKm = (workout.totalDistance?.doubleValue(for: .meter()) ?? 0) / 1000
-                return !firestoreRuns.contains { firestoreRun in
+                return !remainingFirestoreRuns.contains { firestoreRun in
                     abs(workout.startDate.timeIntervalSince(firestoreRun.date)) < 60 &&
                     abs(workoutDistanceKm - firestoreRun.distanceKm) < 0.1
                 }
@@ -279,8 +294,8 @@ final class SyncService: ObservableObject {
             // 削除実行
             if !toDelete.isEmpty {
                 phase = .syncing(current: currentOperation, total: totalOperations)
-                deletedCount = try await firestoreService.deleteRuns(documentIds: toDelete.map { $0.id })
-                currentOperation += deletedCount
+                deletedCount += try await firestoreService.deleteRuns(documentIds: toDelete.map { $0.id })
+                currentOperation += toDelete.count
             }
 
             // 追加実行
@@ -325,6 +340,53 @@ final class SyncService: ObservableObject {
 
         isSyncing = false
         return (addedCount, deletedCount)
+    }
+
+    // MARK: - HealthKit重複排除
+
+    /// HealthKitの重複ワークアウトを排除（サードパーティアプリによる重複対策）
+    /// タイムスタンプ60秒以内 + 距離100m以内のレコードを同一ランとみなし、最初の1件だけ残す。
+    /// 重複グループ内ではApple純正ソースのワークアウトを優先する。
+    private static func deduplicateWorkouts(_ workouts: [HKWorkout]) -> [HKWorkout] {
+        var result: [HKWorkout] = []
+        for workout in workouts {
+            if let existingIndex = result.firstIndex(where: { existing in
+                abs(existing.startDate.timeIntervalSince(workout.startDate)) < 60 &&
+                abs((existing.totalDistance?.doubleValue(for: .meter()) ?? 0) -
+                    (workout.totalDistance?.doubleValue(for: .meter()) ?? 0)) < 100
+            }) {
+                // 重複あり → Apple純正ソースを優先
+                if isAppleSource(workout) && !isAppleSource(result[existingIndex]) {
+                    result[existingIndex] = workout
+                }
+            } else {
+                result.append(workout)
+            }
+        }
+        return result
+    }
+
+    private static func isAppleSource(_ workout: HKWorkout) -> Bool {
+        workout.sourceRevision.source.bundleIdentifier.hasPrefix("com.apple.")
+    }
+
+    /// Firestoreのランレコードから重複ドキュメントIDを検出
+    /// タイムスタンプ60秒以内 + 距離0.1km以内のレコードを同一ランとみなし、最初の1件以外を重複とする。
+    private static func findDuplicateDocumentIds(_ runs: [(id: String, date: Date, distanceKm: Double)]) -> [String] {
+        var seen: [(id: String, date: Date, distanceKm: Double)] = []
+        var duplicateIds: [String] = []
+        for run in runs {
+            let isNew = !seen.contains { existing in
+                abs(existing.date.timeIntervalSince(run.date)) < 60 &&
+                abs(existing.distanceKm - run.distanceKm) < 0.1
+            }
+            if isNew {
+                seen.append(run)
+            } else {
+                duplicateIds.append(run.id)
+            }
+        }
+        return duplicateIds
     }
 
     /// ウィジェットデータを更新
