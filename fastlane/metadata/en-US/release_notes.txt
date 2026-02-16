@@ -1,5 +1,9 @@
 Thank you for using RunRun!
 
-【New Features】
-・Route thumbnails for your runs on the Timeline
-・Display location name of the farthest point on Timeline and Run Detail
+【Improvements】
+・Swipe horizontally on charts to switch between days or months
+・Improved goal progress display
+
+【Bug Fixes】
+・Fixed distance display when multiple runs on the same day in monthly chart
+・Fixed duplicate record issue during data sync
