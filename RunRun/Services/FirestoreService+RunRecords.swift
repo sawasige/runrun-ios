@@ -121,12 +121,18 @@ extension FirestoreService {
         }
     }
 
-    /// 指定したドキュメントIDのランを削除
+    /// 指定したドキュメントIDのランを削除（WriteBatchで500件ずつ一括削除）
     func deleteRuns(documentIds: [String]) async throws -> Int {
         guard !documentIds.isEmpty else { return 0 }
 
-        for id in documentIds {
-            try await runsCollection.document(id).delete()
+        let batchLimit = 500
+        for batchStart in stride(from: 0, to: documentIds.count, by: batchLimit) {
+            let batchEnd = min(batchStart + batchLimit, documentIds.count)
+            let batch = db.batch()
+            for i in batchStart..<batchEnd {
+                batch.deleteDocument(runsCollection.document(documentIds[i]))
+            }
+            try await batch.commit()
         }
 
         return documentIds.count
