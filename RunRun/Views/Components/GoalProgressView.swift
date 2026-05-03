@@ -108,7 +108,7 @@ private struct ShimmerProgressBar: View {
             let animatedWidth = geometry.size.width * animatedProgress
 
             // 達成率ラベル（進捗バーの右端上部）
-            Text("\(Int(animatedProgress * 100))%")
+            Text(animatedProgress, format: .percent.precision(.fractionLength(0)))
                 .font(.subheadline)
                 .fontWeight(.semibold)
                 .foregroundStyle(percentage >= 100 ? .green : .secondary)

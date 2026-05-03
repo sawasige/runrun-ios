@@ -945,10 +945,12 @@ struct RunningRecordRow: View {
                     .font(.headline)
             }
 
-            HStack(spacing: 16) {
-                Label(record.formattedDuration, systemImage: "clock")
+            HStack(spacing: 8) {
+                Label(record.formattedTime, systemImage: "clock")
+                Label(record.formattedDuration, systemImage: "stopwatch")
                 Label(record.formattedPace(useMetric: useMetric), systemImage: "speedometer")
             }
+            .labelStyle(CompactIconLabelStyle())
             .font(.caption)
             .foregroundStyle(.secondary)
         }

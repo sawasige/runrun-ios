@@ -106,6 +106,12 @@ struct RunningRecord: Identifiable, Equatable, Hashable {
         }
     }
 
+    var formattedTime: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: date)
+    }
+
     var averagePacePerKilometer: TimeInterval? {
         guard distanceInKilometers > 0 else { return nil }
         return durationInSeconds / distanceInKilometers

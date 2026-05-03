@@ -409,16 +409,13 @@ private struct TimelineRunRow: View {
                         .font(.subheadline)
                         .fontWeight(.medium)
 
-                    // 開始時刻・時間・ペース（控えめに）
-                    HStack(spacing: 6) {
-                        Text(run.formattedTime)
-                        Text("·")
-                        Text(run.formattedDuration)
-                        Text("·")
-                        Text(UnitFormatter.formatPaceValue(secondsPerKm: paceSecondsPerKm, useMetric: useMetricUnits))
-                        Text(UnitFormatter.paceUnit(useMetric: useMetricUnits))
-                            .foregroundStyle(.tertiary)
+                    // 開始時刻・経過時間・ペース（アイコンで意味を区別）
+                    HStack(spacing: 8) {
+                        Label(run.formattedTime, systemImage: "clock")
+                        Label(run.formattedDuration, systemImage: "stopwatch")
+                        Label(run.formattedPace(useMetric: useMetricUnits), systemImage: "speedometer")
                     }
+                    .labelStyle(CompactIconLabelStyle())
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 }
