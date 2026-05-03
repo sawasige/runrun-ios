@@ -409,8 +409,10 @@ private struct TimelineRunRow: View {
                         .font(.subheadline)
                         .fontWeight(.medium)
 
-                    // 時間とペース（控えめに）
+                    // 開始時刻・時間・ペース（控えめに）
                     HStack(spacing: 6) {
+                        Text(run.formattedTime)
+                        Text("·")
                         Text(run.formattedDuration)
                         Text("·")
                         Text(UnitFormatter.formatPaceValue(secondsPerKm: paceSecondsPerKm, useMetric: useMetricUnits))
