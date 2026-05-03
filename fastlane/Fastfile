@@ -1,5 +1,15 @@
 default_platform(:ios)
 
+# fastlane snapshot は simctl のカテゴリ見出し (例: "iOS 26.4") をシミュレータの
+# OS バージョンとして読み取るが、ランタイムの実バージョンが point release (例: 26.4.1)
+# の場合に xcodebuild の destination マッチが失敗する。
+# 生成される -destination 内の OS=X.Y を OS=latest に書き換えて回避する。
+require 'snapshot/test_command_generator'
+::Snapshot::TestCommandGenerator.singleton_class.send(:alias_method, :__original_destination_for_runrun, :destination)
+::Snapshot::TestCommandGenerator.define_singleton_method(:destination) do |devices|
+  __original_destination_for_runrun(devices).map { |line| line.gsub(/OS=[\d.]+/, 'OS=latest') }
+end
+
 platform :ios do
   desc "メタデータとスクリーンショットをアップロード"
   lane :upload_metadata do |options|
