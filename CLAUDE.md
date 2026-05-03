@@ -38,7 +38,16 @@ RunRun/
 ├── ContentView.swift            # タブビュー (Home/Records/Leaderboard/Friends/Settings)
 ├── Views/
 │   ├── Components/
-│   │   └── ShineLogoView.swift      # ローディング用シャインアニメーション
+│   │   ├── ShineLogoView.swift          # ローディング用シャインアニメーション
+│   │   ├── ChartTooltip.swift           # チャート用ツールチップ
+│   │   ├── ExpandableNavigationButtons.swift # ラン詳細の前後/最古/最新ナビゲーション
+│   │   ├── GoalProgressView.swift       # 目標達成率の進捗表示
+│   │   ├── LiquidGlassModifier.swift    # 半透明グラスエフェクト
+│   │   ├── LottieView.swift             # Lottieアニメーション
+│   │   ├── PulsingDot.swift             # 同期中などのパルス表示
+│   │   ├── RouteThumbnailView.swift     # ルートサムネイル
+│   │   ├── ShareSettingsContainer.swift # 共有設定の共通コンテナ
+│   │   └── SkeletonView.swift           # ロード中のスケルトンUI
 │   ├── TimelineView.swift           # ホーム（タイムライン）
 │   ├── YearDetailView.swift         # 年間記録詳細
 │   ├── MonthDetailView.swift        # 月の詳細（個別記録一覧）
@@ -52,6 +61,8 @@ RunRun/
 │   ├── SettingsView.swift           # 設定画面
 │   ├── LoginView.swift              # ログイン画面
 │   ├── UserSearchView.swift         # ユーザー検索
+│   ├── GoalListView.swift           # 月別・年別目標一覧
+│   ├── GoalSettingsView.swift       # 目標の作成・編集
 │   ├── SyncBannerView.swift         # 同期状態バナー
 │   ├── SyncProgressView.swift       # 同期進捗表示
 │   ├── GradientRouteMapView.swift   # ルートマップ表示
@@ -78,22 +89,36 @@ RunRun/
 │   ├── SyncedRunRecord.swift        # Firestoreに同期した記録
 │   ├── HeartRateSample.swift        # 心拍データ
 │   ├── RouteSegment.swift           # ルートセグメント
-│   ├── Split.swift                  # スプリットデータ
+│   ├── SimplifiedRoute.swift        # 簡略化ルート（ウィジェット/共有用）
+│   ├── Split.swift                  # スプリットデータ（1km単位）
+│   ├── PersonalRecord.swift         # パーソナルレコード（5K/10K/ハーフ/フル）
+│   ├── RunningGoal.swift            # 月別・年別の目標
 │   └── ScreenType.swift             # 画面遷移タイプ（NavigationPath用）
 ├── Services/
-│   ├── HealthKitService.swift       # HealthKit連携
-│   ├── AuthenticationService.swift  # Apple Sign In + Firebase Auth
-│   ├── FirestoreService.swift       # Firestore CRUD操作
-│   ├── StorageService.swift         # Firebase Storage
-│   ├── SyncService.swift            # HealthKit→Firestore同期
-│   ├── WidgetService.swift          # ウィジェットデータ更新
-│   ├── AnalyticsService.swift       # Firebase Analytics
-│   ├── NotificationService.swift    # プッシュ通知
-│   ├── BadgeService.swift           # バッジ管理
-│   ├── ImageCacheService.swift      # 画像キャッシュ
-│   ├── PhotoLibraryService.swift    # 写真ライブラリ保存
-│   ├── MockDataProvider.swift       # スクリーンショット用モックデータ
-│   └── ScreenshotMode.swift         # スクリーンショットモード
+│   ├── HealthKitService.swift               # HealthKit連携
+│   ├── AuthenticationService.swift          # Apple Sign In + Firebase Auth
+│   ├── FirestoreService.swift               # Firestore CRUD（コア）
+│   ├── FirestoreService+UserProfile.swift   # ユーザープロフィール操作
+│   ├── FirestoreService+RunRecords.swift    # ラン記録の同期
+│   ├── FirestoreService+Timeline.swift      # タイムライン取得（ページネーション）
+│   ├── FirestoreService+Leaderboard.swift   # 月別ランキング集計
+│   ├── FirestoreService+Friends.swift       # フレンド機能
+│   ├── FirestoreService+Goals.swift         # 目標の保存/取得
+│   ├── FirestoreService+Debug.swift         # デバッグ用書き込み
+│   ├── StorageService.swift                 # Firebase Storage（アバター画像）
+│   ├── SyncService.swift                    # HealthKit→Firestore同期
+│   ├── WidgetService.swift                  # ウィジェットデータ更新
+│   ├── AnalyticsService.swift               # Firebase Analytics
+│   ├── NotificationService.swift            # FCM・ローカル通知
+│   ├── BadgeService.swift                   # アプリアイコンバッジ
+│   ├── ImageCacheService.swift              # 画像キャッシュ
+│   ├── ImageComposerService.swift           # 共有画像生成（HDR対応 HEIF）
+│   ├── PhotoLibraryService.swift            # 写真ライブラリ保存
+│   ├── RouteCacheService.swift              # ルートセグメントのキャッシュ
+│   ├── ReviewService.swift                  # App Storeレビュー要求
+│   ├── DebugSettings.swift                  # デバッグ用設定
+│   ├── MockDataProvider.swift               # スクリーンショット用モックデータ
+│   └── ScreenshotMode.swift                 # スクリーンショットモード
 └── Utilities/
     ├── UnitFormatter.swift          # 距離・時間のフォーマット
     └── NavigationAction.swift       # プログラム的ナビゲーション用環境値
@@ -235,6 +260,34 @@ firebase deploy --only firestore:indexes
 | `year_share_image_shared` | 画像共有（年） | show_* オプション |
 | `profile_share_image_saved` | 画像保存（プロフィール） | show_* オプション |
 | `profile_share_image_shared` | 画像共有（プロフィール） | show_* オプション |
+
+## Goals (目標管理)
+
+`RunningGoal` で月別・年別の走行距離目標を管理。Firestoreに保存（`FirestoreService+Goals`）。
+
+- `GoalListView`: 月別・年別の目標一覧
+- `GoalSettingsView`: 目標の作成・編集・削除
+- `GoalProgressView`: 達成率の進捗バー（タイムライン・年詳細・月詳細で表示）
+
+## Personal Records
+
+`PersonalRecord` で 5K / 10K / ハーフマラソン / フルマラソン相当の最速タイムを管理。`RunDetailView` で該当ランがPRかどうかを表示。
+
+## Image Sharing (HDR対応)
+
+`ImageComposerService` で共有画像を生成:
+- フォーマット: HEIF
+- カラースペース: Display P3
+- HDRゲインマップ保持（対応端末でHDR表示）
+- アスペクト比: 1:1, 4:5, 9:16
+- 表示要素のオン/オフ切替（日付、距離、ペース、心拍、ルート、カロリーなど）
+
+## Notifications & Badges
+
+- **FCM**: `NotificationService` でFirebase Cloud Messagingトークンを管理
+- **ローカル通知**: 新規ラン同期、フレンドリクエスト、フレンド承認
+- **ディープリンク**: 通知タップでタブ遷移・ラン詳細表示
+- **アプリアイコンバッジ**: `BadgeService` が未読フレンドリクエスト数・新規フレンド数を集計
 
 ## Xcode Project Setup
 
