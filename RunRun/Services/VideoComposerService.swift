@@ -2,6 +2,7 @@ import AVFoundation
 import CoreImage
 import CoreGraphics
 import CoreVideo
+import CoreLocation
 
 enum VideoComposerError: Error, LocalizedError {
     case noVideoTrack
@@ -140,6 +141,29 @@ enum VideoComposer {
             colorPrimaries: outPrimaries,
             yCbCrMatrix: outMatrix
         )
+    }
+
+    /// 動画中央のフレームを取得し、ルート描画領域の背景明度をサンプルする。
+    /// オーバーレイのルート縁取り色を背景に応じて切り替えるための値。
+    static func sampleMiddleFrameBrightness(
+        url: URL,
+        routeCoordinates: [CLLocationCoordinate2D]
+    ) async -> CGFloat? {
+        guard !routeCoordinates.isEmpty else { return nil }
+        let asset = AVURLAsset(url: url)
+        let generator = AVAssetImageGenerator(asset: asset)
+        generator.appliesPreferredTrackTransform = true
+        generator.requestedTimeToleranceBefore = .positiveInfinity
+        generator.requestedTimeToleranceAfter = .positiveInfinity
+        do {
+            let duration = try await asset.load(.duration)
+            let mid = CMTimeMultiplyByFloat64(duration, multiplier: 0.5)
+            let (cgImage, _) = try await generator.image(at: mid)
+            let ci = CIImage(cgImage: cgImage)
+            return ImageComposer.sampleRouteAreaBrightness(image: ci, routeCoordinates: routeCoordinates)
+        } catch {
+            return nil
+        }
     }
 
     /// プレビュー再生 (AVPlayerItem.videoComposition) と書き出しの両方で同じ合成結果を得るためのヘルパー。

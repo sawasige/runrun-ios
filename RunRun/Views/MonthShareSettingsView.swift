@@ -64,35 +64,53 @@ struct MonthShareSettingsView: View {
             composeImage: { data, centered in
                 await ImageComposer.composeMonthlyStats(imageData: data, shareData: shareData, options: options, centered: centered)
             },
+            videoSupport: makeVideoSupport(),
             logSaveEvent: {
-                AnalyticsService.logEvent("month_share_image_saved", parameters: [
-                    "show_period": options.showPeriod,
-                    "show_distance": options.showDistance,
-                    "show_run_count": options.showRunCount,
-                    "show_duration": options.showDuration,
-                    "show_pace": options.showPace,
-                    "show_avg_distance": options.showAvgDistance,
-                    "show_avg_duration": options.showAvgDuration,
-                    "show_calories": options.showCalories,
-                    "show_progress_chart": options.showProgressChart
-                ])
+                AnalyticsService.logEvent("month_share_image_saved", parameters: optionParameters)
             },
             logShareEvent: {
-                AnalyticsService.logEvent("month_share_image_shared", parameters: [
-                    "show_period": options.showPeriod,
-                    "show_distance": options.showDistance,
-                    "show_run_count": options.showRunCount,
-                    "show_duration": options.showDuration,
-                    "show_pace": options.showPace,
-                    "show_avg_distance": options.showAvgDistance,
-                    "show_avg_duration": options.showAvgDuration,
-                    "show_calories": options.showCalories,
-                    "show_progress_chart": options.showProgressChart
-                ])
+                AnalyticsService.logEvent("month_share_image_shared", parameters: optionParameters)
             }
         ) {
             dataOptionsSection
         }
+    }
+
+    private var optionParameters: [String: Any] {
+        [
+            "show_period": options.showPeriod,
+            "show_distance": options.showDistance,
+            "show_run_count": options.showRunCount,
+            "show_duration": options.showDuration,
+            "show_pace": options.showPace,
+            "show_avg_distance": options.showAvgDistance,
+            "show_avg_duration": options.showAvgDuration,
+            "show_calories": options.showCalories,
+            "show_progress_chart": options.showProgressChart
+        ]
+    }
+
+    private func makeVideoSupport() -> VideoShareSupport {
+        let shareData = self.shareData
+        let options = self.options
+        return VideoShareSupport(
+            prepareOverlay: { _ in
+                return { canvasSize in
+                    ImageComposer.makeMonthlyOverlayCGImage(
+                        size: canvasSize,
+                        shareData: shareData,
+                        options: options,
+                        centered: false
+                    )
+                }
+            },
+            logSaveEvent: {
+                AnalyticsService.logEvent("month_share_video_saved", parameters: optionParameters)
+            },
+            logShareEvent: {
+                AnalyticsService.logEvent("month_share_video_shared", parameters: optionParameters)
+            }
+        )
     }
 
     private var dataOptionsSection: some View {

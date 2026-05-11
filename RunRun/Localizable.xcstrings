@@ -591,7 +591,18 @@
         }
       }
     },
+    "Change Background" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "背景を変更"
+          }
+        }
+      }
+    },
     "Change Photo" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ja" : {
           "stringUnit" : {
@@ -2154,6 +2165,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ユーザー検索"
+          }
+        }
+      }
+    },
+    "Select Background" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "背景を選択"
           }
         }
       }

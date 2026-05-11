@@ -52,35 +52,60 @@ struct RunShareSettingsView: View {
             composeImage: { data, centered in
                 await ImageComposer.composeAsHEIF(imageData: data, record: record, options: options, routeCoordinates: routeCoordinates, centered: centered)
             },
+            videoSupport: makeVideoSupport(),
             logSaveEvent: {
-                AnalyticsService.logEvent("share_image_saved", parameters: [
-                    "show_date": options.showDate,
-                    "show_start_time": options.showStartTime,
-                    "show_distance": options.showDistance,
-                    "show_duration": options.showDuration,
-                    "show_pace": options.showPace,
-                    "show_heart_rate": options.showHeartRate,
-                    "show_steps": options.showSteps,
-                    "show_calories": options.showCalories,
-                    "show_route": options.showRoute
-                ])
+                AnalyticsService.logEvent("share_image_saved", parameters: optionParameters)
             },
             logShareEvent: {
-                AnalyticsService.logEvent("share_image_shared", parameters: [
-                    "show_date": options.showDate,
-                    "show_start_time": options.showStartTime,
-                    "show_distance": options.showDistance,
-                    "show_duration": options.showDuration,
-                    "show_pace": options.showPace,
-                    "show_heart_rate": options.showHeartRate,
-                    "show_steps": options.showSteps,
-                    "show_calories": options.showCalories,
-                    "show_route": options.showRoute
-                ])
+                AnalyticsService.logEvent("share_image_shared", parameters: optionParameters)
             }
         ) {
             dataOptionsSection
         }
+    }
+
+    private var optionParameters: [String: Any] {
+        [
+            "show_date": options.showDate,
+            "show_start_time": options.showStartTime,
+            "show_distance": options.showDistance,
+            "show_duration": options.showDuration,
+            "show_pace": options.showPace,
+            "show_heart_rate": options.showHeartRate,
+            "show_steps": options.showSteps,
+            "show_calories": options.showCalories,
+            "show_route": options.showRoute
+        ]
+    }
+
+    private func makeVideoSupport() -> VideoShareSupport {
+        let record = self.record
+        let routeCoordinates = self.routeCoordinates
+        let options = self.options
+        return VideoShareSupport(
+            prepareOverlay: { videoURL in
+                let brightness = await VideoComposer.sampleMiddleFrameBrightness(
+                    url: videoURL,
+                    routeCoordinates: options.showRoute ? routeCoordinates : []
+                )
+                return { canvasSize in
+                    ImageComposer.makeOverlayCGImage(
+                        size: canvasSize,
+                        record: record,
+                        options: options,
+                        routeCoordinates: routeCoordinates,
+                        routeAreaBrightness: brightness,
+                        centered: false
+                    )
+                }
+            },
+            logSaveEvent: {
+                AnalyticsService.logEvent("share_video_saved", parameters: optionParameters)
+            },
+            logShareEvent: {
+                AnalyticsService.logEvent("share_video_shared", parameters: optionParameters)
+            }
+        )
     }
 
     private var dataOptionsSection: some View {
