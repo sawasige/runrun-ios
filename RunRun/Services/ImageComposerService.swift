@@ -919,6 +919,24 @@ enum ImageComposer {
         return saveAsHEIFData(sdrImage: sdrWithText, hdrImage: hdrWithText)
     }
 
+    /// 動画など他のパイプラインから利用する月別オーバーレイ生成（透明背景、HDR拡張レンジ対応）
+    static func makeMonthlyOverlayCGImage(size: CGSize, shareData: MonthlyShareData, options: MonthExportOptions, centered: Bool = false) -> CGImage? {
+        let format = UIGraphicsImageRendererFormat()
+        format.preferredRange = .extended
+        format.scale = 1.0
+        format.opaque = false
+
+        let renderer = UIGraphicsImageRenderer(size: size, format: format)
+        let image = renderer.image { _ in
+            if centered {
+                drawCenteredMonthlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+            } else {
+                drawMonthlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+            }
+        }
+        return image.cgImage
+    }
+
     private static func createMonthlyTextOverlay(size: CGSize, shareData: MonthlyShareData, options: MonthExportOptions, centered: Bool = false) -> CIImage? {
         let format = UIGraphicsImageRendererFormat()
         format.preferredRange = .extended
@@ -1225,6 +1243,24 @@ enum ImageComposer {
         return saveAsHEIFData(sdrImage: sdrWithText, hdrImage: hdrWithText)
     }
 
+    /// 動画など他のパイプラインから利用する年別オーバーレイ生成（透明背景、HDR拡張レンジ対応）
+    static func makeYearlyOverlayCGImage(size: CGSize, shareData: YearlyShareData, options: YearExportOptions, centered: Bool = false) -> CGImage? {
+        let format = UIGraphicsImageRendererFormat()
+        format.preferredRange = .extended
+        format.scale = 1.0
+        format.opaque = false
+
+        let renderer = UIGraphicsImageRenderer(size: size, format: format)
+        let image = renderer.image { _ in
+            if centered {
+                drawCenteredYearlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+            } else {
+                drawYearlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+            }
+        }
+        return image.cgImage
+    }
+
     private static func createYearlyTextOverlay(size: CGSize, shareData: YearlyShareData, options: YearExportOptions, centered: Bool = false) -> CIImage? {
         let format = UIGraphicsImageRendererFormat()
         format.preferredRange = .extended
@@ -1527,6 +1563,24 @@ enum ImageComposer {
         }
 
         return saveAsHEIFData(sdrImage: sdrWithText, hdrImage: hdrWithText)
+    }
+
+    /// 動画など他のパイプラインから利用するプロフィールオーバーレイ生成（透明背景、HDR拡張レンジ対応）
+    static func makeProfileOverlayCGImage(size: CGSize, shareData: ProfileShareData, options: ProfileExportOptions, centered: Bool = false) -> CGImage? {
+        let format = UIGraphicsImageRendererFormat()
+        format.preferredRange = .extended
+        format.scale = 1.0
+        format.opaque = false
+
+        let renderer = UIGraphicsImageRenderer(size: size, format: format)
+        let image = renderer.image { _ in
+            if centered {
+                drawCenteredProfileTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+            } else {
+                drawProfileTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+            }
+        }
+        return image.cgImage
     }
 
     private static func createProfileTextOverlay(size: CGSize, shareData: ProfileShareData, options: ProfileExportOptions, centered: Bool = false) -> CIImage? {

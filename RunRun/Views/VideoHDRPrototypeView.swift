@@ -133,7 +133,7 @@ struct VideoHDRPrototypeView: View {
             inputInfo = await describe(url: picked.url)
 
             // 中央フレームから明度をサンプルし、その値でプレビューを構築
-            brightness = await Self.sampleMiddleFrameBrightness(
+            brightness = await VideoComposer.sampleMiddleFrameBrightness(
                 url: picked.url,
                 routeCoordinates: options.showRoute ? routeCoords : []
             )
@@ -270,26 +270,5 @@ struct VideoHDRPrototypeView: View {
         return ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
     }
 
-    /// 動画中央のフレームを取得し、ImageComposerと同じ計算でルート領域の明度を返す
-    private static func sampleMiddleFrameBrightness(
-        url: URL,
-        routeCoordinates: [CLLocationCoordinate2D]
-    ) async -> CGFloat? {
-        guard !routeCoordinates.isEmpty else { return nil }
-        let asset = AVURLAsset(url: url)
-        let generator = AVAssetImageGenerator(asset: asset)
-        generator.appliesPreferredTrackTransform = true
-        generator.requestedTimeToleranceBefore = .positiveInfinity
-        generator.requestedTimeToleranceAfter = .positiveInfinity
-        do {
-            let duration = try await asset.load(.duration)
-            let mid = CMTimeMultiplyByFloat64(duration, multiplier: 0.5)
-            let (cgImage, _) = try await generator.image(at: mid)
-            let ci = CIImage(cgImage: cgImage)
-            return ImageComposer.sampleRouteAreaBrightness(image: ci, routeCoordinates: routeCoordinates)
-        } catch {
-            return nil
-        }
-    }
 }
 #endif

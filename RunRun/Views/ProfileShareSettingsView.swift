@@ -57,31 +57,51 @@ struct ProfileShareSettingsView: View {
             composeImage: { data, centered in
                 await ImageComposer.composeProfileStats(imageData: data, shareData: shareData, options: options, centered: centered)
             },
+            videoSupport: makeVideoSupport(),
             logSaveEvent: {
-                AnalyticsService.logEvent("profile_share_image_saved", parameters: [
-                    "show_distance": options.showDistance,
-                    "show_duration": options.showDuration,
-                    "show_run_count": options.showRunCount,
-                    "show_calories": options.showCalories,
-                    "show_pace": options.showPace,
-                    "show_avg_distance": options.showAvgDistance,
-                    "show_avg_duration": options.showAvgDuration
-                ])
+                AnalyticsService.logEvent("profile_share_image_saved", parameters: optionParameters)
             },
             logShareEvent: {
-                AnalyticsService.logEvent("profile_share_image_shared", parameters: [
-                    "show_distance": options.showDistance,
-                    "show_duration": options.showDuration,
-                    "show_run_count": options.showRunCount,
-                    "show_calories": options.showCalories,
-                    "show_pace": options.showPace,
-                    "show_avg_distance": options.showAvgDistance,
-                    "show_avg_duration": options.showAvgDuration
-                ])
+                AnalyticsService.logEvent("profile_share_image_shared", parameters: optionParameters)
             }
         ) {
             dataOptionsSection
         }
+    }
+
+    private var optionParameters: [String: Any] {
+        [
+            "show_distance": options.showDistance,
+            "show_duration": options.showDuration,
+            "show_run_count": options.showRunCount,
+            "show_calories": options.showCalories,
+            "show_pace": options.showPace,
+            "show_avg_distance": options.showAvgDistance,
+            "show_avg_duration": options.showAvgDuration
+        ]
+    }
+
+    private func makeVideoSupport() -> VideoShareSupport {
+        let shareData = self.shareData
+        let options = self.options
+        return VideoShareSupport(
+            prepareOverlay: { _ in
+                return { canvasSize in
+                    ImageComposer.makeProfileOverlayCGImage(
+                        size: canvasSize,
+                        shareData: shareData,
+                        options: options,
+                        centered: false
+                    )
+                }
+            },
+            logSaveEvent: {
+                AnalyticsService.logEvent("profile_share_video_saved", parameters: optionParameters)
+            },
+            logShareEvent: {
+                AnalyticsService.logEvent("profile_share_video_shared", parameters: optionParameters)
+            }
+        )
     }
 
     private var dataOptionsSection: some View {
