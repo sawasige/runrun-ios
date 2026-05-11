@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>利用規約 - RunRun</title>
+    <title data-ja="利用規約 - RunRun" data-en="Terms of Service - RunRun">利用規約 - RunRun</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -17,52 +17,97 @@
         h2 { font-size: 1.2em; margin-top: 2em; }
         p { margin: 1em 0; }
         .updated { color: #666; font-size: 0.9em; }
+        .lang-toggle {
+            background: none;
+            border: 1px solid #888;
+            border-radius: 4px;
+            padding: 4px 12px;
+            color: inherit;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85em;
+            float: right;
+        }
+        .lang-toggle:hover { border-color: #EB4B46; color: #EB4B46; }
     </style>
 </head>
 <body>
-    <h1>利用規約</h1>
-    <p class="updated">最終更新日: 2025年1月5日</p>
+    <button class="lang-toggle" onclick="toggleLang()" aria-label="Switch language">EN / 日本語</button>
+    <h1 data-ja="利用規約" data-en="Terms of Service">利用規約</h1>
+    <p class="updated" data-ja="最終更新日: 2025年1月5日" data-en="Last updated: January 9, 2026">最終更新日: 2025年1月5日</p>
 
-    <p>本利用規約（以下「本規約」）は、RunRun（以下「本アプリ」）の利用条件を定めるものです。ユーザーは、本アプリを利用することにより、本規約に同意したものとみなされます。</p>
+    <p data-ja="本利用規約（以下「本規約」）は、RunRun（以下「本アプリ」）の利用条件を定めるものです。ユーザーは、本アプリを利用することにより、本規約に同意したものとみなされます。"
+       data-en="These Terms of Service (&quot;Terms&quot;) govern your use of RunRun (&quot;the App&quot;). By using the App, you agree to be bound by these Terms.">本利用規約（以下「本規約」）は、RunRun（以下「本アプリ」）の利用条件を定めるものです。ユーザーは、本アプリを利用することにより、本規約に同意したものとみなされます。</p>
 
-    <h2>1. サービスの内容</h2>
-    <p>本アプリは、Apple Watchで記録されたランニングデータを表示し、他のユーザーとランキングで競うことができるサービスです。</p>
+    <h2 data-ja="1. サービスの内容" data-en="1. Service Description">1. サービスの内容</h2>
+    <p data-ja="本アプリは、Apple Watchで記録されたランニングデータを表示し、他のユーザーとランキングで競うことができるサービスです。"
+       data-en="The App displays running data recorded by Apple Watch, Strava, Nike Run Club, and other apps that sync with Apple Health, allowing you to compete with other users through rankings.">本アプリは、Apple Watchで記録されたランニングデータを表示し、他のユーザーとランキングで競うことができるサービスです。</p>
 
-    <h2>2. アカウント</h2>
-    <p>本アプリの利用にはSign in with Appleによるアカウント登録が必要です。ユーザーは、自身のアカウント情報を適切に管理する責任を負います。</p>
+    <h2 data-ja="2. アカウント" data-en="2. Account">2. アカウント</h2>
+    <p data-ja="本アプリの利用にはSign in with Appleによるアカウント登録が必要です。ユーザーは、自身のアカウント情報を適切に管理する責任を負います。"
+       data-en="Using the App requires account registration through Sign in with Apple. You are responsible for properly managing your account information.">本アプリの利用にはSign in with Appleによるアカウント登録が必要です。ユーザーは、自身のアカウント情報を適切に管理する責任を負います。</p>
 
-    <h2>3. 禁止事項</h2>
-    <p>ユーザーは、以下の行為を行ってはなりません：</p>
+    <h2 data-ja="3. 禁止事項" data-en="3. Prohibited Activities">3. 禁止事項</h2>
+    <p data-ja="ユーザーは、以下の行為を行ってはなりません:" data-en="Users must not engage in the following activities:">ユーザーは、以下の行為を行ってはなりません:</p>
     <ul>
-        <li>虚偽のデータを登録・送信する行為</li>
-        <li>他のユーザーへの嫌がらせや迷惑行為</li>
-        <li>本アプリの運営を妨害する行為</li>
-        <li>不正アクセスやリバースエンジニアリング</li>
-        <li>法令または公序良俗に反する行為</li>
+        <li data-ja="虚偽のデータを登録・送信する行為" data-en="Registering or transmitting false data">虚偽のデータを登録・送信する行為</li>
+        <li data-ja="他のユーザーへの嫌がらせや迷惑行為" data-en="Harassment or nuisance behavior toward other users">他のユーザーへの嫌がらせや迷惑行為</li>
+        <li data-ja="本アプリの運営を妨害する行為" data-en="Interfering with the operation of the App">本アプリの運営を妨害する行為</li>
+        <li data-ja="不正アクセスやリバースエンジニアリング" data-en="Unauthorized access or reverse engineering">不正アクセスやリバースエンジニアリング</li>
+        <li data-ja="法令または公序良俗に反する行為" data-en="Any activity that violates laws or public order">法令または公序良俗に反する行為</li>
     </ul>
 
-    <h2>4. 免責事項</h2>
-    <p>本アプリは「現状有姿」で提供されます。開発者は、以下について一切の責任を負いません：</p>
+    <h2 data-ja="4. 免責事項" data-en="4. Disclaimer">4. 免責事項</h2>
+    <p data-ja="本アプリは「現状有姿」で提供されます。開発者は、以下について一切の責任を負いません:"
+       data-en="The App is provided &quot;as is.&quot; The developer assumes no responsibility for:">本アプリは「現状有姿」で提供されます。開発者は、以下について一切の責任を負いません:</p>
     <ul>
-        <li>本アプリの利用により生じた損害</li>
-        <li>データの消失や破損</li>
-        <li>サービスの中断や停止</li>
-        <li>ヘルスケアデータの正確性</li>
+        <li data-ja="本アプリの利用により生じた損害" data-en="Any damages arising from use of the App">本アプリの利用により生じた損害</li>
+        <li data-ja="データの消失や破損" data-en="Loss or corruption of data">データの消失や破損</li>
+        <li data-ja="サービスの中断や停止" data-en="Service interruptions or outages">サービスの中断や停止</li>
+        <li data-ja="ヘルスケアデータの正確性" data-en="Accuracy of health data">ヘルスケアデータの正確性</li>
     </ul>
 
-    <h2>5. サービスの変更・終了</h2>
-    <p>開発者は、事前の通知なく本アプリの内容を変更、または提供を終了することがあります。</p>
+    <h2 data-ja="5. サービスの変更・終了" data-en="5. Service Changes and Termination">5. サービスの変更・終了</h2>
+    <p data-ja="開発者は、事前の通知なく本アプリの内容を変更、または提供を終了することがあります。"
+       data-en="The developer may change the content of or discontinue the App without prior notice.">開発者は、事前の通知なく本アプリの内容を変更、または提供を終了することがあります。</p>
 
-    <h2>6. 知的財産権</h2>
-    <p>本アプリに関する著作権、商標権その他の知的財産権は、開発者に帰属します。</p>
+    <h2 data-ja="6. 知的財産権" data-en="6. Intellectual Property">6. 知的財産権</h2>
+    <p data-ja="本アプリに関する著作権、商標権その他の知的財産権は、開発者に帰属します。"
+       data-en="All copyrights, trademarks, and other intellectual property rights related to the App belong to the developer.">本アプリに関する著作権、商標権その他の知的財産権は、開発者に帰属します。</p>
 
-    <h2>7. 規約の変更</h2>
-    <p>開発者は、必要に応じて本規約を変更することがあります。変更後の規約は、本アプリ内での通知または本ページへの掲載をもって効力を生じます。</p>
+    <h2 data-ja="7. 規約の変更" data-en="7. Changes to Terms">7. 規約の変更</h2>
+    <p data-ja="開発者は、必要に応じて本規約を変更することがあります。変更後の規約は、本アプリ内での通知または本ページへの掲載をもって効力を生じます。"
+       data-en="The developer may modify these Terms as necessary. Modified Terms will take effect upon notification within the App or publication on this page.">開発者は、必要に応じて本規約を変更することがあります。変更後の規約は、本アプリ内での通知または本ページへの掲載をもって効力を生じます。</p>
 
-    <h2>8. 準拠法・管轄</h2>
-    <p>本規約は日本法に準拠します。本アプリに関する紛争については、東京地方裁判所を第一審の専属的合意管轄裁判所とします。</p>
+    <h2 data-ja="8. 準拠法・管轄" data-en="8. Governing Law and Jurisdiction">8. 準拠法・管轄</h2>
+    <p data-ja="本規約は日本法に準拠します。本アプリに関する紛争については、東京地方裁判所を第一審の専属的合意管轄裁判所とします。"
+       data-en="These Terms are governed by Japanese law. Any disputes relating to the App shall be subject to the exclusive jurisdiction of the Tokyo District Court as the court of first instance.">本規約は日本法に準拠します。本アプリに関する紛争については、東京地方裁判所を第一審の専属的合意管轄裁判所とします。</p>
 
-    <h2>9. お問い合わせ</h2>
-    <p>本規約に関するお問い合わせは、<a href="support.html">サポートページ</a>よりご連絡ください。</p>
+    <h2 data-ja="9. お問い合わせ" data-en="9. Contact Us">9. お問い合わせ</h2>
+    <p data-html
+       data-ja="本規約に関するお問い合わせは、<a href=&quot;support.html&quot;>サポートページ</a>よりご連絡ください。"
+       data-en="For questions about these Terms, please contact us through the <a href=&quot;support.html&quot;>Support page</a>.">本規約に関するお問い合わせは、<a href="support.html">サポートページ</a>よりご連絡ください。</p>
+
+    <script>
+        var currentLang = 'ja';
+        function applyLang(lang) {
+            currentLang = lang;
+            document.querySelectorAll('[data-' + lang + ']').forEach(function (el) {
+                var val = el.getAttribute('data-' + lang);
+                if (val === null) return;
+                if (el.hasAttribute('data-html')) {
+                    el.innerHTML = val;
+                } else {
+                    el.textContent = val;
+                }
+            });
+            document.documentElement.lang = lang;
+            try { localStorage.setItem('lang', lang); } catch (e) {}
+        }
+        window.toggleLang = function () { applyLang(currentLang === 'ja' ? 'en' : 'ja'); };
+        var saved = null;
+        try { saved = localStorage.getItem('lang'); } catch (e) {}
+        applyLang(saved || ((navigator.language || '').toLowerCase().startsWith('ja') ? 'ja' : 'en'));
+    </script>
 </body>
 </html>
