@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>サポート - RunRun</title>
+    <title data-ja="サポート - RunRun" data-en="Support - RunRun">サポート - RunRun</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -23,34 +23,74 @@
             border-radius: 10px;
             margin: 20px 0;
         }
+        .lang-toggle {
+            background: none;
+            border: 1px solid #888;
+            border-radius: 4px;
+            padding: 4px 12px;
+            color: inherit;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85em;
+            float: right;
+        }
+        .lang-toggle:hover { border-color: #EB4B46; color: #EB4B46; }
     </style>
 </head>
 <body>
-    <h1>サポート</h1>
+    <button class="lang-toggle" onclick="toggleLang()" aria-label="Switch language">EN / 日本語</button>
+    <h1 data-ja="サポート" data-en="Support">サポート</h1>
 
-    <h2>よくある質問</h2>
+    <h2 data-ja="よくある質問" data-en="FAQ">よくある質問</h2>
 
-    <h3>ランニング記録が表示されません</h3>
-    <p>以下をご確認ください：</p>
+    <h3 data-ja="ランニング記録が表示されません" data-en="My running records aren't showing">ランニング記録が表示されません</h3>
+    <p data-ja="以下をご確認ください:" data-en="Please check the following:">以下をご確認ください:</p>
     <ul>
-        <li>ヘルスケアアプリでRunRunにデータへのアクセスを許可していますか？（設定 → ヘルスケア → データアクセスとデバイス → RunRun）</li>
-        <li>Apple Watch、Strava、Nike Run Clubなどでランニングを記録していますか？</li>
-        <li>アプリを下に引いてリフレッシュしてみてください</li>
+        <li data-ja="ヘルスケアアプリでRunRunにデータへのアクセスを許可していますか？（設定 → ヘルスケア → データアクセスとデバイス → RunRun）"
+            data-en="Have you granted RunRun access to your health data? (Settings → Health → Data Access &amp; Devices → RunRun)">ヘルスケアアプリでRunRunにデータへのアクセスを許可していますか？（設定 → ヘルスケア → データアクセスとデバイス → RunRun）</li>
+        <li data-ja="Apple Watch、Strava、Nike Run Clubなどでランニングを記録していますか？"
+            data-en="Are you recording runs with Apple Watch, Strava, Nike Run Club, or other compatible apps?">Apple Watch、Strava、Nike Run Clubなどでランニングを記録していますか？</li>
+        <li data-ja="アプリを下に引いてリフレッシュしてみてください"
+            data-en="Try pulling down to refresh the app">アプリを下に引いてリフレッシュしてみてください</li>
     </ul>
 
-    <h3>ランキングに表示されません</h3>
-    <p>ランキングに表示されるには、データの同期が必要です。設定画面の「再同期」ボタンをお試しください。</p>
+    <h3 data-ja="ランキングに表示されません" data-en="I'm not showing up in the rankings">ランキングに表示されません</h3>
+    <p data-ja="ランキングに表示されるには、データの同期が必要です。設定画面の「再同期」ボタンをお試しください。"
+       data-en="To appear in rankings, your data needs to be synced. Try the &quot;Re-sync&quot; button in Settings.">ランキングに表示されるには、データの同期が必要です。設定画面の「再同期」ボタンをお試しください。</p>
 
-    <h3>アカウントを削除したい</h3>
-    <p>アプリ内の「設定」→「退会する」から削除できます。アカウントを削除すると、サーバーに保存されたすべてのデータが完全に削除されます。</p>
+    <h3 data-ja="アカウントを削除したい" data-en="I want to delete my account">アカウントを削除したい</h3>
+    <p data-ja="アプリ内の「設定」→「退会する」から削除できます。アカウントを削除すると、サーバーに保存されたすべてのデータが完全に削除されます。"
+       data-en="You can delete your account from &quot;Settings&quot; → &quot;Delete Account&quot; in the app. Deleting your account will permanently remove all data stored on our servers.">アプリ内の「設定」→「退会する」から削除できます。アカウントを削除すると、サーバーに保存されたすべてのデータが完全に削除されます。</p>
 
-    <h2>お問い合わせ</h2>
+    <h2 data-ja="お問い合わせ" data-en="Contact Us">お問い合わせ</h2>
     <div class="contact">
-        <p>ご質問・ご要望・不具合報告は、以下のいずれかの方法でお問い合わせください：</p>
+        <p data-ja="ご質問・ご要望・不具合報告は、以下のいずれかの方法でお問い合わせください:"
+           data-en="For questions, feedback, or bug reports, please contact us:">ご質問・ご要望・不具合報告は、以下のいずれかの方法でお問い合わせください:</p>
         <ul>
             <li>GitHub Issues: <a href="https://github.com/sawasige/runrun-ios/issues">https://github.com/sawasige/runrun-ios/issues</a></li>
         </ul>
     </div>
 
+    <script>
+        var currentLang = 'ja';
+        function applyLang(lang) {
+            currentLang = lang;
+            document.querySelectorAll('[data-' + lang + ']').forEach(function (el) {
+                var val = el.getAttribute('data-' + lang);
+                if (val === null) return;
+                if (el.hasAttribute('data-html')) {
+                    el.innerHTML = val;
+                } else {
+                    el.textContent = val;
+                }
+            });
+            document.documentElement.lang = lang;
+            try { localStorage.setItem('lang', lang); } catch (e) {}
+        }
+        window.toggleLang = function () { applyLang(currentLang === 'ja' ? 'en' : 'ja'); };
+        var saved = null;
+        try { saved = localStorage.getItem('lang'); } catch (e) {}
+        applyLang(saved || ((navigator.language || '').toLowerCase().startsWith('ja') ? 'ja' : 'en'));
+    </script>
 </body>
 </html>

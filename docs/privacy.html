@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>プライバシーポリシー - RunRun</title>
+    <title data-ja="プライバシーポリシー - RunRun" data-en="Privacy Policy - RunRun">プライバシーポリシー - RunRun</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -17,51 +17,99 @@
         h2 { font-size: 1.2em; margin-top: 2em; }
         p { margin: 1em 0; }
         .updated { color: #666; font-size: 0.9em; }
+        .lang-toggle {
+            background: none;
+            border: 1px solid #888;
+            border-radius: 4px;
+            padding: 4px 12px;
+            color: inherit;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85em;
+            float: right;
+        }
+        .lang-toggle:hover { border-color: #EB4B46; color: #EB4B46; }
     </style>
 </head>
 <body>
-    <h1>プライバシーポリシー</h1>
-    <p class="updated">最終更新日: 2026年1月16日</p>
+    <button class="lang-toggle" onclick="toggleLang()" aria-label="Switch language">EN / 日本語</button>
+    <h1 data-ja="プライバシーポリシー" data-en="Privacy Policy">プライバシーポリシー</h1>
+    <p class="updated" data-ja="最終更新日: 2026年1月16日" data-en="Last updated: January 16, 2026">最終更新日: 2026年1月16日</p>
 
-    <p>RunRun（以下「本アプリ」）は、ユーザーのプライバシーを尊重し、個人情報の保護に努めています。本プライバシーポリシーでは、本アプリがどのような情報を収集し、どのように使用するかについて説明します。</p>
+    <p data-ja="RunRun（以下「本アプリ」）は、ユーザーのプライバシーを尊重し、個人情報の保護に努めています。本プライバシーポリシーでは、本アプリがどのような情報を収集し、どのように使用するかについて説明します。"
+       data-en="RunRun (&quot;the App&quot;) respects your privacy and is committed to protecting your personal information. This Privacy Policy explains what information we collect and how we use it.">RunRun（以下「本アプリ」）は、ユーザーのプライバシーを尊重し、個人情報の保護に努めています。本プライバシーポリシーでは、本アプリがどのような情報を収集し、どのように使用するかについて説明します。</p>
 
-    <h2>1. 収集する情報</h2>
-    <p>本アプリは以下の情報を収集します：</p>
+    <h2 data-ja="1. 収集する情報" data-en="1. Information We Collect">1. 収集する情報</h2>
+    <p data-ja="本アプリは以下の情報を収集します:" data-en="The App collects the following information:">本アプリは以下の情報を収集します:</p>
     <ul>
-        <li><strong>ヘルスケアデータ</strong>: Apple Watch、Strava、Nike Run Clubなどヘルスケア連携アプリで記録されたランニングの距離、時間、心拍数、ペース等のワークアウトデータ（ユーザーの許可を得た場合のみ）</li>
-        <li><strong>アカウント情報</strong>: Sign in with Appleを通じて提供されるメールアドレス（任意）および表示名</li>
-        <li><strong>プロフィール情報</strong>: ユーザーが設定した表示名およびアイコン</li>
-        <li><strong>利用状況データ</strong>: アプリの利用状況（画面閲覧、機能の使用状況など）をFirebase Analyticsを通じて匿名で収集します</li>
+        <li data-html
+            data-ja="<strong>ヘルスケアデータ</strong>: Apple Watch、Strava、Nike Run Clubなどヘルスケア連携アプリで記録されたランニングの距離、時間、心拍数、ペース等のワークアウトデータ（ユーザーの許可を得た場合のみ）"
+            data-en="<strong>Health Data</strong>: Running workout data including distance, duration, heart rate, and pace recorded by Apple Watch, Strava, Nike Run Club, and other apps that sync with Apple Health (only with your permission)"><strong>ヘルスケアデータ</strong>: Apple Watch、Strava、Nike Run Clubなどヘルスケア連携アプリで記録されたランニングの距離、時間、心拍数、ペース等のワークアウトデータ（ユーザーの許可を得た場合のみ）</li>
+        <li data-html
+            data-ja="<strong>アカウント情報</strong>: Sign in with Appleを通じて提供されるメールアドレス（任意）および表示名"
+            data-en="<strong>Account Information</strong>: Email address (optional) and display name provided through Sign in with Apple"><strong>アカウント情報</strong>: Sign in with Appleを通じて提供されるメールアドレス（任意）および表示名</li>
+        <li data-html
+            data-ja="<strong>プロフィール情報</strong>: ユーザーが設定した表示名およびアイコン"
+            data-en="<strong>Profile Information</strong>: Display name and icon set by the user"><strong>プロフィール情報</strong>: ユーザーが設定した表示名およびアイコン</li>
+        <li data-html
+            data-ja="<strong>利用状況データ</strong>: アプリの利用状況（画面閲覧、機能の使用状況など）をFirebase Analyticsを通じて匿名で収集します"
+            data-en="<strong>Usage Data</strong>: Anonymous app usage data (screen views, feature usage) collected through Firebase Analytics"><strong>利用状況データ</strong>: アプリの利用状況（画面閲覧、機能の使用状況など）をFirebase Analyticsを通じて匿名で収集します</li>
     </ul>
 
-    <h2>2. 情報の使用目的</h2>
-    <p>収集した情報は以下の目的で使用します：</p>
+    <h2 data-ja="2. 情報の使用目的" data-en="2. How We Use Your Information">2. 情報の使用目的</h2>
+    <p data-ja="収集した情報は以下の目的で使用します:" data-en="We use the collected information for:">収集した情報は以下の目的で使用します:</p>
     <ul>
-        <li>ランニング記録の表示および統計の計算</li>
-        <li>月別ランキング機能の提供</li>
-        <li>フレンド機能によるユーザー間の記録共有</li>
-        <li>アプリの改善およびサービス向上のための分析</li>
+        <li data-ja="ランニング記録の表示および統計の計算" data-en="Displaying running records and calculating statistics">ランニング記録の表示および統計の計算</li>
+        <li data-ja="月別ランキング機能の提供" data-en="Providing monthly ranking features">月別ランキング機能の提供</li>
+        <li data-ja="フレンド機能によるユーザー間の記録共有" data-en="Sharing records between users through the friends feature">フレンド機能によるユーザー間の記録共有</li>
+        <li data-ja="アプリの改善およびサービス向上のための分析" data-en="Analyzing and improving our services">アプリの改善およびサービス向上のための分析</li>
     </ul>
 
-    <h2>3. 情報の共有</h2>
-    <p>本アプリは、以下の場合を除き、ユーザーの個人情報を第三者に提供しません：</p>
+    <h2 data-ja="3. 情報の共有" data-en="3. Information Sharing">3. 情報の共有</h2>
+    <p data-ja="本アプリは、以下の場合を除き、ユーザーの個人情報を第三者に提供しません:" data-en="We do not share your personal information with third parties except:">本アプリは、以下の場合を除き、ユーザーの個人情報を第三者に提供しません:</p>
     <ul>
-        <li>ユーザーの同意がある場合</li>
-        <li>法令に基づく開示要求がある場合</li>
+        <li data-ja="ユーザーの同意がある場合" data-en="With your consent">ユーザーの同意がある場合</li>
+        <li data-ja="法令に基づく開示要求がある場合" data-en="When required by law">法令に基づく開示要求がある場合</li>
     </ul>
-    <p>ランキング機能では、ユーザーの表示名と月間走行距離が他のユーザーに表示されます。</p>
+    <p data-ja="ランキング機能では、ユーザーの表示名と月間走行距離が他のユーザーに表示されます。" data-en="In the ranking feature, your display name and monthly running distance are visible to other users.">ランキング機能では、ユーザーの表示名と月間走行距離が他のユーザーに表示されます。</p>
 
-    <h2>4. データの保存</h2>
-    <p>ユーザーデータはGoogle Firebase（Firestore）に安全に保存されます。ヘルスケアデータはAppleのヘルスケアアプリに保存され、本アプリはユーザーの許可のもとで読み取りのみを行います。</p>
+    <h2 data-ja="4. データの保存" data-en="4. Data Storage">4. データの保存</h2>
+    <p data-ja="ユーザーデータはGoogle Firebase（Firestore）に安全に保存されます。ヘルスケアデータはAppleのヘルスケアアプリに保存され、本アプリはユーザーの許可のもとで読み取りのみを行います。"
+       data-en="User data is securely stored on Google Firebase (Firestore). Health data is stored in Apple's Health app, and this App only reads it with your permission.">ユーザーデータはGoogle Firebase（Firestore）に安全に保存されます。ヘルスケアデータはAppleのヘルスケアアプリに保存され、本アプリはユーザーの許可のもとで読み取りのみを行います。</p>
 
-    <h2>5. データの削除</h2>
-    <p>アカウントの削除は、アプリ内の「設定」→「退会する」から行うことができます。退会時には、サーバーに保存されたすべてのデータが削除されます。</p>
+    <h2 data-ja="5. データの削除" data-en="5. Data Deletion">5. データの削除</h2>
+    <p data-ja="アカウントの削除は、アプリ内の「設定」→「退会する」から行うことができます。退会時には、サーバーに保存されたすべてのデータが削除されます。"
+       data-en="You can delete your account from within the app by going to &quot;Settings&quot; → &quot;Delete Account&quot;. All data stored on our servers will be deleted when your account is removed.">アカウントの削除は、アプリ内の「設定」→「退会する」から行うことができます。退会時には、サーバーに保存されたすべてのデータが削除されます。</p>
 
-    <h2>6. お問い合わせ</h2>
-    <p>本プライバシーポリシーに関するお問い合わせは、<a href="support.html">サポートページ</a>よりご連絡ください。</p>
+    <h2 data-ja="6. お問い合わせ" data-en="6. Contact Us">6. お問い合わせ</h2>
+    <p data-html
+       data-ja="本プライバシーポリシーに関するお問い合わせは、<a href=&quot;support.html&quot;>サポートページ</a>よりご連絡ください。"
+       data-en="For questions about this Privacy Policy, please contact us through the <a href=&quot;support.html&quot;>Support page</a>.">本プライバシーポリシーに関するお問い合わせは、<a href="support.html">サポートページ</a>よりご連絡ください。</p>
 
-    <h2>7. 変更について</h2>
-    <p>本プライバシーポリシーは、必要に応じて更新されることがあります。重要な変更がある場合は、アプリ内でお知らせします。</p>
+    <h2 data-ja="7. 変更について" data-en="7. Changes">7. 変更について</h2>
+    <p data-ja="本プライバシーポリシーは、必要に応じて更新されることがあります。重要な変更がある場合は、アプリ内でお知らせします。"
+       data-en="This Privacy Policy may be updated as needed. We will notify you of significant changes through the App.">本プライバシーポリシーは、必要に応じて更新されることがあります。重要な変更がある場合は、アプリ内でお知らせします。</p>
+
+    <script>
+        var currentLang = 'ja';
+        function applyLang(lang) {
+            currentLang = lang;
+            document.querySelectorAll('[data-' + lang + ']').forEach(function (el) {
+                var val = el.getAttribute('data-' + lang);
+                if (val === null) return;
+                if (el.hasAttribute('data-html')) {
+                    el.innerHTML = val;
+                } else {
+                    el.textContent = val;
+                }
+            });
+            document.documentElement.lang = lang;
+            try { localStorage.setItem('lang', lang); } catch (e) {}
+        }
+        window.toggleLang = function () { applyLang(currentLang === 'ja' ? 'en' : 'ja'); };
+        var saved = null;
+        try { saved = localStorage.getItem('lang'); } catch (e) {}
+        applyLang(saved || ((navigator.language || '').toLowerCase().startsWith('ja') ? 'ja' : 'en'));
+    </script>
 </body>
 </html>
-
