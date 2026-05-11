@@ -146,6 +146,29 @@ enum ImageComposer {
         return saveAsHEIFData(sdrImage: sdrWithText, hdrImage: hdrWithText)
     }
 
+    /// 動画など他のパイプラインから利用するためのオーバーレイ生成（透明背景、HDR拡張レンジ対応）
+    static func makeOverlayCGImage(size: CGSize, record: RunningRecord, options: ExportOptions, routeCoordinates: [CLLocationCoordinate2D] = [], routeAreaBrightness: CGFloat? = nil, centered: Bool = false) -> CGImage? {
+        let format = UIGraphicsImageRendererFormat()
+        format.preferredRange = .extended
+        format.scale = 1.0
+        format.opaque = false
+
+        let renderer = UIGraphicsImageRenderer(size: size, format: format)
+        let image = renderer.image { _ in
+            if centered {
+                drawCenteredTextOverlay(width: size.width, height: size.height, record: record, options: options, routeCoordinates: routeCoordinates)
+            } else {
+                drawTextOverlay(width: size.width, height: size.height, record: record, options: options, routeCoordinates: routeCoordinates, routeAreaBrightness: routeAreaBrightness)
+            }
+        }
+        return image.cgImage
+    }
+
+    /// 動画など他のパイプラインから利用する、ルート描画領域の平均明るさサンプリング
+    static func sampleRouteAreaBrightness(image: CIImage, routeCoordinates: [CLLocationCoordinate2D]) -> CGFloat {
+        calculateRouteAreaBrightness(image: image, routeCoordinates: routeCoordinates)
+    }
+
     /// テキストオーバーレイ画像を作成
     private static func createTextOverlay(size: CGSize, record: RunningRecord, options: ExportOptions, routeCoordinates: [CLLocationCoordinate2D] = [], routeAreaBrightness: CGFloat? = nil, centered: Bool = false) -> CIImage? {
         let format = UIGraphicsImageRendererFormat()
