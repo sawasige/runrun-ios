@@ -1,4 +1,4 @@
 Thank you for using RunRun!
 
-【Improvements】
-・Minor display improvements
+【New】
+・You can now use videos as the background for shared media (HDR supported)
