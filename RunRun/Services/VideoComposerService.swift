@@ -85,37 +85,28 @@ enum VideoComposer {
         guard let exporter = AVAssetExportSession(asset: asset, presetName: preset) else {
             throw VideoComposerError.exporterSetupFailed
         }
-        exporter.outputURL = outputURL
-        exporter.outputFileType = .mov
         exporter.videoComposition = composition
         exporter.shouldOptimizeForNetworkUse = false
 
         let progressTask: Task<Void, Never>? = progress.map { cb in
             Task {
-                while !Task.isCancelled {
-                    cb(exporter.progress)
-                    try? await Task.sleep(nanoseconds: 200_000_000)
-                    let s = exporter.status
-                    if s == .completed || s == .failed || s == .cancelled {
-                        cb(exporter.progress)
-                        return
+                for await state in exporter.states(updateInterval: 0.2) {
+                    if Task.isCancelled { return }
+                    switch state {
+                    case .exporting(let progress):
+                        cb(Float(progress.fractionCompleted))
+                    default:
+                        break
                     }
                 }
             }
         }
         defer { progressTask?.cancel() }
 
-        await exporter.export()
-
-        switch exporter.status {
-        case .completed:
-            break
-        case .failed:
-            throw VideoComposerError.exportFailed(exporter.error)
-        case .cancelled:
-            throw VideoComposerError.exportCancelled
-        default:
-            throw VideoComposerError.exportIncomplete(exporter.status)
+        do {
+            try await exporter.export(to: outputURL, as: .mov)
+        } catch {
+            throw VideoComposerError.exportFailed(error)
         }
 
         // 出力動画のメタデータを再取得
