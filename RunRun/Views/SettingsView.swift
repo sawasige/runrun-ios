@@ -168,10 +168,6 @@ struct SettingsView: View {
                     DebugLoadDelayToggle()
                     DebugPastGoalEditToggle()
 
-                    NavigationLink("HDR Video Prototype") {
-                        VideoHDRPrototypeView()
-                    }
-
                     Button("Send Test Notification") {
                         Task { await sendTestNotification() }
                     }
