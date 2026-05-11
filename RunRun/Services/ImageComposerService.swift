@@ -147,7 +147,7 @@ enum ImageComposer {
     }
 
     /// 動画など他のパイプラインから利用するためのオーバーレイ生成（透明背景、HDR拡張レンジ対応）
-    static func makeOverlayCGImage(size: CGSize, record: RunningRecord, options: ExportOptions, routeCoordinates: [CLLocationCoordinate2D] = [], routeAreaBrightness: CGFloat? = nil, centered: Bool = false) -> CGImage? {
+    nonisolated static func makeOverlayCGImage(size: CGSize, record: RunningRecord, options: ExportOptions, routeCoordinates: [CLLocationCoordinate2D] = [], routeAreaBrightness: CGFloat? = nil, centered: Bool = false) -> CGImage? {
         let format = UIGraphicsImageRendererFormat()
         format.preferredRange = .extended
         format.scale = 1.0
@@ -920,7 +920,7 @@ enum ImageComposer {
     }
 
     /// 動画など他のパイプラインから利用する月別オーバーレイ生成（透明背景、HDR拡張レンジ対応）
-    static func makeMonthlyOverlayCGImage(size: CGSize, shareData: MonthlyShareData, options: MonthExportOptions, centered: Bool = false) -> CGImage? {
+    nonisolated static func makeMonthlyOverlayCGImage(size: CGSize, shareData: MonthlyShareData, options: MonthExportOptions, centered: Bool = false) -> CGImage? {
         let format = UIGraphicsImageRendererFormat()
         format.preferredRange = .extended
         format.scale = 1.0
@@ -1244,7 +1244,7 @@ enum ImageComposer {
     }
 
     /// 動画など他のパイプラインから利用する年別オーバーレイ生成（透明背景、HDR拡張レンジ対応）
-    static func makeYearlyOverlayCGImage(size: CGSize, shareData: YearlyShareData, options: YearExportOptions, centered: Bool = false) -> CGImage? {
+    nonisolated static func makeYearlyOverlayCGImage(size: CGSize, shareData: YearlyShareData, options: YearExportOptions, centered: Bool = false) -> CGImage? {
         let format = UIGraphicsImageRendererFormat()
         format.preferredRange = .extended
         format.scale = 1.0
@@ -1566,7 +1566,7 @@ enum ImageComposer {
     }
 
     /// 動画など他のパイプラインから利用するプロフィールオーバーレイ生成（透明背景、HDR拡張レンジ対応）
-    static func makeProfileOverlayCGImage(size: CGSize, shareData: ProfileShareData, options: ProfileExportOptions, centered: Bool = false) -> CGImage? {
+    nonisolated static func makeProfileOverlayCGImage(size: CGSize, shareData: ProfileShareData, options: ProfileExportOptions, centered: Bool = false) -> CGImage? {
         let format = UIGraphicsImageRendererFormat()
         format.preferredRange = .extended
         format.scale = 1.0
