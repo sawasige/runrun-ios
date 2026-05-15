@@ -326,12 +326,15 @@ struct ShareSettingsContainer<OptionsView: View>: View {
 
     private func loadSelectedMedia(from item: PhotosPickerItem?) async {
         guard let item = item else { return }
-        // Heuristic: 動画サポートが有効で、Transferable として動画が取れたら動画モード
-        if videoSupport != nil, let picked = try? await item.loadTransferable(type: PickedVideo.self) {
+        // 画像コンポーネントを持たず動画のみのアイテムだけ動画モードへ。
+        // Live Photo は image にも conform するため写真扱いにする。
+        let supportsImage = item.supportedContentTypes.contains { $0.conforms(to: .image) }
+        let supportsMovie = item.supportedContentTypes.contains { $0.conforms(to: .movie) }
+        if videoSupport != nil, supportsMovie, !supportsImage,
+           let picked = try? await item.loadTransferable(type: PickedVideo.self) {
             await switchToVideo(url: picked.url)
             return
         }
-        // それ以外は写真として読む
         do {
             if let data = try await item.loadTransferable(type: Data.self) {
                 photoData = data
