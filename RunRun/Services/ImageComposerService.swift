@@ -1825,7 +1825,9 @@ struct HDRImageView: UIViewRepresentable {
         let containerView = UIView()
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
+        #if !targetEnvironment(simulator)
         imageView.preferredImageDynamicRange = .high
+        #endif
         imageView.translatesAutoresizingMaskIntoConstraints = false
         containerView.addSubview(imageView)
         NSLayoutConstraint.activate([
@@ -1845,19 +1847,23 @@ struct HDRImageView: UIViewRepresentable {
     }
 
     private func loadHDRImage(from data: Data) -> UIImage? {
+        #if targetEnvironment(simulator)
+        // simulatorではHDRデコード結果が表示されないことがあるため通常デコードにフォールバック
+        return UIImage(data: data)
+        #else
         guard let source = CGImageSourceCreateWithData(data as CFData, nil) else {
-            return nil
+            return UIImage(data: data)
         }
-        // iOS 17+: HDRデコードを要求
-        let options: [CFString: Any] = [
+        let hdrOptions: [CFString: Any] = [
             kCGImageSourceShouldCacheImmediately: true,
             kCGImageSourceShouldAllowFloat: true,
             kCGImageSourceDecodeRequest: kCGImageSourceDecodeToHDR
         ]
-        guard let cgImage = CGImageSourceCreateImageAtIndex(source, 0, options as CFDictionary) else {
-            return nil
+        if let cgImage = CGImageSourceCreateImageAtIndex(source, 0, hdrOptions as CFDictionary) {
+            return UIImage(cgImage: cgImage)
         }
-        return UIImage(cgImage: cgImage)
+        return UIImage(data: data)
+        #endif
     }
 }
 
