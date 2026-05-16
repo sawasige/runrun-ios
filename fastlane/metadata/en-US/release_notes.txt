@@ -1,4 +1,5 @@
 Thank you for using RunRun!
 
-【New】
-・You can now use videos as the background for shared media (HDR supported)
+【Fixed】
+・Fixed an issue where loading would not finish when selecting a photo for the share feature
+・Improved stability of the share feature
