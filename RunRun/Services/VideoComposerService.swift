@@ -106,6 +106,10 @@ enum VideoComposer {
         do {
             try await exporter.export(to: outputURL, as: .mov)
         } catch {
+            // 進捗監視を即停止（"100%"表示直後にエラーアラートが出る矛盾を回避）
+            progressTask?.cancel()
+            // 部分書き込みファイルが残ることがあるので削除
+            try? FileManager.default.removeItem(at: outputURL)
             throw VideoComposerError.exportFailed(error)
         }
 

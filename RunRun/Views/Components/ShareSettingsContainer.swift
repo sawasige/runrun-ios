@@ -83,7 +83,7 @@ struct ShareSettingsContainer<OptionsView: View>: View {
     @State private var showSaveSuccess = false
     @State private var showSaveError = false
     @State private var showPermissionDenied = false
-    @State private var shareItem: URL?
+    @State private var shareItem: IdentifiableURL?
 
     // 連続選択や設定変更時に古いcompose結果でプレビューを上書きしないためのキャンセル管理
     @State private var loadTask: Task<Void, Never>?
@@ -94,9 +94,9 @@ struct ShareSettingsContainer<OptionsView: View>: View {
                 .navigationTitle(String(localized: "Share Settings"))
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { toolbarContent }
-                .sheet(item: $shareItem) { url in
-                    ShareSheet(activityItems: [url], onComplete: { _ in
-                        try? FileManager.default.removeItem(at: url)
+                .sheet(item: $shareItem) { item in
+                    ShareSheet(activityItems: [item.url], onComplete: { _ in
+                        try? FileManager.default.removeItem(at: item.url)
                     })
                 }
                 .onChange(of: selectedPickerItem) { _, newItem in
@@ -516,7 +516,7 @@ struct ShareSettingsContainer<OptionsView: View>: View {
 
         do {
             try data.write(to: tempURL)
-            shareItem = tempURL
+            shareItem = IdentifiableURL(url: tempURL)
             logShareEvent()
         } catch {
             print("Failed to create temp file: \(error)")
@@ -561,7 +561,7 @@ struct ShareSettingsContainer<OptionsView: View>: View {
         }
 
         guard let output = await composeVideoToTemp() else { return }
-        shareItem = output
+        shareItem = IdentifiableURL(url: output)
         videoSupport?.logShareEvent()
     }
 
