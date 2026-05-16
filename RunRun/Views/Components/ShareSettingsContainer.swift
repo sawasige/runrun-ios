@@ -85,6 +85,9 @@ struct ShareSettingsContainer<OptionsView: View>: View {
     @State private var showPermissionDenied = false
     @State private var shareItem: URL?
 
+    // 連続選択や設定変更時に古いcompose結果でプレビューを上書きしないためのキャンセル管理
+    @State private var loadTask: Task<Void, Never>?
+
     var body: some View {
         NavigationStack {
             scrollContent
@@ -95,10 +98,13 @@ struct ShareSettingsContainer<OptionsView: View>: View {
                     ShareSheet(activityItems: [url])
                 }
                 .onChange(of: selectedPickerItem) { _, newItem in
-                    Task { await loadSelectedMedia(from: newItem) }
+                    guard let newItem else { return }
+                    loadTask?.cancel()
+                    loadTask = Task { await loadSelectedMedia(from: newItem) }
                 }
                 .onChange(of: optionsChangeId) { _, _ in
-                    Task { await rebuildAfterOptionsChange() }
+                    loadTask?.cancel()
+                    loadTask = Task { await rebuildAfterOptionsChange() }
                 }
                 .alert(String(localized: "Saved"), isPresented: $showSaveSuccess) {
                     Button("OK") { isPresented = false }
@@ -126,7 +132,7 @@ struct ShareSettingsContainer<OptionsView: View>: View {
                     aspectRatioPicker
                 }
                 backgroundPickerSection
-                if isSaving && videoURL != nil {
+                if (isSaving || isSharing) && videoURL != nil {
                     VStack(spacing: 8) {
                         ProgressView(value: saveProgress)
                         Text(String(format: "%.0f%%", saveProgress * 100))
@@ -262,7 +268,8 @@ struct ShareSettingsContainer<OptionsView: View>: View {
         }
         .pickerStyle(.segmented)
         .onChange(of: selectedAspectRatio) { _, _ in
-            Task { await updatePreview() }
+            loadTask?.cancel()
+            loadTask = Task { await updatePreview() }
         }
     }
 
@@ -324,19 +331,24 @@ struct ShareSettingsContainer<OptionsView: View>: View {
 
     // MARK: - Actions
 
-    private func loadSelectedMedia(from item: PhotosPickerItem?) async {
-        guard let item = item else { return }
+    private func loadSelectedMedia(from item: PhotosPickerItem) async {
+        // 同じ写真を再選択できるよう selection を即座にクリア
+        // onChange側で newItem == nil をスキップしているので無限ループにはならない
+        selectedPickerItem = nil
+
         // 画像コンポーネントを持たず動画のみのアイテムだけ動画モードへ。
         // Live Photo は image にも conform するため写真扱いにする。
         let supportsImage = item.supportedContentTypes.contains { $0.conforms(to: .image) }
         let supportsMovie = item.supportedContentTypes.contains { $0.conforms(to: .movie) }
         if videoSupport != nil, supportsMovie, !supportsImage,
            let picked = try? await item.loadTransferable(type: PickedVideo.self) {
+            if Task.isCancelled { return }
             await switchToVideo(url: picked.url)
             return
         }
         do {
             if let data = try await item.loadTransferable(type: Data.self) {
+                if Task.isCancelled { return }
                 photoData = data
                 videoURL = nil
                 videoOverlayBuilder = nil
@@ -358,28 +370,41 @@ struct ShareSettingsContainer<OptionsView: View>: View {
         videoURL = url
 
         let builder = await videoSupport.prepareOverlay(url)
+        if Task.isCancelled { return }
         videoOverlayBuilder = builder
-        await rebuildPlayer()
+        do {
+            try await rebuildPlayer()
+        } catch {
+            print("Failed to switch to video: \(error)")
+            // ロールバック: 動画モード状態を解除して写真未選択へ戻す
+            videoURL = nil
+            videoOverlayBuilder = nil
+            await updatePreview()
+        }
     }
 
     @MainActor
-    private func rebuildPlayer() async {
+    private func rebuildPlayer() async throws {
         guard let url = videoURL else { return }
-        do {
-            let asset = AVURLAsset(url: url)
-            let composition: AVVideoComposition
-            if let builder = videoOverlayBuilder {
-                composition = try await VideoComposer.makeVideoComposition(asset: asset, overlayBuilder: builder)
-            } else {
-                composition = try await AVMutableVideoComposition.videoComposition(with: asset) { request in
-                    request.finish(with: request.sourceImage, context: nil)
-                }
+        let asset = AVURLAsset(url: url)
+        let composition: AVVideoComposition
+        if let builder = videoOverlayBuilder {
+            composition = try await VideoComposer.makeVideoComposition(asset: asset, overlayBuilder: builder)
+        } else {
+            composition = try await AVMutableVideoComposition.videoComposition(with: asset) { request in
+                request.finish(with: request.sourceImage, context: nil)
             }
-            let item = AVPlayerItem(asset: asset)
-            item.videoComposition = composition
+        }
+        let item = AVPlayerItem(asset: asset)
+        item.videoComposition = composition
+
+        // 既存プレイヤーは再利用してフラッシュを避ける
+        if let existing = videoPlayer {
+            existing.pause()
+            existing.replaceCurrentItem(with: item)
+            existing.play()
+        } else {
             videoPlayer = AVPlayer(playerItem: item)
-        } catch {
-            print("Failed to build player: \(error)")
         }
     }
 
@@ -387,8 +412,13 @@ struct ShareSettingsContainer<OptionsView: View>: View {
         if videoURL != nil, let videoSupport, let url = videoURL {
             // 動画モード: オーバーレイ再生成（オプション変更を反映）
             let builder = await videoSupport.prepareOverlay(url)
+            if Task.isCancelled { return }
             videoOverlayBuilder = builder
-            await rebuildPlayer()
+            do {
+                try await rebuildPlayer()
+            } catch {
+                print("Failed to rebuild player: \(error)")
+            }
         } else {
             await updatePreview()
         }
@@ -404,6 +434,7 @@ struct ShareSettingsContainer<OptionsView: View>: View {
         } else {
             // 写真未選択時はグラデーション背景を使用（中央レイアウト）
             guard let gradientData = ImageComposer.createGradientImageData(aspectRatio: newAspectRatio) else {
+                if Task.isCancelled { return }
                 previewImageData = nil
                 return
             }
@@ -411,6 +442,7 @@ struct ShareSettingsContainer<OptionsView: View>: View {
             centered = true
         }
         let newPreview = await composeImage(data, centered)
+        if Task.isCancelled { return }
         // 画像とアスペクト比を同時に更新（1回の再描画で完了）
         previewImageData = newPreview
         displayedAspectRatio = newAspectRatio
@@ -461,6 +493,7 @@ struct ShareSettingsContainer<OptionsView: View>: View {
         guard let data = previewImageData else { return }
 
         isSharing = true
+        defer { isSharing = false }
 
         let tempURL = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
@@ -468,22 +501,15 @@ struct ShareSettingsContainer<OptionsView: View>: View {
 
         do {
             try data.write(to: tempURL)
-            await MainActor.run {
-                shareItem = tempURL
-                isSharing = false
-            }
+            shareItem = tempURL
             logShareEvent()
         } catch {
             print("Failed to create temp file: \(error)")
-            await MainActor.run {
-                isSharing = false
-            }
         }
     }
 
     private func saveVideoToPhotos() async {
-        guard let output = await composeVideoToTemp() else { return }
-
+        // 重い書き出しの前に認可確認（拒否されたら無駄な計算を回避）
         let authorized = await PhotoLibraryService.ensureAuthorization()
         guard authorized else {
             showPermissionDenied = true
@@ -491,7 +517,12 @@ struct ShareSettingsContainer<OptionsView: View>: View {
         }
 
         isSaving = true
-        defer { isSaving = false }
+        defer {
+            isSaving = false
+            saveProgress = 0
+        }
+
+        guard let output = await composeVideoToTemp() else { return }
 
         do {
             try await PHPhotoLibrary.shared().performChanges {
@@ -507,25 +538,22 @@ struct ShareSettingsContainer<OptionsView: View>: View {
     }
 
     private func shareVideo() async {
-        guard let output = await composeVideoToTemp() else { return }
-        await MainActor.run {
-            shareItem = output
+        isSharing = true
+        defer {
             isSharing = false
+            saveProgress = 0
         }
+
+        guard let output = await composeVideoToTemp() else { return }
+        shareItem = output
         videoSupport?.logShareEvent()
     }
 
-    /// 動画を書き出してtempURLを返す。書き出し中は isSaving/isSharing と saveProgress を更新。
+    /// 動画を書き出してtempURLを返す。saveProgress を更新するが、isSaving/isSharing は呼び出し側で管理する。
     private func composeVideoToTemp() async -> URL? {
         guard let inputURL = videoURL, let builder = videoOverlayBuilder else { return nil }
 
-        await MainActor.run {
-            isSaving = true
-            saveProgress = 0
-        }
-        // 注: 書き出し中もボタン無効化のために isSaving フラグを使用
-        // shareTapped 経由でも isSaving を使うが、shareTapped は最後に isSharing=false にする
-        // ここで isSaving は MainActor.run で操作する
+        saveProgress = 0
 
         let outputURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("share-composed-\(UUID().uuidString)")
@@ -543,10 +571,7 @@ struct ShareSettingsContainer<OptionsView: View>: View {
             return outputURL
         } catch {
             print("Failed to compose video: \(error)")
-            await MainActor.run {
-                isSaving = false
-                showSaveError = true
-            }
+            showSaveError = true
             return nil
         }
     }
