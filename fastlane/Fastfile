@@ -12,11 +12,14 @@ end
 
 platform :ios do
   desc "メタデータとスクリーンショットをアップロード"
+  desc "app_version: を渡すとそのバージョンの新規ページを作成 (例: fastlane upload_metadata app_version:1.10.1)"
   lane :upload_metadata do |options|
     setup_api_key
+    app_version = options[:app_version]
     deliver(
+      app_version: app_version,
       skip_binary_upload: true,
-      skip_app_version_update: true,
+      skip_app_version_update: app_version.nil?,
       skip_screenshots: options[:skip_screenshots] || false,
       overwrite_screenshots: true,
       force: true,
