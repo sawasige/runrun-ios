@@ -95,7 +95,9 @@ struct ShareSettingsContainer<OptionsView: View>: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { toolbarContent }
                 .sheet(item: $shareItem) { url in
-                    ShareSheet(activityItems: [url])
+                    ShareSheet(activityItems: [url], onComplete: { _ in
+                        try? FileManager.default.removeItem(at: url)
+                    })
                 }
                 .onChange(of: selectedPickerItem) { _, newItem in
                     guard let newItem else { return }
@@ -121,7 +123,16 @@ struct ShareSettingsContainer<OptionsView: View>: View {
                     Text("Please allow photo library access to save images.")
                 }
                 .analyticsScreen(analyticsScreenName)
+                .onDisappear {
+                    cleanupVideoTempFile()
+                }
         }
+    }
+
+    /// PhotosPickerからコピーしてきた一時動画ファイルを削除
+    private func cleanupVideoTempFile() {
+        guard let url = videoURL else { return }
+        try? FileManager.default.removeItem(at: url)
     }
 
     private var scrollContent: some View {
@@ -320,6 +331,7 @@ struct ShareSettingsContainer<OptionsView: View>: View {
     }
 
     private func clearBackground() {
+        cleanupVideoTempFile()
         photoData = nil
         videoURL = nil
         videoOverlayBuilder = nil
@@ -349,6 +361,7 @@ struct ShareSettingsContainer<OptionsView: View>: View {
         do {
             if let data = try await item.loadTransferable(type: Data.self) {
                 if Task.isCancelled { return }
+                cleanupVideoTempFile()
                 photoData = data
                 videoURL = nil
                 videoOverlayBuilder = nil
@@ -363,6 +376,7 @@ struct ShareSettingsContainer<OptionsView: View>: View {
 
     private func switchToVideo(url: URL) async {
         guard let videoSupport else { return }
+        cleanupVideoTempFile()
         videoPlayer?.pause()
         videoPlayer = nil
         photoData = nil
@@ -377,6 +391,7 @@ struct ShareSettingsContainer<OptionsView: View>: View {
         } catch {
             print("Failed to switch to video: \(error)")
             // ロールバック: 動画モード状態を解除して写真未選択へ戻す
+            cleanupVideoTempFile()
             videoURL = nil
             videoOverlayBuilder = nil
             await updatePreview()
@@ -523,6 +538,7 @@ struct ShareSettingsContainer<OptionsView: View>: View {
         }
 
         guard let output = await composeVideoToTemp() else { return }
+        defer { try? FileManager.default.removeItem(at: output) }
 
         do {
             try await PHPhotoLibrary.shared().performChanges {
