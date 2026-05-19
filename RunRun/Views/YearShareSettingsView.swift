@@ -94,15 +94,14 @@ struct YearShareSettingsView: View {
         let shareData = self.shareData
         let options = self.options
         return VideoShareSupport(
-            prepareOverlay: { _ in
-                return { canvasSize in
-                    ImageComposer.makeYearlyOverlayCGImage(
-                        size: canvasSize,
-                        shareData: shareData,
-                        options: options,
-                        centered: false
-                    )
-                }
+            analyze: { _ in nil },
+            makeOverlay: { canvasSize, _ in
+                ImageComposer.makeYearlyOverlayCGImage(
+                    size: canvasSize,
+                    shareData: shareData,
+                    options: options,
+                    centered: false
+                )
             },
             logSaveEvent: {
                 AnalyticsService.logEvent("year_share_video_saved", parameters: optionParameters)

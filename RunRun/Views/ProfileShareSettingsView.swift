@@ -85,15 +85,14 @@ struct ProfileShareSettingsView: View {
         let shareData = self.shareData
         let options = self.options
         return VideoShareSupport(
-            prepareOverlay: { _ in
-                return { canvasSize in
-                    ImageComposer.makeProfileOverlayCGImage(
-                        size: canvasSize,
-                        shareData: shareData,
-                        options: options,
-                        centered: false
-                    )
-                }
+            analyze: { _ in nil },
+            makeOverlay: { canvasSize, _ in
+                ImageComposer.makeProfileOverlayCGImage(
+                    size: canvasSize,
+                    shareData: shareData,
+                    options: options,
+                    centered: false
+                )
             },
             logSaveEvent: {
                 AnalyticsService.logEvent("profile_share_video_saved", parameters: optionParameters)

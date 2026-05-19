@@ -83,21 +83,21 @@ struct RunShareSettingsView: View {
         let routeCoordinates = self.routeCoordinates
         let options = self.options
         return VideoShareSupport(
-            prepareOverlay: { videoURL in
-                let brightness = await VideoComposer.sampleMiddleFrameBrightness(
+            analyze: { videoURL in
+                await VideoComposer.sampleMiddleFrameBrightness(
                     url: videoURL,
                     routeCoordinates: options.showRoute ? routeCoordinates : []
                 )
-                return { canvasSize in
-                    ImageComposer.makeOverlayCGImage(
-                        size: canvasSize,
-                        record: record,
-                        options: options,
-                        routeCoordinates: routeCoordinates,
-                        routeAreaBrightness: brightness,
-                        centered: false
-                    )
-                }
+            },
+            makeOverlay: { canvasSize, brightness in
+                ImageComposer.makeOverlayCGImage(
+                    size: canvasSize,
+                    record: record,
+                    options: options,
+                    routeCoordinates: routeCoordinates,
+                    routeAreaBrightness: brightness,
+                    centered: false
+                )
             },
             logSaveEvent: {
                 AnalyticsService.logEvent("share_video_saved", parameters: optionParameters)
