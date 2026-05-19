@@ -2,6 +2,8 @@ import SwiftUI
 import CoreImage
 import UIKit
 import CoreLocation
+import ImageIO
+import UniformTypeIdentifiers
 
 // MARK: - Image Aspect Ratio
 
@@ -67,39 +69,10 @@ enum ImageComposer {
         }
 
         // HEIF形式でエンコード
+        // CIContext.writeHEIFRepresentation は iOS 18 以降の配信バイナリで silent failure (0 byte) する
+        // regression があるため、CGImageDestination 直接使用に切り替える。
         guard let cgImage = gradientImage.cgImage else { return nil }
-
-        let ciImage = CIImage(cgImage: cgImage)
-        let ciContext = CIContext()
-
-        let tempURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString)
-            .appendingPathExtension("heic")
-
-        defer {
-            try? FileManager.default.removeItem(at: tempURL)
-        }
-
-        do {
-            try ciContext.writeHEIFRepresentation(
-                of: ciImage,
-                to: tempURL,
-                format: .RGB10,
-                colorSpace: colorSpace,
-                options: [:]
-            )
-            let data = try Data(contentsOf: tempURL)
-            if !data.isEmpty {
-                return data
-            }
-            // App Store配信バイナリで writeHEIFRepresentation が throw せず 0 byte を返すことがあるため検知してフォールバック
-            print("createGradientImageData: HEIF write returned empty data, falling back to PNG")
-        } catch {
-            print("createGradientImageData: HEIF write failed: \(error), falling back to PNG")
-        }
-
-        // フォールバック: PNG (HDR非対応だがCIImageが読めるので後段の合成は継続できる)
-        return gradientImage.pngData()
+        return encodeHEIC(cgImage: cgImage)
     }
 
     /// HDR Gainmapを保持したまま画像を合成してHEIF Dataを返す (WWDC 2024 Strategy A)
@@ -248,73 +221,52 @@ enum ImageComposer {
         return brightness
     }
 
-    /// HEIF形式のDataを生成（HDR対応 - ファイル経由）
+    /// HEIF形式のDataを生成
+    /// CIContext.writeHEIFRepresentation は iOS 18 以降の配信バイナリで silent failure (0 byte) する
+    /// regression があるため、CGImageDestination 直接使用に切り替える。
+    /// HDR gain map 添付は別途検討 (まずは確実に書き出せることを優先)。
     private static func saveAsHEIFData(sdrImage: CIImage, hdrImage: CIImage?) -> Data? {
         let context = CIContext()
         guard let colorSpace = CGColorSpace(name: CGColorSpace.displayP3) else {
             return nil
         }
-
-        // 一時ファイルに書き出し（writeHEIFRepresentationを使用）
-        let tempURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString)
-            .appendingPathExtension("heic")
-
-        defer {
-            try? FileManager.default.removeItem(at: tempURL)
-        }
-
-        // iOS 17+: HDR参照を設定するとCore ImageがGain Mapを再計算
-        var options: [CIImageRepresentationOption: Any] = [:]
-        if #available(iOS 17.0, *), let hdr = hdrImage {
-            options[.hdrImage] = hdr
-        }
-
-        // HDR用に10bitフォーマットを使用（アルファなし）
-        let format: CIFormat = .RGB10
-
-        // writeHEIFRepresentationは App Store配信バイナリで throw せずに 0 byte を書き出すことがあるため、
-        // 空 Data の場合もフォールバックに進む
-        do {
-            try context.writeHEIFRepresentation(
-                of: sdrImage,
-                to: tempURL,
-                format: format,
-                colorSpace: colorSpace,
-                options: options
-            )
-            let data = try Data(contentsOf: tempURL)
-            if !data.isEmpty {
-                return data
-            }
-            print("saveAsHEIFData: HEIF write returned empty data, retrying without HDR options")
-        } catch {
-            print("saveAsHEIFData: HEIF write error: \(error)")
-        }
-
-        // フォールバック1: HDRオプションなしで再試行
-        do {
-            try context.writeHEIFRepresentation(
-                of: sdrImage,
-                to: tempURL,
-                format: format,
-                colorSpace: colorSpace,
-                options: [:]
-            )
-            let data = try Data(contentsOf: tempURL)
-            if !data.isEmpty {
-                return data
-            }
-            print("saveAsHEIFData: HEIF write still empty, falling back to JPEG")
-        } catch {
-            print("saveAsHEIFData: HEIF retry error: \(error)")
-        }
-
-        // フォールバック2: CGImage 経由で JPEG として書き出す (HDR は失われるが共有可能)
-        guard let cgImage = context.createCGImage(sdrImage, from: sdrImage.extent) else {
+        // Display P3 を明示的に colorSpace に指定して CGImage 化 (DeviceRGB だと HEIC 書き出しが拒否される既知の挙動への対策)
+        guard let cgImage = context.createCGImage(
+            sdrImage,
+            from: sdrImage.extent,
+            format: .RGBA8,
+            colorSpace: colorSpace
+        ) else {
             return nil
         }
-        return UIImage(cgImage: cgImage).jpegData(compressionQuality: 0.95)
+        return encodeHEIC(cgImage: cgImage)
+    }
+
+    /// CGImageDestination を使って HEIC バイト列を生成する。
+    /// `CIContext.writeHEIFRepresentation` の silent failure (iOS 18+ 配信バイナリ regression) を回避するため使用。
+    /// JPEG/PNG への二重フォールバックも持つ。
+    private static func encodeHEIC(cgImage: CGImage) -> Data? {
+        let formats: [(name: String, type: CFString, options: [CFString: Any])] = [
+            ("HEIC", UTType.heic.identifier as CFString, [:]),
+            ("JPEG", UTType.jpeg.identifier as CFString, [kCGImageDestinationLossyCompressionQuality: 0.95]),
+            ("PNG", UTType.png.identifier as CFString, [:])
+        ]
+        for format in formats {
+            let mutableData = NSMutableData()
+            guard let destination = CGImageDestinationCreateWithData(
+                mutableData,
+                format.type,
+                1,
+                nil
+            ) else {
+                continue
+            }
+            CGImageDestinationAddImage(destination, cgImage, format.options as CFDictionary)
+            if CGImageDestinationFinalize(destination), mutableData.length > 0 {
+                return mutableData as Data
+            }
+        }
+        return nil
     }
 
     /// テキストオーバーレイを描画（ヒーローレイアウト）
