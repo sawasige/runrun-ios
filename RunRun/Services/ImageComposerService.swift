@@ -38,8 +38,10 @@ enum ImageComposer {
             return nil
         }
 
+        // sRGB レンジで描画 (extended にすると CGImage の colorSpace が kCGColorSpaceExtendedSRGB になり
+        // 後段の CIImage(data:) が読めなくなる)
         let format = UIGraphicsImageRendererFormat()
-        format.preferredRange = .extended
+        format.preferredRange = .standard
         format.scale = 1.0
         format.opaque = true
 
@@ -87,12 +89,15 @@ enum ImageComposer {
     /// - PHPhotoLibraryに直接渡すためにDataを返す
     /// - centered: グラデーション背景用の中央レイアウトを使用する場合はtrue
     static func composeAsHEIF(imageData: Data, record: RunningRecord, options: ExportOptions, routeCoordinates: [CLLocationCoordinate2D] = [], centered: Bool = false) async -> Data? {
+        heifLogger.notice("composeAsHEIF: entry, imageData bytes=\(imageData.count, privacy: .public) centered=\(centered, privacy: .public)")
         // 1. SDR画像を読み込み（向き自動適用）
         guard let sdrImage = CIImage(data: imageData, options: [
             .applyOrientationProperty: true
         ]) else {
+            heifLogger.error("composeAsHEIF: CIImage(data:) returned nil for \(imageData.count, privacy: .public) bytes")
             return nil
         }
+        heifLogger.notice("composeAsHEIF: sdrImage extent=\(sdrImage.extent.width, privacy: .public)x\(sdrImage.extent.height, privacy: .public)")
 
         // 2. ルート描画領域の明るさを計算
         let routeAreaBrightness: CGFloat?
@@ -237,7 +242,7 @@ enum ImageComposer {
             heifLogger.error("saveAsHEIFData: CGColorSpace(displayP3) returned nil")
             return nil
         }
-        heifLogger.info("saveAsHEIFData: sdrImage extent=\(sdrImage.extent.width, privacy: .public)x\(sdrImage.extent.height, privacy: .public) hdrImage=\(hdrImage != nil, privacy: .public)")
+        heifLogger.notice("saveAsHEIFData: sdrImage extent=\(sdrImage.extent.width, privacy: .public)x\(sdrImage.extent.height, privacy: .public) hdrImage=\(hdrImage != nil, privacy: .public)")
         // Display P3 を明示的に colorSpace に指定して CGImage 化 (DeviceRGB だと HEIC 書き出しが拒否される既知の挙動への対策)
         guard let cgImage = context.createCGImage(
             sdrImage,
@@ -254,9 +259,12 @@ enum ImageComposer {
     /// CGImageDestination を使って HEIC バイト列を生成する。
     /// `CIContext.writeHEIFRepresentation` の silent failure (iOS 18+ 配信バイナリ regression) を回避するため使用。
     /// JPEG/PNG への二重フォールバックも持つ。
-    private static func encodeHEIC(cgImage: CGImage, tag: String = "encode") -> Data? {
+    private static func encodeHEIC(cgImage rawImage: CGImage, tag: String = "encode") -> Data? {
+        // Display P3 ICC-based color profile に強制変換。
+        // kCGColorSpaceExtendedSRGB のままだと後段の CIImage(data:) が auxiliary 0bytes エラーで失敗する。
+        let cgImage = normalizeToDisplayP3(rawImage) ?? rawImage
         let cs = cgImage.colorSpace?.name as String? ?? "nil"
-        heifLogger.info("[\(tag, privacy: .public)] cgImage size=\(cgImage.width, privacy: .public)x\(cgImage.height, privacy: .public) bpc=\(cgImage.bitsPerComponent, privacy: .public) bpp=\(cgImage.bitsPerPixel, privacy: .public) cs=\(cs, privacy: .public)")
+        heifLogger.notice("[\(tag, privacy: .public)] cgImage size=\(cgImage.width, privacy: .public)x\(cgImage.height, privacy: .public) bpc=\(cgImage.bitsPerComponent, privacy: .public) bpp=\(cgImage.bitsPerPixel, privacy: .public) cs=\(cs, privacy: .public)")
         let formats: [(name: String, type: CFString, options: [CFString: Any])] = [
             ("HEIC", UTType.heic.identifier as CFString, [:]),
             ("JPEG", UTType.jpeg.identifier as CFString, [kCGImageDestinationLossyCompressionQuality: 0.95]),
@@ -276,13 +284,36 @@ enum ImageComposer {
             CGImageDestinationAddImage(destination, cgImage, format.options as CFDictionary)
             let finalized = CGImageDestinationFinalize(destination)
             let length = mutableData.length
-            heifLogger.info("[\(tag, privacy: .public)] \(format.name, privacy: .public): finalize=\(finalized, privacy: .public) bytes=\(length, privacy: .public)")
+            heifLogger.notice("[\(tag, privacy: .public)] \(format.name, privacy: .public): finalize=\(finalized, privacy: .public) bytes=\(length, privacy: .public)")
             if finalized, length > 0 {
                 return mutableData as Data
             }
         }
         heifLogger.fault("[\(tag, privacy: .public)] all encoders failed")
         return nil
+    }
+
+    /// CGImage を Display P3 ICC ベースの 8bit RGBA に再描画する。
+    /// kCGColorSpaceExtendedSRGB のままだと CIImage(data:) で読めない HEIC が生成されるため必須。
+    private static func normalizeToDisplayP3(_ cgImage: CGImage) -> CGImage? {
+        guard let displayP3 = CGColorSpace(name: CGColorSpace.displayP3) else { return nil }
+        // 既に Display P3 (ICC-based) ならそのまま
+        if cgImage.colorSpace?.name == CGColorSpace.displayP3 {
+            return cgImage
+        }
+        let width = cgImage.width
+        let height = cgImage.height
+        guard let context = CGContext(
+            data: nil,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: 0,
+            space: displayP3,
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return nil }
+        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+        return context.makeImage()
     }
 
     /// テキストオーバーレイを描画（ヒーローレイアウト）
