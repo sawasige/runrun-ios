@@ -88,11 +88,18 @@ enum ImageComposer {
                 colorSpace: colorSpace,
                 options: [:]
             )
-            return try Data(contentsOf: tempURL)
+            let data = try Data(contentsOf: tempURL)
+            if !data.isEmpty {
+                return data
+            }
+            // App Store配信バイナリで writeHEIFRepresentation が throw せず 0 byte を返すことがあるため検知してフォールバック
+            print("createGradientImageData: HEIF write returned empty data, falling back to PNG")
         } catch {
-            print("Failed to create gradient HEIF: \(error)")
-            return nil
+            print("createGradientImageData: HEIF write failed: \(error), falling back to PNG")
         }
+
+        // フォールバック: PNG (HDR非対応だがCIImageが読めるので後段の合成は継続できる)
+        return gradientImage.pngData()
     }
 
     /// HDR Gainmapを保持したまま画像を合成してHEIF Dataを返す (WWDC 2024 Strategy A)
@@ -266,8 +273,9 @@ enum ImageComposer {
         // HDR用に10bitフォーマットを使用（アルファなし）
         let format: CIFormat = .RGB10
 
+        // writeHEIFRepresentationは App Store配信バイナリで throw せずに 0 byte を書き出すことがあるため、
+        // 空 Data の場合もフォールバックに進む
         do {
-            // writeHEIFRepresentationでファイルに直接書き出し
             try context.writeHEIFRepresentation(
                 of: sdrImage,
                 to: tempURL,
@@ -275,26 +283,38 @@ enum ImageComposer {
                 colorSpace: colorSpace,
                 options: options
             )
-
-            // ファイルからDataを読み込んで返す（UIImageに変換しない）
-            return try Data(contentsOf: tempURL)
-        } catch {
-            print("HEIF write error: \(error)")
-
-            // フォールバック: オプションなしで再試行
-            do {
-                try context.writeHEIFRepresentation(
-                    of: sdrImage,
-                    to: tempURL,
-                    format: format,
-                    colorSpace: colorSpace,
-                    options: [:]
-                )
-                return try Data(contentsOf: tempURL)
-            } catch {
-                return nil
+            let data = try Data(contentsOf: tempURL)
+            if !data.isEmpty {
+                return data
             }
+            print("saveAsHEIFData: HEIF write returned empty data, retrying without HDR options")
+        } catch {
+            print("saveAsHEIFData: HEIF write error: \(error)")
         }
+
+        // フォールバック1: HDRオプションなしで再試行
+        do {
+            try context.writeHEIFRepresentation(
+                of: sdrImage,
+                to: tempURL,
+                format: format,
+                colorSpace: colorSpace,
+                options: [:]
+            )
+            let data = try Data(contentsOf: tempURL)
+            if !data.isEmpty {
+                return data
+            }
+            print("saveAsHEIFData: HEIF write still empty, falling back to JPEG")
+        } catch {
+            print("saveAsHEIFData: HEIF retry error: \(error)")
+        }
+
+        // フォールバック2: CGImage 経由で JPEG として書き出す (HDR は失われるが共有可能)
+        guard let cgImage = context.createCGImage(sdrImage, from: sdrImage.extent) else {
+            return nil
+        }
+        return UIImage(cgImage: cgImage).jpegData(compressionQuality: 0.95)
     }
 
     /// テキストオーバーレイを描画（ヒーローレイアウト）

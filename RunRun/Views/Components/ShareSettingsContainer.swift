@@ -77,6 +77,7 @@ struct ShareSettingsContainer<OptionsView: View>: View {
 
     // プレビュー・保存・シェア
     @State private var previewImageData: Data?
+    @State private var previewFailed = false
     @State private var isSaving = false
     @State private var isSharing = false
     @State private var saveProgress: Float = 0  // 動画書き出し時の進捗
@@ -228,16 +229,50 @@ struct ShareSettingsContainer<OptionsView: View>: View {
                         .aspectRatio(1, contentMode: .fit)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
+            } else if previewFailed {
+                errorPreview
             } else {
                 loadingPreview
             }
         }
         .task {
             // 初期表示時にグラデーションでプレビュー生成
-            if previewImageData == nil && videoPlayer == nil {
+            if previewImageData == nil && videoPlayer == nil && !previewFailed {
                 await updatePreview()
             }
         }
+    }
+
+    private var errorPreview: some View {
+        GeometryReader { geometry in
+            let height = geometry.size.width
+            let width = height * displayedAspectRatio.size.width / displayedAspectRatio.size.height
+
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(UIColor.secondarySystemBackground))
+                .frame(width: width, height: height)
+                .overlay {
+                    VStack(spacing: 12) {
+                        Image(systemName: "exclamationmark.triangle")
+                            .font(.title)
+                            .foregroundStyle(.secondary)
+                        Text("Couldn't generate preview")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                        Button(String(localized: "Retry")) {
+                            previewFailed = false
+                            loadTask?.cancel()
+                            loadTask = Task { await updatePreview() }
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                    }
+                    .padding()
+                }
+                .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
+        }
+        .aspectRatio(1, contentMode: .fit)
     }
 
     /// 高さ固定のコンテナ（幅のみアスペクト比に応じて変化）
@@ -440,6 +475,9 @@ struct ShareSettingsContainer<OptionsView: View>: View {
     }
 
     func updatePreview() async {
+        // リトライや再生成時に古い失敗状態が残らないようリセット（ローディング表示に戻す）
+        previewFailed = false
+
         let data: Data
         let newAspectRatio = selectedAspectRatio
         let centered: Bool
@@ -451,6 +489,7 @@ struct ShareSettingsContainer<OptionsView: View>: View {
             guard let gradientData = ImageComposer.createGradientImageData(aspectRatio: newAspectRatio) else {
                 if Task.isCancelled { return }
                 previewImageData = nil
+                previewFailed = true
                 return
             }
             data = gradientData
@@ -461,6 +500,7 @@ struct ShareSettingsContainer<OptionsView: View>: View {
         // 画像とアスペクト比を同時に更新（1回の再描画で完了）
         previewImageData = newPreview
         displayedAspectRatio = newAspectRatio
+        previewFailed = (newPreview == nil)
     }
 
     private func saveTapped() async {
