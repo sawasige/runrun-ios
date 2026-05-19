@@ -1,5 +1,8 @@
 import SwiftUI
 import CoreLocation
+import OSLog
+
+private let runShareLogger = Logger(subsystem: "com.himatsubu.RunRun", category: "RunShare")
 
 /// 共有画像に出力するデータの選択状態
 struct ExportOptions: Equatable, Hashable {
@@ -50,7 +53,10 @@ struct RunShareSettingsView: View {
             analyticsScreenName: "ShareSettings",
             optionsChangeId: AnyHashable(options),
             composeImage: { data, centered in
-                await ImageComposer.composeAsHEIF(imageData: data, record: record, options: options, routeCoordinates: routeCoordinates, centered: centered)
+                runShareLogger.notice("composeImage closure: received data.count=\(data.count, privacy: .public) centered=\(centered, privacy: .public)")
+                let result = await ImageComposer.composeAsHEIF(imageData: data, record: record, options: options, routeCoordinates: routeCoordinates, centered: centered)
+                runShareLogger.notice("composeImage closure: composeAsHEIF returned \(result?.count ?? -1, privacy: .public) bytes")
+                return result
             },
             videoSupport: makeVideoSupport(),
             logSaveEvent: {
