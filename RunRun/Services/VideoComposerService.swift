@@ -40,11 +40,26 @@ struct VideoComposeResult {
 /// により、HDRパイプラインを AVFoundation 側に委ねる。
 enum VideoComposer {
 
-    /// 事前計算したオーバーレイCGImageを合成して動画を書き出す。
-    /// オーバーレイは呼び出し側でMainActor上で `ImageComposer.make*OverlayCGImage` を使って生成しておく想定。
     static func compose(
         inputURL: URL,
-        overlay: CGImage?,
+        overlay: CGImage,
+        outputURL: URL,
+        progress: (@Sendable (Float) -> Void)? = nil
+    ) async throws -> VideoComposeResult {
+        try await compose(
+            inputURL: inputURL,
+            overlayBuilder: { _ in overlay },
+            outputURL: outputURL,
+            progress: progress
+        )
+    }
+
+    /// オーバーレイを request.sourceImage の実サイズに合わせて遅延生成するバリアント。
+    /// 動画の縦撮り/横撮り・トランスフォーム適用後のサイズを正しく扱うため、
+    /// `overlayBuilder` は実際の描画キャンバスサイズで呼ばれる。
+    static func compose(
+        inputURL: URL,
+        overlayBuilder: @escaping @Sendable (CGSize) -> CGImage?,
         outputURL: URL,
         progress: (@Sendable (Float) -> Void)? = nil
     ) async throws -> VideoComposeResult {
@@ -59,7 +74,7 @@ enum VideoComposer {
         let isHDR = transfer == (kCVImageBufferTransferFunction_ITU_R_2100_HLG as String)
                  || transfer == (kCVImageBufferTransferFunction_SMPTE_ST_2084_PQ as String)
 
-        let composition = try await makeVideoComposition(asset: asset, overlay: overlay)
+        let composition = try await makeVideoComposition(asset: asset, overlayBuilder: overlayBuilder)
 
         try? FileManager.default.removeItem(at: outputURL)
 
@@ -147,16 +162,15 @@ enum VideoComposer {
     }
 
     /// プレビュー再生 (AVPlayerItem.videoComposition) と書き出しの両方で同じ合成結果を得るためのヘルパー。
-    /// 事前計算した `overlay` CGImage を request.sourceImage に重ねる。
-    /// overlay が nil の場合はソース画像をそのまま返す。
     static func makeVideoComposition(
         asset: AVAsset,
-        overlay: CGImage?
+        overlayBuilder: @escaping @Sendable (CGSize) -> CGImage?
     ) async throws -> AVVideoComposition {
-        // CIImageは@Sendableクロージャに安全にcaptureできる
-        let overlayCI: CIImage? = overlay.map { CIImage(cgImage: $0) }
+        let cache = OverlayCache()
         return try await AVMutableVideoComposition.videoComposition(with: asset) { request in
             let source = request.sourceImage
+            let canvasSize = source.extent.size
+            let overlayCI = cache.image(for: canvasSize, builder: overlayBuilder)
             if let overlayCI {
                 let composited = overlayCI.composited(over: source)
                 request.finish(with: composited, context: nil)
@@ -164,18 +178,6 @@ enum VideoComposer {
                 request.finish(with: source, context: nil)
             }
         }
-    }
-
-    /// 動画の natural size と preferredTransform から、適用後の実描画サイズを計算する。
-    /// `makeVideoComposition` 実行前にオーバーレイCGImageを生成するためのキャンバスサイズとして使用。
-    static func renderSize(for asset: AVAsset) async throws -> CGSize {
-        guard let track = try await asset.loadTracks(withMediaType: .video).first else {
-            throw VideoComposerError.noVideoTrack
-        }
-        let naturalSize = try await track.load(.naturalSize)
-        let transform = try await track.load(.preferredTransform)
-        let rect = CGRect(origin: .zero, size: naturalSize).applying(transform)
-        return CGSize(width: abs(rect.width), height: abs(rect.height))
     }
 
     // MARK: - Helpers
@@ -193,3 +195,23 @@ enum VideoComposer {
 
 }
 
+/// `applyingCIFiltersWithHandler` のフレームハンドラは複数回呼ばれるので、
+/// 同じキャンバスサイズに対するオーバーレイCIImageをキャッシュする。
+private final class OverlayCache: @unchecked Sendable {
+    private var cachedSize: CGSize = .zero
+    private var cachedImage: CIImage?
+    private let lock = NSLock()
+
+    func image(for size: CGSize, builder: @Sendable (CGSize) -> CGImage?) -> CIImage? {
+        lock.lock()
+        defer { lock.unlock() }
+        if cachedSize == size, let cachedImage {
+            return cachedImage
+        }
+        guard let cg = builder(size) else { return nil }
+        let ci = CIImage(cgImage: cg)
+        cachedSize = size
+        cachedImage = ci
+        return ci
+    }
+}

@@ -7,12 +7,9 @@ import UniformTypeIdentifiers
 
 /// 動画背景サポートをオプトインで有効化するための設定
 struct VideoShareSupport {
-    /// 動画ロード時の重い前処理。中央フレームを取得してルート描画領域の背景明度をサンプルする。
-    /// 同じ動画なら結果は変わらないので、ShareSettingsContainer 側でキャッシュしてオプション変更時の再実行を避ける。
-    let analyze: @Sendable (URL) async -> CGFloat?
-    /// オーバーレイ CGImage を生成する。MainActor上で同期実行し、`ImageComposer.make*OverlayCGImage` を呼ぶ。
-    /// オプション変更ごとに `(canvasSize, brightness)` を渡して呼び出す軽い処理。
-    let makeOverlay: @MainActor (CGSize, CGFloat?) -> CGImage?
+    /// 動画が選択された直後に呼ばれる。背景明度サンプルなどを行い、
+    /// オーバーレイ生成クロージャを返す。
+    let prepareOverlay: @Sendable (URL) async -> (@Sendable (CGSize) -> CGImage?)?
     let logSaveEvent: () -> Void
     let logShareEvent: () -> Void
 }
@@ -71,9 +68,7 @@ struct ShareSettingsContainer<OptionsView: View>: View {
     @State private var selectedPickerItem: PhotosPickerItem?
     @State private var photoData: Data?
     @State private var videoURL: URL?
-    @State private var videoCanvasSize: CGSize?
-    @State private var videoBrightness: CGFloat?
-    @State private var videoOverlay: CGImage?
+    @State private var videoOverlayBuilder: (@Sendable (CGSize) -> CGImage?)?
     @State private var videoPlayer: AVPlayer?
 
     // アスペクト比（背景未選択時のみ使用、保存される）
@@ -374,9 +369,7 @@ struct ShareSettingsContainer<OptionsView: View>: View {
         cleanupVideoTempFile()
         photoData = nil
         videoURL = nil
-        videoCanvasSize = nil
-        videoBrightness = nil
-        videoOverlay = nil
+        videoOverlayBuilder = nil
         videoPlayer?.pause()
         videoPlayer = nil
         selectedPickerItem = nil
@@ -406,9 +399,7 @@ struct ShareSettingsContainer<OptionsView: View>: View {
                 cleanupVideoTempFile()
                 photoData = data
                 videoURL = nil
-                videoCanvasSize = nil
-                videoBrightness = nil
-                videoOverlay = nil
+                videoOverlayBuilder = nil
                 videoPlayer?.pause()
                 videoPlayer = nil
                 await updatePreview()
@@ -426,50 +417,34 @@ struct ShareSettingsContainer<OptionsView: View>: View {
         photoData = nil
         previewImageData = nil
         videoURL = url
-        videoCanvasSize = nil
-        videoBrightness = nil
-        videoOverlay = nil
 
-        // 動画分析: 描画サイズと明度を非同期で取得。重い処理なのでここで1回だけ。
-        let asset = AVURLAsset(url: url)
-        let canvasSize: CGSize
-        do {
-            canvasSize = try await VideoComposer.renderSize(for: asset)
-        } catch {
-            print("Failed to load video render size: \(error)")
-            // ロールバック
-            cleanupVideoTempFile()
-            videoURL = nil
-            await updatePreview()
-            return
-        }
+        let builder = await videoSupport.prepareOverlay(url)
         if Task.isCancelled { return }
-        let brightness = await videoSupport.analyze(url)
-        if Task.isCancelled { return }
-
-        videoCanvasSize = canvasSize
-        videoBrightness = brightness
-        // MainActor 上で同期的にオーバーレイ生成 (nonisolated 不要)
-        videoOverlay = videoSupport.makeOverlay(canvasSize, brightness)
-
+        videoOverlayBuilder = builder
         do {
-            try await rebuildPlayer(asset: asset)
+            try await rebuildPlayer()
         } catch {
             print("Failed to switch to video: \(error)")
+            // ロールバック: 動画モード状態を解除して写真未選択へ戻す
             cleanupVideoTempFile()
             videoURL = nil
-            videoCanvasSize = nil
-            videoBrightness = nil
-            videoOverlay = nil
+            videoOverlayBuilder = nil
             await updatePreview()
         }
     }
 
     @MainActor
-    private func rebuildPlayer(asset: AVAsset? = nil) async throws {
+    private func rebuildPlayer() async throws {
         guard let url = videoURL else { return }
-        let asset = asset ?? AVURLAsset(url: url)
-        let composition = try await VideoComposer.makeVideoComposition(asset: asset, overlay: videoOverlay)
+        let asset = AVURLAsset(url: url)
+        let composition: AVVideoComposition
+        if let builder = videoOverlayBuilder {
+            composition = try await VideoComposer.makeVideoComposition(asset: asset, overlayBuilder: builder)
+        } else {
+            composition = try await AVMutableVideoComposition.videoComposition(with: asset) { request in
+                request.finish(with: request.sourceImage, context: nil)
+            }
+        }
         let item = AVPlayerItem(asset: asset)
         item.videoComposition = composition
 
@@ -484,11 +459,11 @@ struct ShareSettingsContainer<OptionsView: View>: View {
     }
 
     private func rebuildAfterOptionsChange() async {
-        if videoURL != nil, let videoSupport,
-           let canvasSize = videoCanvasSize {
-            // 動画モード: オーバーレイ再生成（キャンバスサイズと明度はキャッシュから流用）
-            videoOverlay = videoSupport.makeOverlay(canvasSize, videoBrightness)
+        if videoURL != nil, let videoSupport, let url = videoURL {
+            // 動画モード: オーバーレイ再生成（オプション変更を反映）
+            let builder = await videoSupport.prepareOverlay(url)
             if Task.isCancelled { return }
+            videoOverlayBuilder = builder
             do {
                 try await rebuildPlayer()
             } catch {
@@ -632,8 +607,7 @@ struct ShareSettingsContainer<OptionsView: View>: View {
 
     /// 動画を書き出してtempURLを返す。saveProgress を更新するが、isSaving/isSharing は呼び出し側で管理する。
     private func composeVideoToTemp() async -> URL? {
-        guard let inputURL = videoURL else { return nil }
-        let overlay = videoOverlay
+        guard let inputURL = videoURL, let builder = videoOverlayBuilder else { return nil }
 
         saveProgress = 0
 
@@ -644,7 +618,7 @@ struct ShareSettingsContainer<OptionsView: View>: View {
         do {
             _ = try await VideoComposer.compose(
                 inputURL: inputURL,
-                overlay: overlay,
+                overlayBuilder: builder,
                 outputURL: outputURL,
                 progress: { p in
                     Task { @MainActor in self.saveProgress = p }
