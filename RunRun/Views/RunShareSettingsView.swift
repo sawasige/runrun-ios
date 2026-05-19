@@ -52,9 +52,9 @@ struct RunShareSettingsView: View {
             isPresented: $isPresented,
             analyticsScreenName: "ShareSettings",
             optionsChangeId: AnyHashable(options),
-            composeImage: { data, centered in
-                runShareLogger.notice("composeImage closure: received data.count=\(data.count, privacy: .public) centered=\(centered, privacy: .public)")
-                let result = await ImageComposer.composeAsHEIF(imageData: data, record: record, options: options, routeCoordinates: routeCoordinates, centered: centered)
+            composeImage: { input in
+                runShareLogger.notice("composeImage closure: received data.count=\(input.imageData.count, privacy: .public) centered=\(input.centered, privacy: .public)")
+                let result = await ImageComposer.composeAsHEIF(imageData: input.imageData, record: record, options: options, routeCoordinates: routeCoordinates, centered: input.centered)
                 runShareLogger.notice("composeImage closure: composeAsHEIF returned \(result?.count ?? -1, privacy: .public) bytes")
                 return result
             },

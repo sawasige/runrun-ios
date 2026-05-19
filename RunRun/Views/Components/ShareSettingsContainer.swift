@@ -4,6 +4,14 @@ import Photos
 import OSLog
 
 private let previewLogger = Logger(subsystem: "com.himatsubu.RunRun", category: "Preview")
+
+/// 共有プレビューに渡す入力 (imageData + centered)。
+/// (Data, Bool) async タプル引数だと whole-module 最適化で引数が消える Swift compiler バグを
+/// 配信バイナリで踏むため、単一struct引数にして回避する。
+struct ComposeImageInput: Sendable {
+    let imageData: Data
+    let centered: Bool
+}
 import AVFoundation
 import AVKit
 import UniformTypeIdentifiers
@@ -44,7 +52,7 @@ struct ShareSettingsContainer<OptionsView: View>: View {
     @Binding var isPresented: Bool
     let analyticsScreenName: String
     let optionsChangeId: AnyHashable
-    let composeImage: (Data, Bool) async -> Data?  // (imageData, centered)
+    let composeImage: (ComposeImageInput) async -> Data?  // 単一struct引数で渡す (タプル引数だと配信バイナリで引数欠落)
     let videoSupport: VideoShareSupport?
     let logSaveEvent: () -> Void
     let logShareEvent: () -> Void
@@ -54,7 +62,7 @@ struct ShareSettingsContainer<OptionsView: View>: View {
         isPresented: Binding<Bool>,
         analyticsScreenName: String,
         optionsChangeId: AnyHashable,
-        composeImage: @escaping (Data, Bool) async -> Data?,
+        composeImage: @escaping (ComposeImageInput) async -> Data?,
         videoSupport: VideoShareSupport? = nil,
         logSaveEvent: @escaping () -> Void,
         logShareEvent: @escaping () -> Void,
@@ -526,8 +534,9 @@ struct ShareSettingsContainer<OptionsView: View>: View {
             data = gradientData
             centered = true
         }
-        previewLogger.notice("updatePreview: calling composeImage with \(data.count, privacy: .public) bytes centered=\(centered, privacy: .public)")
-        let newPreview = await composeImage(data, centered)
+        let input = ComposeImageInput(imageData: data, centered: centered)
+        previewLogger.notice("updatePreview: calling composeImage with \(input.imageData.count, privacy: .public) bytes centered=\(input.centered, privacy: .public)")
+        let newPreview = await composeImage(input)
         previewLogger.notice("updatePreview: composeImage returned \(newPreview?.count ?? -1, privacy: .public) bytes cancelled=\(Task.isCancelled, privacy: .public)")
         if Task.isCancelled { return }
         // 画像とアスペクト比を同時に更新（1回の再描画で完了）

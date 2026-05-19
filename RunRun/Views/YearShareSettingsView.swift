@@ -61,8 +61,8 @@ struct YearShareSettingsView: View {
             isPresented: $isPresented,
             analyticsScreenName: "YearShareSettings",
             optionsChangeId: AnyHashable(options),
-            composeImage: { data, centered in
-                await ImageComposer.composeYearlyStats(imageData: data, shareData: shareData, options: options, centered: centered)
+            composeImage: { input in
+                await ImageComposer.composeYearlyStats(imageData: input.imageData, shareData: shareData, options: options, centered: input.centered)
             },
             videoSupport: makeVideoSupport(),
             logSaveEvent: {
