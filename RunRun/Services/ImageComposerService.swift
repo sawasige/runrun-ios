@@ -4,6 +4,9 @@ import UIKit
 import CoreLocation
 import ImageIO
 import UniformTypeIdentifiers
+import OSLog
+
+private let heifLogger = Logger(subsystem: "com.himatsubu.RunRun", category: "HEIF")
 
 // MARK: - Image Aspect Ratio
 
@@ -71,8 +74,11 @@ enum ImageComposer {
         // HEIF形式でエンコード
         // CIContext.writeHEIFRepresentation は iOS 18 以降の配信バイナリで silent failure (0 byte) する
         // regression があるため、CGImageDestination 直接使用に切り替える。
-        guard let cgImage = gradientImage.cgImage else { return nil }
-        return encodeHEIC(cgImage: cgImage)
+        guard let cgImage = gradientImage.cgImage else {
+            heifLogger.error("createGradientImageData: gradientImage.cgImage was nil")
+            return nil
+        }
+        return encodeHEIC(cgImage: cgImage, tag: "gradient")
     }
 
     /// HDR Gainmapを保持したまま画像を合成してHEIF Dataを返す (WWDC 2024 Strategy A)
@@ -228,8 +234,10 @@ enum ImageComposer {
     private static func saveAsHEIFData(sdrImage: CIImage, hdrImage: CIImage?) -> Data? {
         let context = CIContext()
         guard let colorSpace = CGColorSpace(name: CGColorSpace.displayP3) else {
+            heifLogger.error("saveAsHEIFData: CGColorSpace(displayP3) returned nil")
             return nil
         }
+        heifLogger.info("saveAsHEIFData: sdrImage extent=\(sdrImage.extent.width, privacy: .public)x\(sdrImage.extent.height, privacy: .public) hdrImage=\(hdrImage != nil, privacy: .public)")
         // Display P3 を明示的に colorSpace に指定して CGImage 化 (DeviceRGB だと HEIC 書き出しが拒否される既知の挙動への対策)
         guard let cgImage = context.createCGImage(
             sdrImage,
@@ -237,15 +245,18 @@ enum ImageComposer {
             format: .RGBA8,
             colorSpace: colorSpace
         ) else {
+            heifLogger.error("saveAsHEIFData: context.createCGImage returned nil")
             return nil
         }
-        return encodeHEIC(cgImage: cgImage)
+        return encodeHEIC(cgImage: cgImage, tag: "compose")
     }
 
     /// CGImageDestination を使って HEIC バイト列を生成する。
     /// `CIContext.writeHEIFRepresentation` の silent failure (iOS 18+ 配信バイナリ regression) を回避するため使用。
     /// JPEG/PNG への二重フォールバックも持つ。
-    private static func encodeHEIC(cgImage: CGImage) -> Data? {
+    private static func encodeHEIC(cgImage: CGImage, tag: String = "encode") -> Data? {
+        let cs = cgImage.colorSpace?.name as String? ?? "nil"
+        heifLogger.info("[\(tag, privacy: .public)] cgImage size=\(cgImage.width, privacy: .public)x\(cgImage.height, privacy: .public) bpc=\(cgImage.bitsPerComponent, privacy: .public) bpp=\(cgImage.bitsPerPixel, privacy: .public) cs=\(cs, privacy: .public)")
         let formats: [(name: String, type: CFString, options: [CFString: Any])] = [
             ("HEIC", UTType.heic.identifier as CFString, [:]),
             ("JPEG", UTType.jpeg.identifier as CFString, [kCGImageDestinationLossyCompressionQuality: 0.95]),
@@ -259,13 +270,18 @@ enum ImageComposer {
                 1,
                 nil
             ) else {
+                heifLogger.error("[\(tag, privacy: .public)] \(format.name, privacy: .public): CGImageDestinationCreateWithData returned nil")
                 continue
             }
             CGImageDestinationAddImage(destination, cgImage, format.options as CFDictionary)
-            if CGImageDestinationFinalize(destination), mutableData.length > 0 {
+            let finalized = CGImageDestinationFinalize(destination)
+            let length = mutableData.length
+            heifLogger.info("[\(tag, privacy: .public)] \(format.name, privacy: .public): finalize=\(finalized, privacy: .public) bytes=\(length, privacy: .public)")
+            if finalized, length > 0 {
                 return mutableData as Data
             }
         }
+        heifLogger.fault("[\(tag, privacy: .public)] all encoders failed")
         return nil
     }
 
