@@ -1,5 +1,5 @@
 Thank you for using RunRun!
 
 【Fixed】
-・Fixed an issue where loading would not finish when selecting a photo for the share feature
-・Improved stability of the share feature
+・Fixed an issue where the preview wouldn't appear on the share settings screen
+・Show a retry button when preview generation fails
