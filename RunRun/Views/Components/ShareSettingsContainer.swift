@@ -1,6 +1,9 @@
 import SwiftUI
 import PhotosUI
 import Photos
+import OSLog
+
+private let previewLogger = Logger(subsystem: "com.himatsubu.RunRun", category: "Preview")
 import AVFoundation
 import AVKit
 import UniformTypeIdentifiers
@@ -500,6 +503,7 @@ struct ShareSettingsContainer<OptionsView: View>: View {
     }
 
     func updatePreview() async {
+        previewLogger.notice("updatePreview: entry photoData=\(self.photoData != nil, privacy: .public)")
         // リトライや再生成時に古い失敗状態が残らないようリセット（ローディング表示に戻す）
         previewFailed = false
 
@@ -512,15 +516,19 @@ struct ShareSettingsContainer<OptionsView: View>: View {
         } else {
             // 写真未選択時はグラデーション背景を使用（中央レイアウト）
             guard let gradientData = ImageComposer.createGradientImageData(aspectRatio: newAspectRatio) else {
+                previewLogger.error("updatePreview: createGradientImageData returned nil")
                 if Task.isCancelled { return }
                 previewImageData = nil
                 previewFailed = true
                 return
             }
+            previewLogger.notice("updatePreview: got gradientData \(gradientData.count, privacy: .public) bytes")
             data = gradientData
             centered = true
         }
+        previewLogger.notice("updatePreview: calling composeImage with \(data.count, privacy: .public) bytes centered=\(centered, privacy: .public)")
         let newPreview = await composeImage(data, centered)
+        previewLogger.notice("updatePreview: composeImage returned \(newPreview?.count ?? -1, privacy: .public) bytes cancelled=\(Task.isCancelled, privacy: .public)")
         if Task.isCancelled { return }
         // 画像とアスペクト比を同時に更新（1回の再描画で完了）
         previewImageData = newPreview

@@ -31,6 +31,7 @@ enum ImageComposer {
     /// - Parameter aspectRatio: 出力する画像のアスペクト比
     /// - Returns: HEIF形式の画像Data
     static func createGradientImageData(aspectRatio: ImageAspectRatio) -> Data? {
+        heifLogger.notice("createGradientImageData: entry aspectRatio=\(aspectRatio.rawValue, privacy: .public)")
         let size = aspectRatio.size
 
         // Display P3 カラースペースでレンダリング
@@ -80,7 +81,9 @@ enum ImageComposer {
             heifLogger.error("createGradientImageData: gradientImage.cgImage was nil")
             return nil
         }
-        return encodeHEIC(cgImage: cgImage, tag: "gradient")
+        let result = encodeHEIC(cgImage: cgImage, tag: "gradient")
+        heifLogger.notice("createGradientImageData: returning \(result?.count ?? -1, privacy: .public) bytes (nil=\(result == nil, privacy: .public))")
+        return result
     }
 
     /// HDR Gainmapを保持したまま画像を合成してHEIF Dataを返す (WWDC 2024 Strategy A)
