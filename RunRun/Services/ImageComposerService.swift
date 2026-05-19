@@ -286,7 +286,11 @@ enum ImageComposer {
             let length = mutableData.length
             heifLogger.notice("[\(tag, privacy: .public)] \(format.name, privacy: .public): finalize=\(finalized, privacy: .public) bytes=\(length, privacy: .public)")
             if finalized, length > 0 {
-                return mutableData as Data
+                // `mutableData as Data` は配信バイナリで空になる事例があるため、
+                // バイトを明示的にコピーした Data を返す。
+                let copied = Data(bytes: mutableData.bytes, count: length)
+                heifLogger.notice("[\(tag, privacy: .public)] \(format.name, privacy: .public): returning copied bytes=\(copied.count, privacy: .public)")
+                return copied
             }
         }
         heifLogger.fault("[\(tag, privacy: .public)] all encoders failed")
