@@ -88,18 +88,11 @@ enum ImageComposer {
                 colorSpace: colorSpace,
                 options: [:]
             )
-            let data = try Data(contentsOf: tempURL)
-            if !data.isEmpty {
-                return data
-            }
-            // App Store配信バイナリで writeHEIFRepresentation が throw せず 0 byte を返すことがあるため検知してフォールバック
-            print("createGradientImageData: HEIF write returned empty data, falling back to PNG")
+            return try Data(contentsOf: tempURL)
         } catch {
-            print("createGradientImageData: HEIF write failed: \(error), falling back to PNG")
+            print("Failed to create gradient HEIF: \(error)")
+            return nil
         }
-
-        // フォールバック: PNG (HDR非対応だがCIImageが読めるので後段の合成は継続できる)
-        return gradientImage.pngData()
     }
 
     /// HDR Gainmapを保持したまま画像を合成してHEIF Dataを返す (WWDC 2024 Strategy A)
@@ -151,29 +144,6 @@ enum ImageComposer {
 
         // 5. HEIF形式で出力（両方のレイヤーを渡す）
         return saveAsHEIFData(sdrImage: sdrWithText, hdrImage: hdrWithText)
-    }
-
-    /// 動画など他のパイプラインから利用するためのオーバーレイ生成（透明背景、HDR拡張レンジ対応）
-    static func makeOverlayCGImage(size: CGSize, record: RunningRecord, options: ExportOptions, routeCoordinates: [CLLocationCoordinate2D] = [], routeAreaBrightness: CGFloat? = nil, centered: Bool = false) -> CGImage? {
-        let format = UIGraphicsImageRendererFormat()
-        format.preferredRange = .extended
-        format.scale = 1.0
-        format.opaque = false
-
-        let renderer = UIGraphicsImageRenderer(size: size, format: format)
-        let image = renderer.image { _ in
-            if centered {
-                drawCenteredTextOverlay(width: size.width, height: size.height, record: record, options: options, routeCoordinates: routeCoordinates)
-            } else {
-                drawTextOverlay(width: size.width, height: size.height, record: record, options: options, routeCoordinates: routeCoordinates, routeAreaBrightness: routeAreaBrightness)
-            }
-        }
-        return image.cgImage
-    }
-
-    /// 動画など他のパイプラインから利用する、ルート描画領域の平均明るさサンプリング
-    static func sampleRouteAreaBrightness(image: CIImage, routeCoordinates: [CLLocationCoordinate2D]) -> CGFloat {
-        calculateRouteAreaBrightness(image: image, routeCoordinates: routeCoordinates)
     }
 
     /// テキストオーバーレイ画像を作成
@@ -273,9 +243,8 @@ enum ImageComposer {
         // HDR用に10bitフォーマットを使用（アルファなし）
         let format: CIFormat = .RGB10
 
-        // writeHEIFRepresentationは App Store配信バイナリで throw せずに 0 byte を書き出すことがあるため、
-        // 空 Data の場合もフォールバックに進む
         do {
+            // writeHEIFRepresentationでファイルに直接書き出し
             try context.writeHEIFRepresentation(
                 of: sdrImage,
                 to: tempURL,
@@ -283,38 +252,26 @@ enum ImageComposer {
                 colorSpace: colorSpace,
                 options: options
             )
-            let data = try Data(contentsOf: tempURL)
-            if !data.isEmpty {
-                return data
-            }
-            print("saveAsHEIFData: HEIF write returned empty data, retrying without HDR options")
-        } catch {
-            print("saveAsHEIFData: HEIF write error: \(error)")
-        }
 
-        // フォールバック1: HDRオプションなしで再試行
-        do {
-            try context.writeHEIFRepresentation(
-                of: sdrImage,
-                to: tempURL,
-                format: format,
-                colorSpace: colorSpace,
-                options: [:]
-            )
-            let data = try Data(contentsOf: tempURL)
-            if !data.isEmpty {
-                return data
-            }
-            print("saveAsHEIFData: HEIF write still empty, falling back to JPEG")
+            // ファイルからDataを読み込んで返す（UIImageに変換しない）
+            return try Data(contentsOf: tempURL)
         } catch {
-            print("saveAsHEIFData: HEIF retry error: \(error)")
-        }
+            print("HEIF write error: \(error)")
 
-        // フォールバック2: CGImage 経由で JPEG として書き出す (HDR は失われるが共有可能)
-        guard let cgImage = context.createCGImage(sdrImage, from: sdrImage.extent) else {
-            return nil
+            // フォールバック: オプションなしで再試行
+            do {
+                try context.writeHEIFRepresentation(
+                    of: sdrImage,
+                    to: tempURL,
+                    format: format,
+                    colorSpace: colorSpace,
+                    options: [:]
+                )
+                return try Data(contentsOf: tempURL)
+            } catch {
+                return nil
+            }
         }
-        return UIImage(cgImage: cgImage).jpegData(compressionQuality: 0.95)
     }
 
     /// テキストオーバーレイを描画（ヒーローレイアウト）
@@ -939,24 +896,6 @@ enum ImageComposer {
         return saveAsHEIFData(sdrImage: sdrWithText, hdrImage: hdrWithText)
     }
 
-    /// 動画など他のパイプラインから利用する月別オーバーレイ生成（透明背景、HDR拡張レンジ対応）
-    static func makeMonthlyOverlayCGImage(size: CGSize, shareData: MonthlyShareData, options: MonthExportOptions, centered: Bool = false) -> CGImage? {
-        let format = UIGraphicsImageRendererFormat()
-        format.preferredRange = .extended
-        format.scale = 1.0
-        format.opaque = false
-
-        let renderer = UIGraphicsImageRenderer(size: size, format: format)
-        let image = renderer.image { _ in
-            if centered {
-                drawCenteredMonthlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
-            } else {
-                drawMonthlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
-            }
-        }
-        return image.cgImage
-    }
-
     private static func createMonthlyTextOverlay(size: CGSize, shareData: MonthlyShareData, options: MonthExportOptions, centered: Bool = false) -> CIImage? {
         let format = UIGraphicsImageRendererFormat()
         format.preferredRange = .extended
@@ -1263,24 +1202,6 @@ enum ImageComposer {
         return saveAsHEIFData(sdrImage: sdrWithText, hdrImage: hdrWithText)
     }
 
-    /// 動画など他のパイプラインから利用する年別オーバーレイ生成（透明背景、HDR拡張レンジ対応）
-    static func makeYearlyOverlayCGImage(size: CGSize, shareData: YearlyShareData, options: YearExportOptions, centered: Bool = false) -> CGImage? {
-        let format = UIGraphicsImageRendererFormat()
-        format.preferredRange = .extended
-        format.scale = 1.0
-        format.opaque = false
-
-        let renderer = UIGraphicsImageRenderer(size: size, format: format)
-        let image = renderer.image { _ in
-            if centered {
-                drawCenteredYearlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
-            } else {
-                drawYearlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
-            }
-        }
-        return image.cgImage
-    }
-
     private static func createYearlyTextOverlay(size: CGSize, shareData: YearlyShareData, options: YearExportOptions, centered: Bool = false) -> CIImage? {
         let format = UIGraphicsImageRendererFormat()
         format.preferredRange = .extended
@@ -1585,24 +1506,6 @@ enum ImageComposer {
         return saveAsHEIFData(sdrImage: sdrWithText, hdrImage: hdrWithText)
     }
 
-    /// 動画など他のパイプラインから利用するプロフィールオーバーレイ生成（透明背景、HDR拡張レンジ対応）
-    static func makeProfileOverlayCGImage(size: CGSize, shareData: ProfileShareData, options: ProfileExportOptions, centered: Bool = false) -> CGImage? {
-        let format = UIGraphicsImageRendererFormat()
-        format.preferredRange = .extended
-        format.scale = 1.0
-        format.opaque = false
-
-        let renderer = UIGraphicsImageRenderer(size: size, format: format)
-        let image = renderer.image { _ in
-            if centered {
-                drawCenteredProfileTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
-            } else {
-                drawProfileTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
-            }
-        }
-        return image.cgImage
-    }
-
     private static func createProfileTextOverlay(size: CGSize, shareData: ProfileShareData, options: ProfileExportOptions, centered: Bool = false) -> CIImage? {
         let format = UIGraphicsImageRendererFormat()
         format.preferredRange = .extended
@@ -1845,9 +1748,7 @@ struct HDRImageView: UIViewRepresentable {
         let containerView = UIView()
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
-        #if !targetEnvironment(simulator)
         imageView.preferredImageDynamicRange = .high
-        #endif
         imageView.translatesAutoresizingMaskIntoConstraints = false
         containerView.addSubview(imageView)
         NSLayoutConstraint.activate([
@@ -1867,23 +1768,19 @@ struct HDRImageView: UIViewRepresentable {
     }
 
     private func loadHDRImage(from data: Data) -> UIImage? {
-        #if targetEnvironment(simulator)
-        // simulatorではHDRデコード結果が表示されないことがあるため通常デコードにフォールバック
-        return UIImage(data: data)
-        #else
         guard let source = CGImageSourceCreateWithData(data as CFData, nil) else {
-            return UIImage(data: data)
+            return nil
         }
-        let hdrOptions: [CFString: Any] = [
+        // iOS 17+: HDRデコードを要求
+        let options: [CFString: Any] = [
             kCGImageSourceShouldCacheImmediately: true,
             kCGImageSourceShouldAllowFloat: true,
             kCGImageSourceDecodeRequest: kCGImageSourceDecodeToHDR
         ]
-        if let cgImage = CGImageSourceCreateImageAtIndex(source, 0, hdrOptions as CFDictionary) {
-            return UIImage(cgImage: cgImage)
+        guard let cgImage = CGImageSourceCreateImageAtIndex(source, 0, options as CFDictionary) else {
+            return nil
         }
-        return UIImage(data: data)
-        #endif
+        return UIImage(cgImage: cgImage)
     }
 }
 

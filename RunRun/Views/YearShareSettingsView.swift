@@ -64,52 +64,35 @@ struct YearShareSettingsView: View {
             composeImage: { data, centered in
                 await ImageComposer.composeYearlyStats(imageData: data, shareData: shareData, options: options, centered: centered)
             },
-            videoSupport: makeVideoSupport(),
             logSaveEvent: {
-                AnalyticsService.logEvent("year_share_image_saved", parameters: optionParameters)
+                AnalyticsService.logEvent("year_share_image_saved", parameters: [
+                    "show_year": options.showYear,
+                    "show_distance": options.showDistance,
+                    "show_run_count": options.showRunCount,
+                    "show_duration": options.showDuration,
+                    "show_pace": options.showPace,
+                    "show_avg_distance": options.showAvgDistance,
+                    "show_avg_duration": options.showAvgDuration,
+                    "show_calories": options.showCalories,
+                    "show_monthly_chart": options.showMonthlyChart
+                ])
             },
             logShareEvent: {
-                AnalyticsService.logEvent("year_share_image_shared", parameters: optionParameters)
+                AnalyticsService.logEvent("year_share_image_shared", parameters: [
+                    "show_year": options.showYear,
+                    "show_distance": options.showDistance,
+                    "show_run_count": options.showRunCount,
+                    "show_duration": options.showDuration,
+                    "show_pace": options.showPace,
+                    "show_avg_distance": options.showAvgDistance,
+                    "show_avg_duration": options.showAvgDuration,
+                    "show_calories": options.showCalories,
+                    "show_monthly_chart": options.showMonthlyChart
+                ])
             }
         ) {
             dataOptionsSection
         }
-    }
-
-    private var optionParameters: [String: Any] {
-        [
-            "show_year": options.showYear,
-            "show_distance": options.showDistance,
-            "show_run_count": options.showRunCount,
-            "show_duration": options.showDuration,
-            "show_pace": options.showPace,
-            "show_avg_distance": options.showAvgDistance,
-            "show_avg_duration": options.showAvgDuration,
-            "show_calories": options.showCalories,
-            "show_monthly_chart": options.showMonthlyChart
-        ]
-    }
-
-    private func makeVideoSupport() -> VideoShareSupport {
-        let shareData = self.shareData
-        let options = self.options
-        return VideoShareSupport(
-            analyze: { _ in nil },
-            makeOverlay: { canvasSize, _ in
-                ImageComposer.makeYearlyOverlayCGImage(
-                    size: canvasSize,
-                    shareData: shareData,
-                    options: options,
-                    centered: false
-                )
-            },
-            logSaveEvent: {
-                AnalyticsService.logEvent("year_share_video_saved", parameters: optionParameters)
-            },
-            logShareEvent: {
-                AnalyticsService.logEvent("year_share_video_shared", parameters: optionParameters)
-            }
-        )
     }
 
     private var dataOptionsSection: some View {
