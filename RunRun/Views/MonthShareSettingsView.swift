@@ -94,14 +94,15 @@ struct MonthShareSettingsView: View {
         let shareData = self.shareData
         let options = self.options
         return VideoShareSupport(
-            analyze: { _ in nil },
-            makeOverlay: { canvasSize, _ in
-                ImageComposer.makeMonthlyOverlayCGImage(
-                    size: canvasSize,
-                    shareData: shareData,
-                    options: options,
-                    centered: false
-                )
+            prepareOverlay: { _ in
+                return { canvasSize in
+                    ImageComposer.makeMonthlyOverlayCGImage(
+                        size: canvasSize,
+                        shareData: shareData,
+                        options: options,
+                        centered: false
+                    )
+                }
             },
             logSaveEvent: {
                 AnalyticsService.logEvent("month_share_video_saved", parameters: optionParameters)
