@@ -14,6 +14,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:image" content="assets/og-image.png">
     <link rel="icon" type="image/png" href="assets/logo.png">
+    <link rel="icon" type="image/png" href="assets/logo-dark.png" media="(prefers-color-scheme: dark)">
     <style>
         * {
             margin: 0;
@@ -25,12 +26,38 @@
             --accent: #EB4B46;
             --accent-light: #FFF0F0;
             --bg: #FAFAFA;
+            --bg-gradient-top: #ffffff;
             --text: #1a1a1a;
             --text-muted: #666;
             --card-bg: #fff;
+            --pill-bg: var(--bg);
             --heading: #1a1a1a;
             --footer-bg: #1a1a1a;
             --footer-bg-deep: #0d0d0d;
+            --shadow-strong: 0 12px 40px rgba(0,0,0,0.15);
+            --shadow-medium: 0 8px 32px rgba(0,0,0,0.08);
+            --shadow-light: 0 2px 12px rgba(0,0,0,0.04);
+            --logo-default: url('assets/logo.png');
+            --logo-dark: url('assets/logo-dark.png');
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --accent: #FF6B66;
+                --accent-light: #2a1414;
+                --bg: #0d0d0f;
+                --bg-gradient-top: #1a1a1d;
+                --text: #f2f2f5;
+                --text-muted: #a1a1a8;
+                --card-bg: #1a1a1d;
+                --pill-bg: #2a2a2e;
+                --heading: #f2f2f5;
+                --footer-bg: #050506;
+                --footer-bg-deep: #050506;
+                --shadow-strong: 0 12px 40px rgba(0,0,0,0.6);
+                --shadow-medium: 0 8px 32px rgba(0,0,0,0.5);
+                --shadow-light: 0 2px 12px rgba(0,0,0,0.3);
+            }
         }
 
         body {
@@ -44,7 +71,7 @@
         .hero {
             text-align: center;
             padding: 40px 20px 60px;
-            background: linear-gradient(180deg, #fff 0%, var(--bg) 100%);
+            background: linear-gradient(180deg, var(--bg-gradient-top) 0%, var(--bg) 100%);
         }
 
         .hero-banner {
@@ -53,7 +80,7 @@
             margin: 0 auto 32px;
             border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+            box-shadow: var(--shadow-strong);
         }
 
         .hero-banner > img {
@@ -152,7 +179,7 @@
             height: 480px;
             border-radius: 12px;
             flex-shrink: 0;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+            box-shadow: var(--shadow-medium);
             scroll-snap-align: center;
             cursor: zoom-in;
         }
@@ -286,7 +313,7 @@
         .feature-detail-image img {
             width: 100%;
             border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+            box-shadow: var(--shadow-medium);
             cursor: zoom-in;
         }
 
@@ -341,7 +368,7 @@
         }
 
         .pill-list span {
-            background: var(--bg);
+            background: var(--pill-bg);
             padding: 8px 16px;
             border-radius: 20px;
             font-size: 0.9rem;
@@ -371,7 +398,7 @@
             background: var(--card-bg);
             padding: 28px;
             border-radius: 16px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+            box-shadow: var(--shadow-light);
         }
 
         .feature-icon {
@@ -558,7 +585,10 @@
                    data-ja="気軽に、楽しく、続けられる<br>あなたの毎日を、もっとアクティブに。"
                    data-en="Effortless, fun, and lasting.<br>Make every day a little more active.">気軽に、楽しく、続けられる<br>あなたの毎日を、もっとアクティブに。</p>
                 <div class="hero-overlay-lockup">
-                    <img src="assets/logo.png" alt="" class="hero-overlay-icon">
+                    <picture>
+                        <source srcset="assets/logo-dark.png" media="(prefers-color-scheme: dark)">
+                        <img src="assets/logo.png" alt="" class="hero-overlay-icon">
+                    </picture>
                     <span class="hero-overlay-name">RunRun</span>
                 </div>
                 <p class="hero-overlay-subtitle"
@@ -749,7 +779,10 @@
     </section>
 
     <footer>
-        <img src="assets/logo.png" alt="RunRun" class="footer-logo">
+        <picture>
+            <source srcset="assets/logo-dark.png" media="(prefers-color-scheme: dark)">
+            <img src="assets/logo.png" alt="RunRun" class="footer-logo">
+        </picture>
         <div class="footer-links">
             <a href="privacy.html" data-ja="プライバシーポリシー" data-en="Privacy Policy">プライバシーポリシー</a>
             <a href="terms.html" data-ja="利用規約" data-en="Terms of Service">利用規約</a>

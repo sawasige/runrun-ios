@@ -5,21 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-ja="利用規約 - RunRun" data-en="Terms of Service - RunRun">利用規約 - RunRun</title>
     <style>
+        :root {
+            --bg: #fff;
+            --text: #333;
+            --text-muted: #666;
+            --link: #007AFF;
+            --border: #888;
+            --accent: #EB4B46;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0d0d0f;
+                --text: #e8e8eb;
+                --text-muted: #a1a1a8;
+                --link: #4DA3FF;
+                --border: #555;
+                --accent: #FF6B66;
+            }
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             max-width: 600px;
             margin: 0 auto;
             padding: 20px;
             line-height: 1.8;
-            color: #333;
+            background: var(--bg);
+            color: var(--text);
         }
-        h1 { color: #007AFF; font-size: 1.5em; }
+        h1 { color: var(--link); font-size: 1.5em; }
         h2 { font-size: 1.2em; margin-top: 2em; }
+        a { color: var(--link); }
         p { margin: 1em 0; }
-        .updated { color: #666; font-size: 0.9em; }
+        .updated { color: var(--text-muted); font-size: 0.9em; }
         .lang-toggle {
             background: none;
-            border: 1px solid #888;
+            border: 1px solid var(--border);
             border-radius: 4px;
             padding: 4px 12px;
             color: inherit;
@@ -28,7 +48,7 @@
             font-size: 0.85em;
             float: right;
         }
-        .lang-toggle:hover { border-color: #EB4B46; color: #EB4B46; }
+        .lang-toggle:hover { border-color: var(--accent); color: var(--accent); }
     </style>
 </head>
 <body>
