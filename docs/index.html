@@ -78,6 +78,7 @@
             position: relative;
             max-width: 900px;
             margin: 0 auto 32px;
+            aspect-ratio: 1729 / 910;
             border-radius: 16px;
             overflow: hidden;
             box-shadow: var(--shadow-strong);
@@ -86,7 +87,8 @@
         .hero-banner > img {
             display: block;
             width: 100%;
-            height: auto;
+            height: 100%;
+            object-fit: cover;
         }
 
         .hero-overlay {
