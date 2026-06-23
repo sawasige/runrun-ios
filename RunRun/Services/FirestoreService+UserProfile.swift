@@ -32,6 +32,10 @@ extension FirestoreService {
     }
 
     func getUserProfile(userId: String) async throws -> UserProfile? {
+        if let cached = await profileCache.get(userId) {
+            return cached
+        }
+
         let snapshot = try await usersCollection.document(userId).getDocument()
         guard let data = snapshot.data() else { return nil }
 
@@ -40,7 +44,7 @@ extension FirestoreService {
             avatarURL = URL(string: urlString)
         }
 
-        return UserProfile(
+        let profile = UserProfile(
             id: snapshot.documentID,
             displayName: data["displayName"] as? String ?? "Runner",
             email: data["email"] as? String,
@@ -48,6 +52,8 @@ extension FirestoreService {
             avatarURL: avatarURL,
             createdAt: (data["createdAt"] as? Timestamp)?.dateValue() ?? Date()
         )
+        await profileCache.set(profile, for: userId)
+        return profile
     }
 
     func updateProfile(userId: String, displayName: String, iconName: String, avatarURL: URL?) async throws {
@@ -59,17 +65,20 @@ extension FirestoreService {
             updateData["avatarURL"] = avatarURL.absoluteString
         }
         try await usersCollection.document(userId).updateData(updateData)
+        await profileCache.invalidate(userId)
     }
 
     func clearAvatarURL(userId: String) async throws {
         try await usersCollection.document(userId).updateData([
             "avatarURL": FieldValue.delete()
         ])
+        await profileCache.invalidate(userId)
     }
 
     func updateDisplayName(userId: String, displayName: String) async throws {
         try await usersCollection.document(userId).updateData([
             "displayName": displayName
         ])
+        await profileCache.invalidate(userId)
     }
 }
