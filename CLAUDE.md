@@ -365,13 +365,18 @@ gh pr merge <PR番号> --merge --delete-branch
 - PRのタイトル・本文も日本語で書く
 - Co-Authored-Byの署名は付けない
 
-### リリース（GitHub Actions）
+### リリース（Xcode Cloud）
+
+v1.10.2以降、リリースビルドはGitHub ActionsからXcode Cloudに移行
+（GitHub Actions固定のXcode 26.3にSwiftコンパイラ/リンカのリグレッションがあり、配信バイナリが壊れるため）。
 
 #### TestFlightへのアップロード
-GitHub Actionsの「Release to App Store」ワークフローを手動実行:
-1. GitHub → Actions → 「Release to App Store」 → 「Run workflow」
-2. ビルド完了後、自動で`build-N`タグが作成される
-3. TestFlightで審査後、App Storeに提出
+1. Xcode Cloudのワークフローでビルドし、TestFlightに配信
+2. dSYMは `ci_scripts/ci_post_xcodebuild.sh` が自動でCrashlyticsにアップロード
+3. TestFlightで確認後、App Storeに提出
+4. App Storeリリース後、`vX.Y.Z` 形式のタグでGitHubリリースを作成
+
+**タグ命名規則**: `vX.Y.Z`（例: `v1.10.2`）。旧`build-N`タグは廃止したGitHub Actionsパイプラインの自動タグで、今後は使わない。旧「Release to App Store」ワークフロー（release.yml）は残っているが使用しない。
 
 #### App Storeメタデータの更新
 リリースノートやスクリーンショットの更新:
