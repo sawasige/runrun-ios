@@ -94,13 +94,15 @@ struct MonthShareSettingsView: View {
         let shareData = self.shareData
         let options = self.options
         return VideoShareSupport(
-            prepareOverlay: { _ in
+            prepareOverlay: { videoURL in
+                let isHDR = await VideoComposer.isHDRVideo(url: videoURL)
                 return { canvasSize in
                     ImageComposer.makeMonthlyOverlayCGImage(
                         size: canvasSize,
                         shareData: shareData,
                         options: options,
-                        centered: false
+                        centered: false,
+                        hdrLogoBoost: isHDR
                     )
                 }
             },
