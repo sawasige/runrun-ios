@@ -365,22 +365,24 @@ gh pr merge <PR番号> --merge --delete-branch
 - PRのタイトル・本文も日本語で書く
 - Co-Authored-Byの署名は付けない
 
-### リリース（GitHub Actions）
+### リリース（Xcode Cloud）
+
+v1.10.2以降、リリースビルドはGitHub ActionsからXcode Cloudに移行
+（GitHub Actions固定のXcode 26.3にSwiftコンパイラ/リンカのリグレッションがあり、配信バイナリが壊れるため）。
 
 #### TestFlightへのアップロード
-GitHub Actionsの「Release to App Store」ワークフローを手動実行:
-1. GitHub → Actions → 「Release to App Store」 → 「Run workflow」
-2. ビルド完了後、自動で`build-N`タグが作成される
-3. TestFlightで審査後、App Storeに提出
+1. Xcode Cloudのワークフローでビルドし、TestFlightに配信
+2. dSYMは `ci_scripts/ci_post_xcodebuild.sh` が自動でCrashlyticsにアップロード
+3. TestFlightで確認後、App Storeに提出
+4. App Storeリリース後、`vX.Y.Z` 形式のタグでGitHubリリースを作成
+
+**タグ命名規則**: `vX.Y.Z`（例: `v1.10.2`）。旧`build-N`タグは廃止したGitHub Actionsパイプラインの自動タグで、今後は使わない。旧ワークフロー（release.yml / update-appstore-assets.yml）は削除済み。
 
 #### App Storeメタデータの更新
 リリースノートやスクリーンショットの更新:
 ```bash
 # ローカルでメタデータを更新
 bundle exec fastlane upload_metadata
-
-# または GitHub Actions で実行
-# Actions → 「Update App Store Assets」 → 「Run workflow」
 ```
 
 メタデータファイル:
@@ -388,12 +390,3 @@ bundle exec fastlane upload_metadata
 - `fastlane/metadata/en-US/release_notes.txt` - 英語リリースノート
 - `fastlane/metadata/ja/description.txt` - 日本語説明文
 - `fastlane/metadata/en-US/description.txt` - 英語説明文
-
-#### 必要なSecrets
-- `ASC_ISSUER_ID` - App Store Connect API Issuer ID
-- `ASC_KEY_ID` - App Store Connect API Key ID
-- `ASC_PRIVATE_KEY` - App Store Connect API Private Key
-- `DISTRIBUTION_CERTIFICATE_P12` - 配布用証明書（Base64）
-- `DISTRIBUTION_CERTIFICATE_PASSWORD` - 証明書パスワード
-- `PROVISIONING_PROFILE` - メインアプリ用プロビジョニングプロファイル
-- `WIDGET_PROVISIONING_PROFILE` - ウィジェット用プロビジョニングプロファイル
