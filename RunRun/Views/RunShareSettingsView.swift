@@ -88,6 +88,7 @@ struct RunShareSettingsView: View {
                     url: videoURL,
                     routeCoordinates: options.showRoute ? routeCoordinates : []
                 )
+                let isHDR = await VideoComposer.isHDRVideo(url: videoURL)
                 return { canvasSize in
                     ImageComposer.makeOverlayCGImage(
                         size: canvasSize,
@@ -95,7 +96,8 @@ struct RunShareSettingsView: View {
                         options: options,
                         routeCoordinates: routeCoordinates,
                         routeAreaBrightness: brightness,
-                        centered: false
+                        centered: false,
+                        hdrLogoBoost: isHDR
                     )
                 }
             },

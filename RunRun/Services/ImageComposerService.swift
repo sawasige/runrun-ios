@@ -134,14 +134,15 @@ enum ImageComposer {
             sdrWithText = sdrImage
         }
 
-        // 4. iOS 17+: HDRにも同じテキストを合成
+        // 4. iOS 17+: HDRにはロゴをブーストしたオーバーレイを合成（テキストのHDR白と輝度を揃える）
         var hdrWithText: CIImage?
         if #available(iOS 17.0, *) {
             if let hdrImage = CIImage(data: imageData, options: [
                 .applyOrientationProperty: true,
                 .expandToHDR: true
             ]) {
-                if let overlay = textOverlay {
+                let hdrOverlay = createTextOverlay(size: sdrImage.extent.size, record: record, options: options, routeCoordinates: routeCoordinates, routeAreaBrightness: routeAreaBrightness, centered: centered, hdrLogoBoost: true) ?? textOverlay
+                if let overlay = hdrOverlay {
                     hdrWithText = overlay.composited(over: hdrImage)
                 } else {
                     hdrWithText = hdrImage
@@ -154,7 +155,7 @@ enum ImageComposer {
     }
 
     /// 動画など他のパイプラインから利用するためのオーバーレイ生成（透明背景、HDR拡張レンジ対応）
-    nonisolated static func makeOverlayCGImage(size: CGSize, record: RunningRecord, options: ExportOptions, routeCoordinates: [CLLocationCoordinate2D] = [], routeAreaBrightness: CGFloat? = nil, centered: Bool = false) -> CGImage? {
+    nonisolated static func makeOverlayCGImage(size: CGSize, record: RunningRecord, options: ExportOptions, routeCoordinates: [CLLocationCoordinate2D] = [], routeAreaBrightness: CGFloat? = nil, centered: Bool = false, hdrLogoBoost: Bool = false) -> CGImage? {
         let format = UIGraphicsImageRendererFormat()
         format.preferredRange = .extended
         format.scale = 1.0
@@ -163,9 +164,9 @@ enum ImageComposer {
         let renderer = UIGraphicsImageRenderer(size: size, format: format)
         let image = renderer.image { _ in
             if centered {
-                drawCenteredTextOverlay(width: size.width, height: size.height, record: record, options: options, routeCoordinates: routeCoordinates)
+                drawCenteredTextOverlay(width: size.width, height: size.height, record: record, options: options, routeCoordinates: routeCoordinates, hdrLogoBoost: hdrLogoBoost)
             } else {
-                drawTextOverlay(width: size.width, height: size.height, record: record, options: options, routeCoordinates: routeCoordinates, routeAreaBrightness: routeAreaBrightness)
+                drawTextOverlay(width: size.width, height: size.height, record: record, options: options, routeCoordinates: routeCoordinates, routeAreaBrightness: routeAreaBrightness, hdrLogoBoost: hdrLogoBoost)
             }
         }
         return image.cgImage
@@ -177,7 +178,7 @@ enum ImageComposer {
     }
 
     /// テキストオーバーレイ画像を作成
-    private static func createTextOverlay(size: CGSize, record: RunningRecord, options: ExportOptions, routeCoordinates: [CLLocationCoordinate2D] = [], routeAreaBrightness: CGFloat? = nil, centered: Bool = false) -> CIImage? {
+    private static func createTextOverlay(size: CGSize, record: RunningRecord, options: ExportOptions, routeCoordinates: [CLLocationCoordinate2D] = [], routeAreaBrightness: CGFloat? = nil, centered: Bool = false, hdrLogoBoost: Bool = false) -> CIImage? {
         let format = UIGraphicsImageRendererFormat()
         format.preferredRange = .extended
         format.scale = 1.0
@@ -186,9 +187,9 @@ enum ImageComposer {
         let renderer = UIGraphicsImageRenderer(size: size, format: format)
         let textUIImage = renderer.image { _ in
             if centered {
-                drawCenteredTextOverlay(width: size.width, height: size.height, record: record, options: options, routeCoordinates: routeCoordinates)
+                drawCenteredTextOverlay(width: size.width, height: size.height, record: record, options: options, routeCoordinates: routeCoordinates, hdrLogoBoost: hdrLogoBoost)
             } else {
-                drawTextOverlay(width: size.width, height: size.height, record: record, options: options, routeCoordinates: routeCoordinates, routeAreaBrightness: routeAreaBrightness)
+                drawTextOverlay(width: size.width, height: size.height, record: record, options: options, routeCoordinates: routeCoordinates, routeAreaBrightness: routeAreaBrightness, hdrLogoBoost: hdrLogoBoost)
             }
         }
 
@@ -318,7 +319,7 @@ enum ImageComposer {
     }
 
     /// テキストオーバーレイを描画（ヒーローレイアウト）
-    private static func drawTextOverlay(width: CGFloat, height: CGFloat, record: RunningRecord, options: ExportOptions, routeCoordinates: [CLLocationCoordinate2D] = [], routeAreaBrightness: CGFloat? = nil) {
+    private static func drawTextOverlay(width: CGFloat, height: CGFloat, record: RunningRecord, options: ExportOptions, routeCoordinates: [CLLocationCoordinate2D] = [], routeAreaBrightness: CGFloat? = nil, hdrLogoBoost: Bool = false) {
         let useMetric = UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
         let overlayHeight = height / 3.0
         let baseFontSize = overlayHeight / 10.0
@@ -341,40 +342,7 @@ enum ImageComposer {
             let logoAspect = logo.size.width / logo.size.height
             let logoWidth = logoHeight * logoAspect
             let logoRect = CGRect(x: x - logoWidth, y: yOffset - logoHeight, width: logoWidth, height: logoHeight)
-
-            // 少し小さめの角丸にクリップ（白縁を隠す）
-            let inset = logoHeight * 0.06
-            let clipRect = logoRect.insetBy(dx: inset, dy: inset)
-            let cornerRadius = clipRect.height * 0.22
-            if let ctx = UIGraphicsGetCurrentContext() {
-                ctx.saveGState()
-                UIBezierPath(roundedRect: clipRect, cornerRadius: cornerRadius).addClip()
-            }
-
-            // ロゴをコントラスト強調して描画
-            if let ciLogo = CIImage(image: logo),
-               let filter = CIFilter(name: "CIColorControls") {
-                filter.setValue(ciLogo, forKey: kCIInputImageKey)
-                filter.setValue(1.5, forKey: kCIInputContrastKey)  // コントラスト強調
-                filter.setValue(0.1, forKey: kCIInputBrightnessKey)  // 少し明るく
-                filter.setValue(1.4, forKey: kCIInputSaturationKey)  // 彩度を上げる
-                if let output = filter.outputImage {
-                    let context = CIContext(options: [.workingColorSpace: CGColorSpace(name: CGColorSpace.extendedSRGB)!])
-                    if let cgImage = context.createCGImage(output, from: output.extent) {
-                        UIImage(cgImage: cgImage).draw(in: logoRect)
-                    } else {
-                        logo.draw(in: logoRect)
-                    }
-                } else {
-                    logo.draw(in: logoRect)
-                }
-            } else {
-                logo.draw(in: logoRect)
-            }
-
-            // クリップを解除
-            UIGraphicsGetCurrentContext()?.restoreGState()
-
+            drawLogo(logo, in: logoRect, hdrBoost: hdrLogoBoost)
             yOffset -= logoHeight + baseFontSize * 0.3
         }
 
@@ -454,7 +422,7 @@ enum ImageComposer {
     }
 
     /// テキストオーバーレイを描画（中央レイアウト - グラデーション背景用）
-    private static func drawCenteredTextOverlay(width: CGFloat, height: CGFloat, record: RunningRecord, options: ExportOptions, routeCoordinates: [CLLocationCoordinate2D] = []) {
+    private static func drawCenteredTextOverlay(width: CGFloat, height: CGFloat, record: RunningRecord, options: ExportOptions, routeCoordinates: [CLLocationCoordinate2D] = [], hdrLogoBoost: Bool = false) {
         let useMetric = UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
         let centerX = width / 2
         let padding = min(width, height) * 0.05  // 上下の余白
@@ -600,38 +568,7 @@ enum ImageComposer {
             let logoAspect = logo.size.width / logo.size.height
             let logoWidth = logoH * logoAspect
             let logoRect = CGRect(x: centerX - logoWidth / 2, y: yOffset, width: logoWidth, height: logoH)
-
-            // 少し小さめの角丸にクリップ
-            let inset = logoH * 0.06
-            let clipRect = logoRect.insetBy(dx: inset, dy: inset)
-            let cornerRadius = clipRect.height * 0.22
-            if let ctx = UIGraphicsGetCurrentContext() {
-                ctx.saveGState()
-                UIBezierPath(roundedRect: clipRect, cornerRadius: cornerRadius).addClip()
-            }
-
-            // ロゴをコントラスト強調して描画
-            if let ciLogo = CIImage(image: logo),
-               let filter = CIFilter(name: "CIColorControls") {
-                filter.setValue(ciLogo, forKey: kCIInputImageKey)
-                filter.setValue(1.5, forKey: kCIInputContrastKey)
-                filter.setValue(0.1, forKey: kCIInputBrightnessKey)
-                filter.setValue(1.4, forKey: kCIInputSaturationKey)
-                if let output = filter.outputImage {
-                    let context = CIContext(options: [.workingColorSpace: CGColorSpace(name: CGColorSpace.extendedSRGB)!])
-                    if let cgImage = context.createCGImage(output, from: output.extent) {
-                        UIImage(cgImage: cgImage).draw(in: logoRect)
-                    } else {
-                        logo.draw(in: logoRect)
-                    }
-                } else {
-                    logo.draw(in: logoRect)
-                }
-            } else {
-                logo.draw(in: logoRect)
-            }
-
-            UIGraphicsGetCurrentContext()?.restoreGState()
+            drawLogo(logo, in: logoRect, hdrBoost: hdrLogoBoost)
         }
     }
 
@@ -903,6 +840,53 @@ enum ImageComposer {
         (text as NSString).draw(at: drawPoint, withAttributes: fillAttributes)
     }
 
+    /// アプリロゴを角丸クリップ + コントラスト強調して描画
+    /// - hdrBoost: HDRレンディション用。テキストのHDR白（輝度2.0）と揃うよう、
+    ///   SDRと同じ見た目のロゴをリニア2倍（+1EV）にして拡張レンジで描画する
+    private static func drawLogo(_ logo: UIImage, in logoRect: CGRect, hdrBoost: Bool) {
+        let inset = logoRect.height * 0.06
+        let clipRect = logoRect.insetBy(dx: inset, dy: inset)
+        let cornerRadius = clipRect.height * 0.22
+        if let ctx = UIGraphicsGetCurrentContext() {
+            ctx.saveGState()
+            UIBezierPath(roundedRect: clipRect, cornerRadius: cornerRadius).addClip()
+        }
+        defer { UIGraphicsGetCurrentContext()?.restoreGState() }
+
+        // コントラスト強調（SDRの見た目の基準）
+        guard let ciLogo = CIImage(image: logo),
+              let filter = CIFilter(name: "CIColorControls") else {
+            logo.draw(in: logoRect)
+            return
+        }
+        filter.setValue(ciLogo, forKey: kCIInputImageKey)
+        filter.setValue(1.5, forKey: kCIInputContrastKey)
+        filter.setValue(0.1, forKey: kCIInputBrightnessKey)
+        filter.setValue(1.4, forKey: kCIInputSaturationKey)
+        guard let output = filter.outputImage,
+              let sdrCGImage = CIContext(options: [.workingColorSpace: CGColorSpace(name: CGColorSpace.extendedSRGB)!])
+                  .createCGImage(output, from: output.extent) else {
+            logo.draw(in: logoRect)
+            return
+        }
+
+        if hdrBoost {
+            // SDRと同じ見た目からリニア2倍にブーストし、float16でレンジを保持
+            let linearSpace = CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!
+            if let exposure = CIFilter(name: "CIExposureAdjust") {
+                exposure.setValue(CIImage(cgImage: sdrCGImage), forKey: kCIInputImageKey)
+                exposure.setValue(1.0, forKey: kCIInputEVKey)
+                if let boosted = exposure.outputImage,
+                   let hdrCGImage = CIContext(options: [.workingColorSpace: linearSpace])
+                       .createCGImage(boosted, from: boosted.extent, format: .RGBAh, colorSpace: linearSpace) {
+                    UIImage(cgImage: hdrCGImage).draw(in: logoRect)
+                    return
+                }
+            }
+        }
+        UIImage(cgImage: sdrCGImage).draw(in: logoRect)
+    }
+
     // MARK: - Monthly Stats Composition
 
     /// 月間統計画像を合成
@@ -922,13 +906,15 @@ enum ImageComposer {
             sdrWithText = sdrImage
         }
 
+        // HDRにはロゴをブーストしたオーバーレイを合成（テキストのHDR白と輝度を揃える）
         var hdrWithText: CIImage?
         if #available(iOS 17.0, *) {
             if let hdrImage = CIImage(data: imageData, options: [
                 .applyOrientationProperty: true,
                 .expandToHDR: true
             ]) {
-                if let overlay = textOverlay {
+                let hdrOverlay = createMonthlyTextOverlay(size: sdrImage.extent.size, shareData: shareData, options: options, centered: centered, hdrLogoBoost: true) ?? textOverlay
+                if let overlay = hdrOverlay {
                     hdrWithText = overlay.composited(over: hdrImage)
                 } else {
                     hdrWithText = hdrImage
@@ -940,7 +926,7 @@ enum ImageComposer {
     }
 
     /// 動画など他のパイプラインから利用する月別オーバーレイ生成（透明背景、HDR拡張レンジ対応）
-    nonisolated static func makeMonthlyOverlayCGImage(size: CGSize, shareData: MonthlyShareData, options: MonthExportOptions, centered: Bool = false) -> CGImage? {
+    nonisolated static func makeMonthlyOverlayCGImage(size: CGSize, shareData: MonthlyShareData, options: MonthExportOptions, centered: Bool = false, hdrLogoBoost: Bool = false) -> CGImage? {
         let format = UIGraphicsImageRendererFormat()
         format.preferredRange = .extended
         format.scale = 1.0
@@ -949,15 +935,15 @@ enum ImageComposer {
         let renderer = UIGraphicsImageRenderer(size: size, format: format)
         let image = renderer.image { _ in
             if centered {
-                drawCenteredMonthlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+                drawCenteredMonthlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options, hdrLogoBoost: hdrLogoBoost)
             } else {
-                drawMonthlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+                drawMonthlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options, hdrLogoBoost: hdrLogoBoost)
             }
         }
         return image.cgImage
     }
 
-    private static func createMonthlyTextOverlay(size: CGSize, shareData: MonthlyShareData, options: MonthExportOptions, centered: Bool = false) -> CIImage? {
+    private static func createMonthlyTextOverlay(size: CGSize, shareData: MonthlyShareData, options: MonthExportOptions, centered: Bool = false, hdrLogoBoost: Bool = false) -> CIImage? {
         let format = UIGraphicsImageRendererFormat()
         format.preferredRange = .extended
         format.scale = 1.0
@@ -966,16 +952,16 @@ enum ImageComposer {
         let renderer = UIGraphicsImageRenderer(size: size, format: format)
         let textUIImage = renderer.image { _ in
             if centered {
-                drawCenteredMonthlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+                drawCenteredMonthlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options, hdrLogoBoost: hdrLogoBoost)
             } else {
-                drawMonthlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+                drawMonthlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options, hdrLogoBoost: hdrLogoBoost)
             }
         }
 
         return CIImage(image: textUIImage)
     }
 
-    private static func drawMonthlyTextOverlay(width: CGFloat, height: CGFloat, shareData: MonthlyShareData, options: MonthExportOptions) {
+    private static func drawMonthlyTextOverlay(width: CGFloat, height: CGFloat, shareData: MonthlyShareData, options: MonthExportOptions, hdrLogoBoost: Bool = false) {
         let useMetric = UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
         let overlayHeight = height / 3.0
         let baseFontSize = overlayHeight / 10.0
@@ -998,36 +984,7 @@ enum ImageComposer {
             let logoAspect = logo.size.width / logo.size.height
             let logoWidth = logoHeight * logoAspect
             let logoRect = CGRect(x: x - logoWidth, y: yOffset - logoHeight, width: logoWidth, height: logoHeight)
-
-            let inset = logoHeight * 0.06
-            let clipRect = logoRect.insetBy(dx: inset, dy: inset)
-            let cornerRadius = clipRect.height * 0.22
-            if let ctx = UIGraphicsGetCurrentContext() {
-                ctx.saveGState()
-                UIBezierPath(roundedRect: clipRect, cornerRadius: cornerRadius).addClip()
-            }
-
-            if let ciLogo = CIImage(image: logo),
-               let filter = CIFilter(name: "CIColorControls") {
-                filter.setValue(ciLogo, forKey: kCIInputImageKey)
-                filter.setValue(1.5, forKey: kCIInputContrastKey)
-                filter.setValue(0.1, forKey: kCIInputBrightnessKey)
-                filter.setValue(1.4, forKey: kCIInputSaturationKey)
-                if let output = filter.outputImage {
-                    let context = CIContext(options: [.workingColorSpace: CGColorSpace(name: CGColorSpace.extendedSRGB)!])
-                    if let cgImage = context.createCGImage(output, from: output.extent) {
-                        UIImage(cgImage: cgImage).draw(in: logoRect)
-                    } else {
-                        logo.draw(in: logoRect)
-                    }
-                } else {
-                    logo.draw(in: logoRect)
-                }
-            } else {
-                logo.draw(in: logoRect)
-            }
-
-            UIGraphicsGetCurrentContext()?.restoreGState()
+            drawLogo(logo, in: logoRect, hdrBoost: hdrLogoBoost)
             yOffset -= logoHeight + baseFontSize * 0.3
         }
 
@@ -1099,7 +1056,7 @@ enum ImageComposer {
     }
 
     /// 月間統計テキストオーバーレイを描画（中央レイアウト）
-    private static func drawCenteredMonthlyTextOverlay(width: CGFloat, height: CGFloat, shareData: MonthlyShareData, options: MonthExportOptions) {
+    private static func drawCenteredMonthlyTextOverlay(width: CGFloat, height: CGFloat, shareData: MonthlyShareData, options: MonthExportOptions, hdrLogoBoost: Bool = false) {
         let useMetric = UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
         let centerX = width / 2
         let padding = min(width, height) * 0.05
@@ -1209,21 +1166,7 @@ enum ImageComposer {
         if let logo = UIImage(named: "Logo") {
             let logoW = logoH * (logo.size.width / logo.size.height)
             let logoRect = CGRect(x: centerX - logoW / 2, y: yOffset, width: logoW, height: logoH)
-            let inset = logoH * 0.06
-            let clipRect = logoRect.insetBy(dx: inset, dy: inset)
-            UIGraphicsGetCurrentContext()?.saveGState()
-            UIBezierPath(roundedRect: clipRect, cornerRadius: clipRect.height * 0.22).addClip()
-            if let ciLogo = CIImage(image: logo), let filter = CIFilter(name: "CIColorControls") {
-                filter.setValue(ciLogo, forKey: kCIInputImageKey)
-                filter.setValue(1.5, forKey: kCIInputContrastKey)
-                filter.setValue(0.1, forKey: kCIInputBrightnessKey)
-                filter.setValue(1.4, forKey: kCIInputSaturationKey)
-                if let output = filter.outputImage,
-                   let cgImage = CIContext(options: [.workingColorSpace: CGColorSpace(name: CGColorSpace.extendedSRGB)!]).createCGImage(output, from: output.extent) {
-                    UIImage(cgImage: cgImage).draw(in: logoRect)
-                } else { logo.draw(in: logoRect) }
-            } else { logo.draw(in: logoRect) }
-            UIGraphicsGetCurrentContext()?.restoreGState()
+            drawLogo(logo, in: logoRect, hdrBoost: hdrLogoBoost)
         }
     }
 
@@ -1246,13 +1189,15 @@ enum ImageComposer {
             sdrWithText = sdrImage
         }
 
+        // HDRにはロゴをブーストしたオーバーレイを合成（テキストのHDR白と輝度を揃える）
         var hdrWithText: CIImage?
         if #available(iOS 17.0, *) {
             if let hdrImage = CIImage(data: imageData, options: [
                 .applyOrientationProperty: true,
                 .expandToHDR: true
             ]) {
-                if let overlay = textOverlay {
+                let hdrOverlay = createYearlyTextOverlay(size: sdrImage.extent.size, shareData: shareData, options: options, centered: centered, hdrLogoBoost: true) ?? textOverlay
+                if let overlay = hdrOverlay {
                     hdrWithText = overlay.composited(over: hdrImage)
                 } else {
                     hdrWithText = hdrImage
@@ -1264,7 +1209,7 @@ enum ImageComposer {
     }
 
     /// 動画など他のパイプラインから利用する年別オーバーレイ生成（透明背景、HDR拡張レンジ対応）
-    nonisolated static func makeYearlyOverlayCGImage(size: CGSize, shareData: YearlyShareData, options: YearExportOptions, centered: Bool = false) -> CGImage? {
+    nonisolated static func makeYearlyOverlayCGImage(size: CGSize, shareData: YearlyShareData, options: YearExportOptions, centered: Bool = false, hdrLogoBoost: Bool = false) -> CGImage? {
         let format = UIGraphicsImageRendererFormat()
         format.preferredRange = .extended
         format.scale = 1.0
@@ -1273,15 +1218,15 @@ enum ImageComposer {
         let renderer = UIGraphicsImageRenderer(size: size, format: format)
         let image = renderer.image { _ in
             if centered {
-                drawCenteredYearlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+                drawCenteredYearlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options, hdrLogoBoost: hdrLogoBoost)
             } else {
-                drawYearlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+                drawYearlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options, hdrLogoBoost: hdrLogoBoost)
             }
         }
         return image.cgImage
     }
 
-    private static func createYearlyTextOverlay(size: CGSize, shareData: YearlyShareData, options: YearExportOptions, centered: Bool = false) -> CIImage? {
+    private static func createYearlyTextOverlay(size: CGSize, shareData: YearlyShareData, options: YearExportOptions, centered: Bool = false, hdrLogoBoost: Bool = false) -> CIImage? {
         let format = UIGraphicsImageRendererFormat()
         format.preferredRange = .extended
         format.scale = 1.0
@@ -1290,16 +1235,16 @@ enum ImageComposer {
         let renderer = UIGraphicsImageRenderer(size: size, format: format)
         let textUIImage = renderer.image { _ in
             if centered {
-                drawCenteredYearlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+                drawCenteredYearlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options, hdrLogoBoost: hdrLogoBoost)
             } else {
-                drawYearlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+                drawYearlyTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options, hdrLogoBoost: hdrLogoBoost)
             }
         }
 
         return CIImage(image: textUIImage)
     }
 
-    private static func drawYearlyTextOverlay(width: CGFloat, height: CGFloat, shareData: YearlyShareData, options: YearExportOptions) {
+    private static func drawYearlyTextOverlay(width: CGFloat, height: CGFloat, shareData: YearlyShareData, options: YearExportOptions, hdrLogoBoost: Bool = false) {
         let useMetric = UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
         let overlayHeight = height / 3.0
         let baseFontSize = overlayHeight / 10.0
@@ -1322,36 +1267,7 @@ enum ImageComposer {
             let logoAspect = logo.size.width / logo.size.height
             let logoWidth = logoHeight * logoAspect
             let logoRect = CGRect(x: x - logoWidth, y: yOffset - logoHeight, width: logoWidth, height: logoHeight)
-
-            let inset = logoHeight * 0.06
-            let clipRect = logoRect.insetBy(dx: inset, dy: inset)
-            let cornerRadius = clipRect.height * 0.22
-            if let ctx = UIGraphicsGetCurrentContext() {
-                ctx.saveGState()
-                UIBezierPath(roundedRect: clipRect, cornerRadius: cornerRadius).addClip()
-            }
-
-            if let ciLogo = CIImage(image: logo),
-               let filter = CIFilter(name: "CIColorControls") {
-                filter.setValue(ciLogo, forKey: kCIInputImageKey)
-                filter.setValue(1.5, forKey: kCIInputContrastKey)
-                filter.setValue(0.1, forKey: kCIInputBrightnessKey)
-                filter.setValue(1.4, forKey: kCIInputSaturationKey)
-                if let output = filter.outputImage {
-                    let context = CIContext(options: [.workingColorSpace: CGColorSpace(name: CGColorSpace.extendedSRGB)!])
-                    if let cgImage = context.createCGImage(output, from: output.extent) {
-                        UIImage(cgImage: cgImage).draw(in: logoRect)
-                    } else {
-                        logo.draw(in: logoRect)
-                    }
-                } else {
-                    logo.draw(in: logoRect)
-                }
-            } else {
-                logo.draw(in: logoRect)
-            }
-
-            UIGraphicsGetCurrentContext()?.restoreGState()
+            drawLogo(logo, in: logoRect, hdrBoost: hdrLogoBoost)
             yOffset -= logoHeight + baseFontSize * 0.3
         }
 
@@ -1424,7 +1340,7 @@ enum ImageComposer {
     }
 
     /// 年間統計テキストオーバーレイを描画（中央レイアウト）
-    private static func drawCenteredYearlyTextOverlay(width: CGFloat, height: CGFloat, shareData: YearlyShareData, options: YearExportOptions) {
+    private static func drawCenteredYearlyTextOverlay(width: CGFloat, height: CGFloat, shareData: YearlyShareData, options: YearExportOptions, hdrLogoBoost: Bool = false) {
         let useMetric = UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
         let centerX = width / 2
         let padding = min(width, height) * 0.05
@@ -1531,21 +1447,7 @@ enum ImageComposer {
         if let logo = UIImage(named: "Logo") {
             let logoW = logoH * (logo.size.width / logo.size.height)
             let logoRect = CGRect(x: centerX - logoW / 2, y: yOffset, width: logoW, height: logoH)
-            let inset = logoH * 0.06
-            let clipRect = logoRect.insetBy(dx: inset, dy: inset)
-            UIGraphicsGetCurrentContext()?.saveGState()
-            UIBezierPath(roundedRect: clipRect, cornerRadius: clipRect.height * 0.22).addClip()
-            if let ciLogo = CIImage(image: logo), let filter = CIFilter(name: "CIColorControls") {
-                filter.setValue(ciLogo, forKey: kCIInputImageKey)
-                filter.setValue(1.5, forKey: kCIInputContrastKey)
-                filter.setValue(0.1, forKey: kCIInputBrightnessKey)
-                filter.setValue(1.4, forKey: kCIInputSaturationKey)
-                if let output = filter.outputImage,
-                   let cgImage = CIContext(options: [.workingColorSpace: CGColorSpace(name: CGColorSpace.extendedSRGB)!]).createCGImage(output, from: output.extent) {
-                    UIImage(cgImage: cgImage).draw(in: logoRect)
-                } else { logo.draw(in: logoRect) }
-            } else { logo.draw(in: logoRect) }
-            UIGraphicsGetCurrentContext()?.restoreGState()
+            drawLogo(logo, in: logoRect, hdrBoost: hdrLogoBoost)
         }
     }
 
@@ -1568,13 +1470,15 @@ enum ImageComposer {
             sdrWithText = sdrImage
         }
 
+        // HDRにはロゴをブーストしたオーバーレイを合成（テキストのHDR白と輝度を揃える）
         var hdrWithText: CIImage?
         if #available(iOS 17.0, *) {
             if let hdrImage = CIImage(data: imageData, options: [
                 .applyOrientationProperty: true,
                 .expandToHDR: true
             ]) {
-                if let overlay = textOverlay {
+                let hdrOverlay = createProfileTextOverlay(size: sdrImage.extent.size, shareData: shareData, options: options, centered: centered, hdrLogoBoost: true) ?? textOverlay
+                if let overlay = hdrOverlay {
                     hdrWithText = overlay.composited(over: hdrImage)
                 } else {
                     hdrWithText = hdrImage
@@ -1586,7 +1490,7 @@ enum ImageComposer {
     }
 
     /// 動画など他のパイプラインから利用するプロフィールオーバーレイ生成（透明背景、HDR拡張レンジ対応）
-    nonisolated static func makeProfileOverlayCGImage(size: CGSize, shareData: ProfileShareData, options: ProfileExportOptions, centered: Bool = false) -> CGImage? {
+    nonisolated static func makeProfileOverlayCGImage(size: CGSize, shareData: ProfileShareData, options: ProfileExportOptions, centered: Bool = false, hdrLogoBoost: Bool = false) -> CGImage? {
         let format = UIGraphicsImageRendererFormat()
         format.preferredRange = .extended
         format.scale = 1.0
@@ -1595,15 +1499,15 @@ enum ImageComposer {
         let renderer = UIGraphicsImageRenderer(size: size, format: format)
         let image = renderer.image { _ in
             if centered {
-                drawCenteredProfileTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+                drawCenteredProfileTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options, hdrLogoBoost: hdrLogoBoost)
             } else {
-                drawProfileTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+                drawProfileTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options, hdrLogoBoost: hdrLogoBoost)
             }
         }
         return image.cgImage
     }
 
-    private static func createProfileTextOverlay(size: CGSize, shareData: ProfileShareData, options: ProfileExportOptions, centered: Bool = false) -> CIImage? {
+    private static func createProfileTextOverlay(size: CGSize, shareData: ProfileShareData, options: ProfileExportOptions, centered: Bool = false, hdrLogoBoost: Bool = false) -> CIImage? {
         let format = UIGraphicsImageRendererFormat()
         format.preferredRange = .extended
         format.scale = 1.0
@@ -1612,16 +1516,16 @@ enum ImageComposer {
         let renderer = UIGraphicsImageRenderer(size: size, format: format)
         let textUIImage = renderer.image { _ in
             if centered {
-                drawCenteredProfileTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+                drawCenteredProfileTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options, hdrLogoBoost: hdrLogoBoost)
             } else {
-                drawProfileTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options)
+                drawProfileTextOverlay(width: size.width, height: size.height, shareData: shareData, options: options, hdrLogoBoost: hdrLogoBoost)
             }
         }
 
         return CIImage(image: textUIImage)
     }
 
-    private static func drawProfileTextOverlay(width: CGFloat, height: CGFloat, shareData: ProfileShareData, options: ProfileExportOptions) {
+    private static func drawProfileTextOverlay(width: CGFloat, height: CGFloat, shareData: ProfileShareData, options: ProfileExportOptions, hdrLogoBoost: Bool = false) {
         let useMetric = UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
         let overlayHeight = height / 3.0
         let baseFontSize = overlayHeight / 10.0
@@ -1644,36 +1548,7 @@ enum ImageComposer {
             let logoAspect = logo.size.width / logo.size.height
             let logoWidth = logoHeight * logoAspect
             let logoRect = CGRect(x: x - logoWidth, y: yOffset - logoHeight, width: logoWidth, height: logoHeight)
-
-            let inset = logoHeight * 0.06
-            let clipRect = logoRect.insetBy(dx: inset, dy: inset)
-            let cornerRadius = clipRect.height * 0.22
-            if let ctx = UIGraphicsGetCurrentContext() {
-                ctx.saveGState()
-                UIBezierPath(roundedRect: clipRect, cornerRadius: cornerRadius).addClip()
-            }
-
-            if let ciLogo = CIImage(image: logo),
-               let filter = CIFilter(name: "CIColorControls") {
-                filter.setValue(ciLogo, forKey: kCIInputImageKey)
-                filter.setValue(1.5, forKey: kCIInputContrastKey)
-                filter.setValue(0.1, forKey: kCIInputBrightnessKey)
-                filter.setValue(1.4, forKey: kCIInputSaturationKey)
-                if let output = filter.outputImage {
-                    let context = CIContext(options: [.workingColorSpace: CGColorSpace(name: CGColorSpace.extendedSRGB)!])
-                    if let cgImage = context.createCGImage(output, from: output.extent) {
-                        UIImage(cgImage: cgImage).draw(in: logoRect)
-                    } else {
-                        logo.draw(in: logoRect)
-                    }
-                } else {
-                    logo.draw(in: logoRect)
-                }
-            } else {
-                logo.draw(in: logoRect)
-            }
-
-            UIGraphicsGetCurrentContext()?.restoreGState()
+            drawLogo(logo, in: logoRect, hdrBoost: hdrLogoBoost)
             yOffset -= logoHeight + baseFontSize * 0.3
         }
 
@@ -1730,7 +1605,7 @@ enum ImageComposer {
     }
 
     /// プロフィール統計テキストオーバーレイを描画（中央レイアウト）
-    private static func drawCenteredProfileTextOverlay(width: CGFloat, height: CGFloat, shareData: ProfileShareData, options: ProfileExportOptions) {
+    private static func drawCenteredProfileTextOverlay(width: CGFloat, height: CGFloat, shareData: ProfileShareData, options: ProfileExportOptions, hdrLogoBoost: Bool = false) {
         let useMetric = UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
         let centerX = width / 2
         let padding = min(width, height) * 0.05
@@ -1817,21 +1692,7 @@ enum ImageComposer {
         if let logo = UIImage(named: "Logo") {
             let logoW = logoH * (logo.size.width / logo.size.height)
             let logoRect = CGRect(x: centerX - logoW / 2, y: yOffset, width: logoW, height: logoH)
-            let inset = logoH * 0.06
-            let clipRect = logoRect.insetBy(dx: inset, dy: inset)
-            UIGraphicsGetCurrentContext()?.saveGState()
-            UIBezierPath(roundedRect: clipRect, cornerRadius: clipRect.height * 0.22).addClip()
-            if let ciLogo = CIImage(image: logo), let filter = CIFilter(name: "CIColorControls") {
-                filter.setValue(ciLogo, forKey: kCIInputImageKey)
-                filter.setValue(1.5, forKey: kCIInputContrastKey)
-                filter.setValue(0.1, forKey: kCIInputBrightnessKey)
-                filter.setValue(1.4, forKey: kCIInputSaturationKey)
-                if let output = filter.outputImage,
-                   let cgImage = CIContext(options: [.workingColorSpace: CGColorSpace(name: CGColorSpace.extendedSRGB)!]).createCGImage(output, from: output.extent) {
-                    UIImage(cgImage: cgImage).draw(in: logoRect)
-                } else { logo.draw(in: logoRect) }
-            } else { logo.draw(in: logoRect) }
-            UIGraphicsGetCurrentContext()?.restoreGState()
+            drawLogo(logo, in: logoRect, hdrBoost: hdrLogoBoost)
         }
     }
 }

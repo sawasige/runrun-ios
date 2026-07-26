@@ -138,6 +138,19 @@ enum VideoComposer {
         )
     }
 
+    /// 動画がHDR (HLG/PQ) かどうかを返す。
+    /// オーバーレイのロゴをHDRブーストするかの判定に使う。
+    static func isHDRVideo(url: URL) async -> Bool {
+        let asset = AVURLAsset(url: url)
+        guard let track = try? await asset.loadTracks(withMediaType: .video).first,
+              let formats = try? await track.load(.formatDescriptions) else {
+            return false
+        }
+        let (_, transfer, _) = extractColorAttachments(from: formats)
+        return transfer == (kCVImageBufferTransferFunction_ITU_R_2100_HLG as String)
+            || transfer == (kCVImageBufferTransferFunction_SMPTE_ST_2084_PQ as String)
+    }
+
     /// 動画中央のフレームを取得し、ルート描画領域の背景明度をサンプルする。
     /// オーバーレイのルート縁取り色を背景に応じて切り替えるための値。
     static func sampleMiddleFrameBrightness(
