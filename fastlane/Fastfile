@@ -16,24 +16,32 @@ platform :ios do
   lane :upload_metadata do |options|
     setup_api_key
     app_version = options[:app_version]
-    deliver(
+    skip_screenshots = options[:skip_screenshots] || false
+    deliver_options = {
       app_version: app_version,
       skip_binary_upload: true,
       skip_app_version_update: app_version.nil?,
-      skip_screenshots: options[:skip_screenshots] || false,
+      skip_screenshots: skip_screenshots,
       overwrite_screenshots: true,
       force: true,
       run_precheck_before_submit: false
-    )
+    }
+    if skip_screenshots
+      deliver(**deliver_options)
+    else
+      deliver_options[:screenshots_path] = staged_framed_screenshots_path
+      deliver_with_screenshot_verification(deliver_options)
+    end
   end
 
   desc "スクリーンショットのみアップロード"
   lane :upload_screenshots do
     setup_api_key
-    deliver(
+    deliver_with_screenshot_verification(
       skip_binary_upload: true,
       skip_metadata: true,
       overwrite_screenshots: true,
+      screenshots_path: staged_framed_screenshots_path,
       force: true,
       run_precheck_before_submit: false
     )
@@ -112,6 +120,92 @@ platform :ios do
   lane :generate_preview do
     screenshots_path = File.expand_path("../screenshots", __FILE__)
     generate_preview_html(screenshots_path)
+  end
+end
+
+# フレーム版 (*_framed.png) のみを含む一時ディレクトリを作って返す。
+# screenshots/ にはフレーム版と元画像が混在しており、そのまま deliver に渡すと
+# 両方アップロードされて ASC の上限 (1機種10枚) を超えてしまうため。
+def staged_framed_screenshots_path
+  src = File.expand_path("../screenshots", __FILE__)
+  dst = File.join(Dir.tmpdir, "runrun-framed-screenshots")
+  FileUtils.rm_rf(dst)
+  ["ja", "en-US"].each do |lang|
+    FileUtils.mkdir_p(File.join(dst, lang))
+    framed = Dir.glob(File.join(src, lang, "*_framed.png"))
+    UI.user_error!("#{lang} にフレーム版スクリーンショットがありません") if framed.empty?
+    framed.each { |f| FileUtils.cp(f, File.join(dst, lang, File.basename(f))) }
+    UI.message("Staged #{framed.size} framed screenshots for #{lang}")
+  end
+  dst
+end
+
+# deliver 実行 + アップロード後検証。不整合があれば ASC 側を掃除してから deliver をやり直す。
+# ASC API の一時エラーで「全削除」が取りこぼされると、古い画像が残ったまま
+# 新規分が枚数上限 (1機種10枚) でスキップされたり、リトライで重複登録されるため。
+def deliver_with_screenshot_verification(deliver_options)
+  max_attempts = 3
+  attempts = 0
+  begin
+    attempts += 1
+    deliver(**deliver_options)
+    verify_and_reconcile_screenshots
+  rescue => e
+    if attempts < max_attempts
+      UI.important("スクリーンショット検証に失敗したため再試行します (#{attempts + 1}/#{max_attempts}): #{e.message}")
+      retry
+    end
+    raise
+  end
+end
+
+# ASC 側のスクリーンショットをローカルのフレーム版 (MD5) と突き合わせる。
+# - ローカルに存在しない画像（過去の取りこぼし残骸）→ 削除
+# - 同一チェックサムの重複 → 削除
+# - 掃除後の枚数がローカルと一致しなければ例外（呼び出し元で deliver をやり直す）
+def verify_and_reconcile_screenshots
+  require "digest"
+  src = File.expand_path("../screenshots", __FILE__)
+  local = {}
+  ["ja", "en-US"].each do |lang|
+    local[lang] = { "IPHONE" => {}, "IPAD" => {} }
+    Dir.glob(File.join(src, lang, "*_framed.png")).each do |f|
+      family = File.basename(f).start_with?("iPad") ? "IPAD" : "IPHONE"
+      local[lang][family][Digest::MD5.file(f).hexdigest] = File.basename(f)
+    end
+  end
+
+  app_identifier = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
+  app = Spaceship::ConnectAPI::App.find(app_identifier)
+  version = app.get_edit_app_store_version(platform: Spaceship::ConnectAPI::Platform::IOS)
+  UI.user_error!("編集可能なバージョンが見つかりません") if version.nil?
+
+  version.get_app_store_version_localizations.each do |localization|
+    next unless local.key?(localization.locale)
+
+    localization.get_app_screenshot_sets.each do |set|
+      device_family = set.screenshot_display_type.include?("IPAD") ? "IPAD" : "IPHONE"
+      valid = local[localization.locale][device_family]
+      seen = {}
+      (set.app_screenshots || []).each do |shot|
+        key = shot.source_file_checksum || shot.file_name
+        if !valid.key?(key)
+          UI.important("ローカルに無い画像を削除: #{localization.locale} #{set.screenshot_display_type} #{shot.file_name}")
+          shot.delete!
+        elsif seen[key]
+          UI.important("重複を削除: #{localization.locale} #{set.screenshot_display_type} #{shot.file_name}")
+          shot.delete!
+        else
+          seen[key] = true
+        end
+      end
+
+      if seen.size != valid.size
+        missing = valid.reject { |k, _| seen.key?(k) }.values
+        UI.user_error!("枚数不一致: #{localization.locale} #{set.screenshot_display_type} expected=#{valid.size} actual=#{seen.size} missing=#{missing.join(', ')}")
+      end
+      UI.success("検証OK: #{localization.locale} #{set.screenshot_display_type} #{seen.size}枚")
+    end
   end
 end
 
