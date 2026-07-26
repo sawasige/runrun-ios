@@ -1,5 +1,5 @@
 Thank you for using RunRun!
 
-【Fixed】
-・Fixed an issue where the preview wouldn't appear on the share settings screen
-・Show a retry button when preview generation fails
+【Improved】
+・The app logo in shared images and videos now supports HDR, matching the brightness of the text
+・Fixed an issue where the share overlay appeared too small on landscape photos and videos
