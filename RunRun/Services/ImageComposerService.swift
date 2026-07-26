@@ -201,8 +201,7 @@ enum ImageComposer {
     /// ルート描画領域の平均明るさを計算（0.0〜1.0）
     private static func calculateRouteAreaBrightness(image: CIImage, routeCoordinates: [CLLocationCoordinate2D]) -> CGFloat {
         let size = image.extent.size
-        let overlayHeight = size.height / 3.0
-        let baseFontSize = overlayHeight / 10.0
+        let baseFontSize = overlayBaseFontSize(width: size.width, height: size.height)
         let padding = baseFontSize * 0.8
         let routeHeight = baseFontSize * 3.6  // drawTextOverlayと同じサイズ
         let routeWidth = routeHeight * 1.5
@@ -321,8 +320,7 @@ enum ImageComposer {
     /// テキストオーバーレイを描画（ヒーローレイアウト）
     private static func drawTextOverlay(width: CGFloat, height: CGFloat, record: RunningRecord, options: ExportOptions, routeCoordinates: [CLLocationCoordinate2D] = [], routeAreaBrightness: CGFloat? = nil, hdrLogoBoost: Bool = false) {
         let useMetric = UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
-        let overlayHeight = height / 3.0
-        let baseFontSize = overlayHeight / 10.0
+        let baseFontSize = overlayBaseFontSize(width: width, height: height)
         let padding = baseFontSize * 0.8
 
         // フォントサイズのバリエーション
@@ -840,6 +838,13 @@ enum ImageComposer {
         (text as NSString).draw(at: drawPoint, withAttributes: fillAttributes)
     }
 
+    /// 右下レイアウトの基準フォントサイズを計算
+    /// 長辺基準（長辺の1/30）にすることで、横向きの写真・動画でも縦向きと同じ大きさで表示される。
+    /// 超横長（パノラマ等）でオーバーレイが縦にはみ出さないよう短辺の1/16でキャップ（16:9までは影響なし）。
+    private static func overlayBaseFontSize(width: CGFloat, height: CGFloat) -> CGFloat {
+        min(max(width, height) / 30.0, min(width, height) / 16.0)
+    }
+
     /// アプリロゴを角丸クリップ + コントラスト強調して描画
     /// - hdrBoost: HDRレンディション用。テキストのHDR白（輝度2.0）と揃うよう、
     ///   SDRと同じ見た目のロゴをリニア2倍（+1EV）にして拡張レンジで描画する
@@ -963,8 +968,7 @@ enum ImageComposer {
 
     private static func drawMonthlyTextOverlay(width: CGFloat, height: CGFloat, shareData: MonthlyShareData, options: MonthExportOptions, hdrLogoBoost: Bool = false) {
         let useMetric = UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
-        let overlayHeight = height / 3.0
-        let baseFontSize = overlayHeight / 10.0
+        let baseFontSize = overlayBaseFontSize(width: width, height: height)
         let padding = baseFontSize * 0.8
 
         // フォントサイズのバリエーション（ラン詳細と同様）
@@ -1246,8 +1250,7 @@ enum ImageComposer {
 
     private static func drawYearlyTextOverlay(width: CGFloat, height: CGFloat, shareData: YearlyShareData, options: YearExportOptions, hdrLogoBoost: Bool = false) {
         let useMetric = UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
-        let overlayHeight = height / 3.0
-        let baseFontSize = overlayHeight / 10.0
+        let baseFontSize = overlayBaseFontSize(width: width, height: height)
         let padding = baseFontSize * 0.8
 
         // フォントサイズのバリエーション（月詳細と同様）
@@ -1527,8 +1530,7 @@ enum ImageComposer {
 
     private static func drawProfileTextOverlay(width: CGFloat, height: CGFloat, shareData: ProfileShareData, options: ProfileExportOptions, hdrLogoBoost: Bool = false) {
         let useMetric = UserDefaults.standard.object(forKey: "units.distance") as? Bool ?? UnitFormatter.defaultUseMetric
-        let overlayHeight = height / 3.0
-        let baseFontSize = overlayHeight / 10.0
+        let baseFontSize = overlayBaseFontSize(width: width, height: height)
         let padding = baseFontSize * 0.8
 
         // フォントサイズのバリエーション（月詳細・年詳細と同様）
