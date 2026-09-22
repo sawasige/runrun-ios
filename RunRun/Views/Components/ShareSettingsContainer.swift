@@ -66,6 +66,7 @@ struct ShareSettingsContainer<OptionsView: View>: View {
 
     // 写真/動画選択（背景）
     @State private var selectedPickerItem: PhotosPickerItem?
+    @State private var showBackgroundPicker = false
     @State private var photoData: Data?
     @State private var videoURL: URL?
     @State private var videoOverlayBuilder: (@Sendable (CGSize) -> CGImage?)?
@@ -99,6 +100,22 @@ struct ShareSettingsContainer<OptionsView: View>: View {
                     ShareSheet(activityItems: [item.url], onComplete: { _ in
                         try? FileManager.default.removeItem(at: item.url)
                     })
+                }
+                .photosPicker(
+                    isPresented: $showBackgroundPicker,
+                    selection: $selectedPickerItem,
+                    matching: pickerFilter,
+                    preferredItemEncoding: .current,
+                    photoLibrary: .shared()
+                )
+                // 写真ピッカーや共有シートは別プロセスのリモートUI。
+                // 表示中は動画プレビューの合成を止めて、リモートプロセス起動時のアプリ側負荷を下げる
+                // (iOS 27.0 で UIKit のリモートVC接続時アサーションによるクラッシュが発生したための緩和策)
+                .onChange(of: showBackgroundPicker) { _, isShowing in
+                    setPreviewPlaybackPaused(isShowing)
+                }
+                .onChange(of: shareItem == nil) { _, isDismissed in
+                    setPreviewPlaybackPaused(!isDismissed)
                 }
                 .onChange(of: selectedPickerItem) { _, newItem in
                     guard let newItem else { return }
@@ -323,12 +340,9 @@ struct ShareSettingsContainer<OptionsView: View>: View {
 
     private var backgroundPickerSection: some View {
         HStack(spacing: 12) {
-            PhotosPicker(
-                selection: $selectedPickerItem,
-                matching: pickerFilter,
-                preferredItemEncoding: .current,
-                photoLibrary: .shared()
-            ) {
+            Button {
+                showBackgroundPicker = true
+            } label: {
                 Label(backgroundPickerLabel, systemImage: backgroundPickerIcon)
                     .frame(maxWidth: .infinity)
             }
@@ -363,6 +377,16 @@ struct ShareSettingsContainer<OptionsView: View>: View {
     private var backgroundPickerIcon: String {
         if videoURL != nil { return "video" }
         return "photo"
+    }
+
+    /// リモートUI（写真ピッカー・共有シート）の表示中は動画プレビューを一時停止する
+    private func setPreviewPlaybackPaused(_ paused: Bool) {
+        guard let videoPlayer else { return }
+        if paused {
+            videoPlayer.pause()
+        } else {
+            videoPlayer.play()
+        }
     }
 
     private func clearBackground() {
