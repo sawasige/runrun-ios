@@ -1,5 +1,4 @@
 Thank you for using RunRun!
 
-【Improved】
-・The app logo in shared images and videos now supports HDR, matching the brightness of the text
-・Fixed an issue where the share overlay appeared too small on landscape photos and videos
+【Fixed】
+・Fixed an issue where the app could quit when opening the photo picker or share sheet from the video background share settings
