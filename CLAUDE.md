@@ -338,6 +338,18 @@ App Storeのテキスト情報は `fastlane/metadata/{ja,en-US}/` に保存:
 - `keywords.txt` - 検索キーワード
 - `subtitle.txt` - サブタイトル
 
+### クリエイティブアセット（ヘッダー・検索結果）
+
+iOS 27 以降の App Store で表示されるプロダクトページのヘッダー（21:9, 3840x1646）と検索結果用（3:2, 3840x2560）の画像。`fastlane/creative-assets/` に日英それぞれの PNG と生成スクリプトを置く。
+
+```bash
+# 再生成（ImageMagick が必要。背景は docs/assets/og-image.png、画面は fastlane/screenshots の生スクショを使用）
+fastlane/creative-assets/build.sh
+```
+
+- アップロードは App Store Connect のアプリ情報「Header and Search Results」タブ、または Asset Library から手動で行う（fastlane 未対応）
+- アプリのビルドとは独立して審査に出せる
+
 ### ランディングページ
 
 - 日本語: `docs/`、英語: `docs/en/`
