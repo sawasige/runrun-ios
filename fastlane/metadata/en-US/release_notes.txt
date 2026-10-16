@@ -1,4 +1,4 @@
 Thank you for using RunRun!
 
 【Fixed】
-・Fixed an issue where the app could quit when opening the photo picker or share sheet from the video background share settings
+・Fixed an issue where a year with runs could be missing from the yearly distance chart on the profile screen
