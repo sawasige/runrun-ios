@@ -45,21 +45,22 @@ header() {
   local lang=$1 W=3840 H=1646
   local out="$OUT/header_${lang}.png"
   local loc=ja; [ "$lang" = en ] && loc=en-US
-  local font=$FONT_JA fsub=$FONT_JA_SUB t1 t2 s1=150 s2=66 y2=760
-  if [ "$lang" = ja ]; then t1='好きなアプリで走るだけ'; t2='ランニング記録を自動で同期、月ごとに振り返り'
-  else font=$FONT_EN; fsub=$FONT_EN_SUB; s1=118; s2=60; y2=730; t1='Just run with your favorite app'; t2='Runs sync automatically. Look back month by month.'; fi
+  # iPhone では左右が約8%ずつ切れ、左上に戻るボタンが重なるため、文字は x=540 以降・y=600 以下に置く
+  local font=$FONT_JA fsub=$FONT_JA_SUB l1 l2 t2 s1=160 s2=62 y1=640 yl2=830 y2=985
+  if [ "$lang" = ja ]; then l1='好きなアプリで'; l2='走るだけ'; t2='ランニング記録を自動で同期、月ごとに振り返り'
+  else font=$FONT_EN; fsub=$FONT_EN_SUB; s1=136; s2=58; y1=640; yl2=805; y2=950; l1='Just run with'; l2='your favorite app'; t2='Runs sync automatically. Look back month by month.'; fi
   backdrop "$WORK/bg_h.png" $W $H
   local S="$REPO/fastlane/screenshots/$loc/iPhone 17 Pro Max"
   mock "$S-02_Records.png"   "$WORK/p1.png" 560
   mock "$S-01_Timeline.png"  "$WORK/p2.png" 620
   mock "$S-04_RunDetail.png" "$WORK/p3.png" 560
   magick "$WORK/bg_h.png" \
-    "$WORK/p1.png" -geometry +2000+330 -composite \
-    "$WORK/p3.png" -geometry +3080+330 -composite \
-    "$WORK/p2.png" -geometry +2500+200 -composite \
+    "$WORK/p1.png" -geometry +2080+330 -composite \
+    "$WORK/p3.png" -geometry +3160+330 -composite \
+    "$WORK/p2.png" -geometry +2580+200 -composite \
     -gravity NorthWest -fill white \
-    -font "$font" -pointsize $s1 -annotate +260+560 "$t1" \
-    -font "$fsub" -pointsize $s2 -fill 'rgba(255,255,255,0.92)' -annotate +268+$y2 "$t2" \
+    -font "$font" -pointsize $s1 -annotate +540+$y1 "$l1" -annotate +540+$yl2 "$l2" \
+    -font "$fsub" -pointsize $s2 -fill 'rgba(255,255,255,0.92)' -annotate +548+$y2 "$t2" \
     -alpha off "$out"
   echo "wrote $out"
 }
