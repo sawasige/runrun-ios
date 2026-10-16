@@ -364,7 +364,7 @@ struct ProfileView: View {
 
 
     private var sortedYearlyStats: [YearlyStats] {
-        yearlyStats.suffix(12).sorted { $0.year < $1.year }
+        Array(yearlyStats.sorted { $0.year < $1.year }.suffix(12))
     }
 
     private var yearlyChart: some View {
