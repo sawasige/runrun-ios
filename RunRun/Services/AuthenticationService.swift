@@ -59,6 +59,7 @@ final class AuthenticationService: ObservableObject {
         AnalyticsService.logEvent("logout")
         AnalyticsService.setUserId(nil)
         try Auth.auth().signOut()
+        FirestoreService.shared.clearBlockedUserIdsCache()
     }
 
     /// 再認証してからアカウントを削除
@@ -100,6 +101,7 @@ final class AuthenticationService: ObservableObject {
 
         // アカウント削除（Cloud Functionでデータクリーンアップが実行される）
         try await user.delete()
+        FirestoreService.shared.clearBlockedUserIdsCache()
     }
 
     private func performSignIn(request: ASAuthorizationAppleIDRequest) async throws -> ASAuthorization {

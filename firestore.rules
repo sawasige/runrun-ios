@@ -51,6 +51,17 @@ service cloud.firestore {
       match /goals/{goalId} {
         allow read, write: if request.auth.uid == userId;
       }
+
+      // ブロックしたユーザー: 本人だけが読み書きできる。
+      // 相手からは見えないが、friendRequests のルールが exists() で参照して申請を止める
+      match /blocks/{blockedId} {
+        allow read: if request.auth.uid == userId;
+        allow create: if request.auth.uid == userId
+          && blockedId != userId
+          && request.resource.data.keys().hasOnly(['createdAt'])
+          && request.resource.data.createdAt is timestamp;
+        allow delete: if request.auth.uid == userId;
+      }
     }
 
     // ラン記録: 自分のみ書き込み可能
@@ -60,9 +71,73 @@ service cloud.firestore {
       allow update, delete: if request.auth.uid == resource.data.userId;
     }
 
-    // フレンドリクエスト: 認証済みユーザーならアクセス可能
+    // フレンドリクエスト
+    function isBlockedEitherWay(a, b) {
+      return exists(/databases/$(database)/documents/users/$(a)/blocks/$(b))
+        || exists(/databases/$(database)/documents/users/$(b)/blocks/$(a));
+    }
+
+    function friendRequestFields() {
+      return ['fromUserId', 'fromDisplayName', 'toUserId', 'createdAt', 'status'];
+    }
+
+    function isValidFriendRequest(data) {
+      return data.keys().hasOnly(friendRequestFields())
+        && data.fromUserId is string
+        && data.toUserId is string
+        && data.fromUserId != data.toUserId
+        && data.fromDisplayName is string
+        && data.createdAt is timestamp
+        && data.status in ['pending', 'accepted', 'rejected'];
+    }
+
+    function isParticipant(data) {
+      return request.auth != null
+        && (request.auth.uid == data.fromUserId || request.auth.uid == data.toUserId);
+    }
+
     match /friendRequests/{requestId} {
-      allow read, write: if request.auth != null;
+      // 当事者のみ読める（クエリは fromUserId か toUserId で絞ること）
+      allow read: if isParticipant(resource.data);
+
+      // 新規申請: 送信者本人、pending、どちらもブロックしていないこと
+      allow create: if request.auth.uid == request.resource.data.fromUserId
+        && isValidFriendRequest(request.resource.data)
+        && request.resource.data.status == 'pending'
+        && !isBlockedEitherWay(request.auth.uid, request.resource.data.toUserId);
+
+      // 更新は 3 パターン:
+      //  1. 受信者が承認/拒否する、または送信者が取り下げる（status のみ変更）
+      //  2. 送信者が再申請する（createdAt と status を pending に戻す）
+      //  3. 逆方向の古い申請を from/to を入れ替えて再利用する（元の受信者が新しい送信者になる）
+      allow update: if isValidFriendRequest(request.resource.data)
+        && (
+          (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+            && (
+              (request.auth.uid == resource.data.toUserId
+                && request.resource.data.status in ['accepted', 'rejected'])
+              || (request.auth.uid == resource.data.fromUserId
+                && request.resource.data.status == 'rejected')
+            )
+          )
+          || (
+            request.auth.uid == resource.data.fromUserId
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['createdAt', 'status'])
+            && request.resource.data.status == 'pending'
+            && !isBlockedEitherWay(request.auth.uid, resource.data.toUserId)
+          )
+          || (
+            request.auth.uid == resource.data.toUserId
+            && request.resource.data.fromUserId == request.auth.uid
+            && request.resource.data.toUserId == resource.data.fromUserId
+            && request.resource.data.status == 'pending'
+            && !isBlockedEitherWay(request.auth.uid, resource.data.fromUserId)
+          )
+        );
+
+      // 削除は当事者のみ
+      allow delete: if isParticipant(resource.data);
     }
   }
 }
