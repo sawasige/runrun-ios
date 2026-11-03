@@ -90,7 +90,7 @@ export const onFriendRequestUpdated = functions
 
     // ケース1: ステータスがacceptedに変更された場合
     if (before.status !== "accepted" && after.status === "accepted") {
-      await sendAcceptedNotification(after, change.after.id);
+      await sendAcceptedNotification(after);
       return;
     }
 
@@ -106,7 +106,7 @@ export const onFriendRequestUpdated = functions
 /**
  * フレンドリクエスト承認通知を送信
  */
-async function sendAcceptedNotification(request: FriendRequest, requestId: string) {
+async function sendAcceptedNotification(request: FriendRequest) {
   const fromUserId = request.fromUserId;
   const toUserId = request.toUserId;
 
@@ -213,6 +213,77 @@ async function sendResendNotification(request: FriendRequest, requestId: string)
     console.error(`Error sending notification to ${toUserId}:`, error);
   }
 }
+
+interface UserReport {
+  reporterId: string;
+  reportedUserId: string;
+  reason: string;
+}
+
+const REPORT_REASON_LABELS: Record<string, string> = {
+  inappropriate_name: "不適切な表示名",
+  inappropriate_photo: "不適切なプロフィール写真",
+  harassment: "嫌がらせ",
+  spam: "スパム",
+  other: "その他",
+};
+
+/**
+ * 通報作成時に運営アカウント（環境変数 ADMIN_UIDS）へ通知を送信
+ * 個人を特定する情報は通知に含めない。対応は Firebase コンソールで行う（OPERATIONS.md）
+ */
+export const onReportCreated = functions
+  .region("asia-northeast1")
+  .firestore.document("reports/{reportId}")
+  .onCreate(async (snap) => {
+    const report = snap.data() as UserReport;
+    const adminUids = (process.env.ADMIN_UIDS ?? "")
+      .split(",")
+      .map((uid) => uid.trim())
+      .filter((uid) => uid.length > 0);
+
+    if (adminUids.length === 0) {
+      console.warn("ADMIN_UIDS is not configured; report notification skipped");
+      return;
+    }
+
+    const reasonLabel = REPORT_REASON_LABELS[report.reason] ?? report.reason;
+
+    for (const adminUid of adminUids) {
+      const adminDoc = await db.collection("users").doc(adminUid).get();
+      const fcmToken = (adminDoc.data() as UserProfile | undefined)?.fcmToken;
+      if (!fcmToken) {
+        console.log(`Admin ${adminUid} has no FCM token`);
+        continue;
+      }
+
+      const message: admin.messaging.Message = {
+        token: fcmToken,
+        data: {
+          type: "report",
+          reportId: snap.id,
+        },
+        apns: {
+          payload: {
+            aps: {
+              alert: {
+                title: "新しい通報",
+                body: `理由: ${reasonLabel}。Firebase コンソールで確認してください`,
+              },
+              sound: "default",
+            },
+          },
+        },
+      };
+
+      try {
+        await admin.messaging().send(message);
+        console.log(`Report notification sent to admin ${adminUid}`);
+      } catch (error) {
+        console.error(`Error sending report notification to ${adminUid}:`, error);
+      }
+    }
+  });
 
 /**
  * ユーザー削除時にデータをクリーンアップ
