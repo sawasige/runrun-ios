@@ -3,6 +3,7 @@ import Foundation
 import UIKit
 import UserNotifications
 import FirebaseMessaging
+import FirebaseAuth
 
 enum AppTab: Int {
     case home = 0
@@ -22,6 +23,10 @@ final class NotificationService: NSObject, ObservableObject {
     @Published var pendingRunInfo: (date: Date, distanceKm: Double)?
 
     private let firestoreService = FirestoreService.shared
+
+    /// Firestore に保存済みのトークン（同じ値を毎回書き込まないための記録）
+    private let uploadedTokenKey = "fcm.uploadedToken"
+    private let uploadedUserIdKey = "fcm.uploadedUserId"
 
     private override init() {
         super.init()
@@ -59,19 +64,31 @@ final class NotificationService: NSObject, ObservableObject {
         }
     }
 
+    /// 現在のトークンを Firestore に保存する。前回保存した値と同じならスキップ
     func updateFCMToken(userId: String) async {
         guard let token = fcmToken else { return }
 
+        let defaults = UserDefaults.standard
+        if defaults.string(forKey: uploadedTokenKey) == token,
+           defaults.string(forKey: uploadedUserIdKey) == userId {
+            return
+        }
+
         do {
             try await firestoreService.updateFCMToken(userId: userId, token: token)
+            defaults.set(token, forKey: uploadedTokenKey)
+            defaults.set(userId, forKey: uploadedUserIdKey)
         } catch {
             print("Failed to update FCM token: \(error)")
         }
     }
 
+    /// サインアウト前に呼び、この端末に通知が届かないようにする
     func removeFCMToken(userId: String) async {
         do {
             try await firestoreService.removeFCMToken(userId: userId)
+            UserDefaults.standard.removeObject(forKey: uploadedTokenKey)
+            UserDefaults.standard.removeObject(forKey: uploadedUserIdKey)
         } catch {
             print("Failed to remove FCM token: \(error)")
         }
@@ -151,11 +168,17 @@ extension NotificationService: UNUserNotificationCenterDelegate {
 
 // MARK: - MessagingDelegate
 extension NotificationService: MessagingDelegate {
+    /// 起動時とトークン更新時に呼ばれる。サインイン済みならその場で Firestore に保存する。
+    /// サインイン直後の 1 回しか保存しないと、再インストールや更新で変わったトークンが
+    /// 反映されず通知が届かなくなるため
     nonisolated func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
         guard let token = fcmToken else { return }
 
         Task { @MainActor in
             self.fcmToken = token
+            if let userId = Auth.auth().currentUser?.uid {
+                await self.updateFCMToken(userId: userId)
+            }
         }
     }
 }

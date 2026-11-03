@@ -6,6 +6,7 @@ import WidgetKit
 struct SettingsView: View {
     @EnvironmentObject private var authService: AuthenticationService
     @EnvironmentObject private var syncService: SyncService
+    @EnvironmentObject private var notificationService: NotificationService
     @State private var lastSyncMessage: String?
     @State private var userProfile: UserProfile?
     @State private var showingProfileEdit = false
@@ -76,7 +77,12 @@ struct SettingsView: View {
                     }
 
                     Button("Sign Out", role: .destructive) {
-                        try? authService.signOut()
+                        Task {
+                            if let userId = authService.user?.uid {
+                                await notificationService.removeFCMToken(userId: userId)
+                            }
+                            try? authService.signOut()
+                        }
                     }
 
                     Button(role: .destructive) {
@@ -522,4 +528,5 @@ private struct DebugPastGoalEditToggle: View {
 #Preview {
     SettingsView()
         .environmentObject(AuthenticationService())
+        .environmentObject(NotificationService.shared)
 }
