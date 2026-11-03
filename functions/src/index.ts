@@ -90,7 +90,7 @@ export const onFriendRequestUpdated = functions
 
     // ケース1: ステータスがacceptedに変更された場合
     if (before.status !== "accepted" && after.status === "accepted") {
-      await sendAcceptedNotification(after, change.after.id);
+      await sendAcceptedNotification(after);
       return;
     }
 
@@ -106,7 +106,7 @@ export const onFriendRequestUpdated = functions
 /**
  * フレンドリクエスト承認通知を送信
  */
-async function sendAcceptedNotification(request: FriendRequest, requestId: string) {
+async function sendAcceptedNotification(request: FriendRequest) {
   const fromUserId = request.fromUserId;
   const toUserId = request.toUserId;
 
