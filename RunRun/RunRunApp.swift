@@ -207,8 +207,12 @@ struct RunRunApp: App {
                     }
                 }
                 .task {
-                    // アプリ起動時にウィジェットデータを更新
                     if let userId = authService.user?.uid {
+                        // サインイン済みで起動したときも APNs に登録し直し、トークンの変化を Firestore に反映する
+                        // （許可済みなら requestAuthorization はダイアログを出さずに true を返す）
+                        await notificationService.requestAndRegister()
+                        await notificationService.updateFCMToken(userId: userId)
+                        // アプリ起動時にウィジェットデータを更新
                         await updateWidgetData(userId: userId)
                     }
                 }
