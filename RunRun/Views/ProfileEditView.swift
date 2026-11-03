@@ -75,9 +75,18 @@ struct ProfileEditView: View {
                     .padding(.vertical, 8)
                 }
 
-                Section("Display Name") {
+                Section {
                     TextField("Display Name", text: $displayName)
                         .textContentType(.name)
+                } header: {
+                    Text("Display Name")
+                } footer: {
+                    if let error = displayNameError {
+                        Text(error.localizedDescription)
+                            .foregroundStyle(.red)
+                    } else {
+                        Text(verbatim: "\(DisplayNameValidator.length(of: displayName))/\(DisplayNameValidator.maxLength)")
+                    }
                 }
 
                 if let error = errorMessage {
@@ -101,7 +110,7 @@ struct ProfileEditView: View {
                     Button("Save") {
                         Task { await save() }
                     }
-                    .disabled(displayName.isEmpty || isSaving)
+                    .disabled(displayNameError != nil || isSaving)
                 }
             }
             .overlay {
@@ -123,6 +132,10 @@ struct ProfileEditView: View {
                 }
             }
         }
+    }
+
+    private var displayNameError: DisplayNameValidator.ValidationError? {
+        DisplayNameValidator.validationError(for: displayName)
     }
 
     @ViewBuilder
@@ -170,7 +183,7 @@ struct ProfileEditView: View {
 
             try await firestoreService.updateProfile(
                 userId: userId,
-                displayName: displayName,
+                displayName: DisplayNameValidator.normalized(displayName),
                 iconName: selectedIcon,
                 avatarURL: newAvatarURL
             )

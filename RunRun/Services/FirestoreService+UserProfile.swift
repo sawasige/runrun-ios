@@ -7,7 +7,7 @@ extension FirestoreService {
     /// 新規ユーザーのプロファイルを作成（初回サインイン時のみ使用）
     func createNewUserProfile(userId: String, displayName: String, email: String?) async throws {
         let data: [String: Any] = [
-            "displayName": displayName,
+            "displayName": DisplayNameValidator.sanitized(displayName, fallback: String(localized: "Runner")),
             "email": email as Any,
             "iconName": "figure.run",
             "createdAt": Date()
@@ -22,7 +22,7 @@ extension FirestoreService {
 
         if !snapshot.exists {
             let data: [String: Any] = [
-                "displayName": displayName,
+                "displayName": DisplayNameValidator.sanitized(displayName, fallback: String(localized: "Runner")),
                 "email": email as Any,
                 "iconName": "figure.run",
                 "createdAt": Date()
@@ -58,7 +58,7 @@ extension FirestoreService {
 
     func updateProfile(userId: String, displayName: String, iconName: String, avatarURL: URL?) async throws {
         var updateData: [String: Any] = [
-            "displayName": displayName,
+            "displayName": try DisplayNameValidator.validated(displayName),
             "iconName": iconName
         ]
         if let avatarURL = avatarURL {
@@ -77,7 +77,7 @@ extension FirestoreService {
 
     func updateDisplayName(userId: String, displayName: String) async throws {
         try await usersCollection.document(userId).updateData([
-            "displayName": displayName
+            "displayName": try DisplayNameValidator.validated(displayName)
         ])
         await profileCache.invalidate(userId)
     }
