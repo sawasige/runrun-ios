@@ -39,4 +39,6 @@
 
 - 通報者・被通報者のどちらにも通知は送らない。アプリ側でもその旨を案内している
 - 被通報者が「自分の通報」を見る手段はない（`reports` は読み取り不可）
-- 新規通報の自動通知は未実装。定期的にコンソールを確認するか、必要になったら `onReportCreated` の Cloud Function で運営端末へプッシュする
+- 新規通報があると Cloud Function `onReportCreated` が運営アカウントの RunRun にプッシュ通知を送る（通知には理由のみ含め、個人情報は含めない）
+  - 送信先は `functions/.env` の `ADMIN_UIDS`（カンマ区切りの UID）。変更したら `firebase deploy --only functions:onReportCreated`
+  - 運営アカウントの端末で通知を許可し、`users/{uid}.fcmToken` が保存されている必要がある

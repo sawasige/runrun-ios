@@ -4,9 +4,9 @@ lib/
 # Dependencies
 node_modules/
 
-# Local environment files
-.env
+# Local environment files (.env は秘密情報を含まない設定なのでコミットする)
 .env.local
+.env.*.local
 
 # Firebase
 .firebase/
