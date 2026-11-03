@@ -19,6 +19,8 @@ struct ProfileView: View {
     @State private var showShareSettings = false
     @State private var isBlocked = false
     @State private var showingBlockConfirmation = false
+    @State private var showingReportSheet = false
+    @State private var showingReportSubmittedAlert = false
 
     // チャートタップ状態
     @State private var selectedYear: Int?
@@ -330,6 +332,11 @@ struct ProfileView: View {
             } else {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
+                        Button {
+                            showingReportSheet = true
+                        } label: {
+                            Label("Report", systemImage: "flag")
+                        }
                         if isBlocked {
                             Button {
                                 Task { await unblockUser() }
@@ -361,6 +368,27 @@ struct ProfileView: View {
             }
         } message: {
             Text("They will be removed from your friends and won't be able to send you friend requests. They won't be notified.")
+        }
+        .sheet(isPresented: $showingReportSheet) {
+            if let reporterId = authService.user?.uid {
+                ReportUserView(reporterId: reporterId, reportedUser: displayedProfile) {
+                    showingReportSubmittedAlert = true
+                }
+            }
+        }
+        .alert("Report Submitted", isPresented: $showingReportSubmittedAlert) {
+            if !isBlocked {
+                Button("Block User", role: .destructive) {
+                    Task { await blockUser() }
+                }
+            }
+            Button("Done", role: .cancel) {}
+        } message: {
+            if isBlocked {
+                Text("Thanks for your report. We'll review it.")
+            } else {
+                Text("Thanks for your report. We'll review it. You can also block this user so they no longer appear for you.")
+            }
         }
         .sheet(isPresented: $showingProfileEdit, onDismiss: {
             Task { await reloadProfile() }
