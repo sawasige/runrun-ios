@@ -167,7 +167,7 @@ struct LeaderboardView: View {
         do {
             switch selectedFilter {
             case .all:
-                users = try await firestoreService.getMonthlyLeaderboard(year: selectedYear, month: selectedMonth)
+                users = try await firestoreService.getMonthlyLeaderboard(currentUserId: userId, year: selectedYear, month: selectedMonth)
             case .friends:
                 users = try await firestoreService.getFriendsMonthlyLeaderboard(userId: userId, year: selectedYear, month: selectedMonth)
             }

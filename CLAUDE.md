@@ -59,6 +59,7 @@ RunRun/
 │   ├── ProfileEditView.swift        # プロフィール編集
 │   ├── ProfileAvatarView.swift      # アバター表示コンポーネント
 │   ├── SettingsView.swift           # 設定画面
+│   ├── BlockedUsersView.swift       # ブロックしたユーザー一覧
 │   ├── LoginView.swift              # ログイン画面
 │   ├── UserSearchView.swift         # ユーザー検索
 │   ├── GoalListView.swift           # 月別・年別目標一覧
@@ -103,6 +104,7 @@ RunRun/
 │   ├── FirestoreService+Timeline.swift      # タイムライン取得（ページネーション）
 │   ├── FirestoreService+Leaderboard.swift   # 月別ランキング集計
 │   ├── FirestoreService+Friends.swift       # フレンド機能
+│   ├── FirestoreService+Blocks.swift        # ブロック機能（ブロック/解除、除外用 ID キャッシュ）
 │   ├── FirestoreService+Goals.swift         # 目標の保存/取得
 │   ├── FirestoreService+Debug.swift         # デバッグ用書き込み
 │   ├── StorageService.swift                 # Firebase Storage（アバター画像）
@@ -224,6 +226,7 @@ firebase deploy --only firestore:indexes
 | ランキング | Leaderboard |
 | フレンド | Friends |
 | 設定 | Settings |
+| ブロックしたユーザー | BlockedUsers |
 | プロフィール | Profile |
 | プロフィール編集 | ProfileEdit |
 | 年詳細 | YearDetail |
@@ -251,6 +254,8 @@ firebase deploy --only firestore:indexes
 | `accept_friend_request` | フレンド承認 | - |
 | `reject_friend_request` | フレンド拒否 | - |
 | `remove_friend` | フレンド解除 | - |
+| `block_user` | ユーザーをブロック | - |
+| `unblock_user` | ブロック解除 | - |
 | `change_distance_unit` | 単位変更 | unit: "km" or "mi" |
 | `share_image_saved` | 画像保存（ラン） | show_* オプション |
 | `share_image_shared` | 画像共有（ラン） | show_* オプション |

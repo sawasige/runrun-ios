@@ -127,7 +127,9 @@ extension FirestoreService {
         return timestamp.dateValue()
     }
 
+    /// 受信した保留中の申請。ブロック前に届いていた申請はルールでは消えないので、ここで除外する
     func getFriendRequests(userId: String) async throws -> [FriendRequest] {
+        let blockedIds = try await blockedUserIds(for: userId)
         let snapshot = try await friendRequestsCollection
             .whereField("toUserId", isEqualTo: userId)
             .whereField("status", isEqualTo: "pending")
@@ -137,6 +139,7 @@ extension FirestoreService {
         return snapshot.documents.compactMap { doc -> FriendRequest? in
             let data = doc.data()
             guard let fromUserId = data["fromUserId"] as? String,
+                  !blockedIds.contains(fromUserId),
                   let fromDisplayName = data["fromDisplayName"] as? String,
                   let toUserId = data["toUserId"] as? String,
                   let createdAt = (data["createdAt"] as? Timestamp)?.dateValue(),
@@ -220,8 +223,10 @@ extension FirestoreService {
 // MARK: - User Search
 
 extension FirestoreService {
+    /// 表示名の前方一致検索。自分自身とブロック中のユーザーは結果から除く
     func searchUsers(query: String, excludeUserId: String) async throws -> [UserProfile] {
         guard !query.isEmpty else { return [] }
+        let blockedIds = try await blockedUserIds(for: excludeUserId)
 
         let snapshot = try await usersCollection
             .order(by: "displayName")
@@ -231,7 +236,7 @@ extension FirestoreService {
             .getDocuments()
 
         return snapshot.documents.compactMap { doc -> UserProfile? in
-            guard doc.documentID != excludeUserId else { return nil }
+            guard doc.documentID != excludeUserId, !blockedIds.contains(doc.documentID) else { return nil }
             let data = doc.data()
             var avatarURL: URL?
             if let urlString = data["avatarURL"] as? String {

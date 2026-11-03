@@ -29,7 +29,9 @@ extension FirestoreService {
         }
     }
 
-    func getMonthlyLeaderboard(year: Int, month: Int, limit: Int = 20) async throws -> [UserProfile] {
+    /// 月間ランキング。currentUserId がブロックしているユーザーは順位を詰めて除外する
+    func getMonthlyLeaderboard(currentUserId: String, year: Int, month: Int, limit: Int = 20) async throws -> [UserProfile] {
+        let blockedIds = try await blockedUserIds(for: currentUserId)
         let calendar = Calendar.current
         guard let startOfMonth = calendar.date(from: DateComponents(year: year, month: month, day: 1)),
               let startOfNextMonth = calendar.date(byAdding: .month, value: 1, to: startOfMonth) else {
@@ -47,7 +49,8 @@ extension FirestoreService {
         for doc in snapshot.documents {
             let data = doc.data()
             guard let userId = data["userId"] as? String,
-                  let distance = data["distanceKm"] as? Double else { continue }
+                  let distance = data["distanceKm"] as? Double,
+                  !blockedIds.contains(userId) else { continue }
 
             let current = userStats[userId] ?? (0, 0)
             userStats[userId] = (current.distance + distance, current.runs + 1)

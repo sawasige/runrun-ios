@@ -374,6 +374,8 @@ struct ContentView: View {
             LicensesView()
         case .goals:
             GoalListView()
+        case .blockedUsers:
+            BlockedUsersView()
         }
     }
 }

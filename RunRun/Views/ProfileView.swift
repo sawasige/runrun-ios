@@ -17,6 +17,8 @@ struct ProfileView: View {
     @State private var showingProfileEdit = false
     @State private var currentProfile: UserProfile?
     @State private var showShareSettings = false
+    @State private var isBlocked = false
+    @State private var showingBlockConfirmation = false
 
     // チャートタップ状態
     @State private var selectedYear: Int?
@@ -325,7 +327,40 @@ struct ProfileView: View {
                         }
                     }
                 }
+            } else {
+                ToolbarItem(placement: .primaryAction) {
+                    Menu {
+                        if isBlocked {
+                            Button {
+                                Task { await unblockUser() }
+                            } label: {
+                                Label("Unblock", systemImage: "person.crop.circle.badge.checkmark")
+                            }
+                        } else {
+                            Button(role: .destructive) {
+                                showingBlockConfirmation = true
+                            } label: {
+                                Label("Block", systemImage: "person.slash")
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                    }
+                    .accessibilityLabel(Text("More", comment: "Profile actions menu"))
+                    .disabled(isLoading || isProcessing)
+                }
             }
+        }
+        .confirmationDialog(
+            Text("Block \(displayedProfile.displayName)?"),
+            isPresented: $showingBlockConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Block", role: .destructive) {
+                Task { await blockUser() }
+            }
+        } message: {
+            Text("They will be removed from your friends and won't be able to send you friend requests. They won't be notified.")
         }
         .sheet(isPresented: $showingProfileEdit, onDismiss: {
             Task { await reloadProfile() }
@@ -471,6 +506,17 @@ struct ProfileView: View {
                     ProgressView()
                     Spacer()
                 }
+            } else if isBlocked {
+                HStack {
+                    Label("Blocked", systemImage: "person.slash")
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Unblock") {
+                        Task { await unblockUser() }
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(isProcessing)
+                }
             } else if isFriend {
                 Button(role: .destructive) {
                     Task { await removeFriend() }
@@ -528,26 +574,9 @@ struct ProfileView: View {
         }
 
         do {
-            // フレンド状態を確認
+            // ブロック・フレンド状態を確認
             if !isCurrentUser {
-                isFriend = try await firestoreService.isFriend(
-                    currentUserId: currentUserId,
-                    otherUserId: userId
-                )
-
-                // フレンド申請可能かチェック
-                if !isFriend {
-                    canSendRequest = try await firestoreService.canSendFriendRequest(
-                        fromUserId: currentUserId,
-                        toUserId: userId
-                    )
-                    if !canSendRequest {
-                        lastRequestDate = try await firestoreService.getLastFriendRequestDate(
-                            fromUserId: currentUserId,
-                            toUserId: userId
-                        )
-                    }
-                }
+                try await loadRelationship(currentUserId: currentUserId, userId: userId)
             }
 
             // 統計を取得
@@ -573,6 +602,34 @@ struct ProfileView: View {
         }
 
         isLoading = false
+    }
+
+    /// ブロック状態とフレンド状態、申請可否を取得する
+    private func loadRelationship(currentUserId: String, userId: String) async throws {
+        isBlocked = try await firestoreService.isBlocked(currentUserId: currentUserId, otherUserId: userId)
+        if isBlocked {
+            isFriend = false
+            return
+        }
+
+        isFriend = try await firestoreService.isFriend(
+            currentUserId: currentUserId,
+            otherUserId: userId
+        )
+
+        // フレンド申請可能かチェック
+        if !isFriend {
+            canSendRequest = try await firestoreService.canSendFriendRequest(
+                fromUserId: currentUserId,
+                toUserId: userId
+            )
+            if !canSendRequest {
+                lastRequestDate = try await firestoreService.getLastFriendRequestDate(
+                    fromUserId: currentUserId,
+                    toUserId: userId
+                )
+            }
+        }
     }
 
     private func reloadProfile() async {
@@ -683,6 +740,49 @@ struct ProfileView: View {
             lastRequestDate = Date()
         } catch {
             print("Send request error: \(error)")
+        }
+
+        isProcessing = false
+    }
+
+    private func blockUser() async {
+        guard let currentUserId = authService.user?.uid,
+              let blockedUserId = user.id else { return }
+
+        isProcessing = true
+
+        do {
+            try await firestoreService.blockUser(
+                currentUserId: currentUserId,
+                blockedUserId: blockedUserId
+            )
+            AnalyticsService.logEvent("block_user")
+            isBlocked = true
+            isFriend = false
+        } catch {
+            print("Block user error: \(error)")
+        }
+
+        isProcessing = false
+    }
+
+    private func unblockUser() async {
+        guard let currentUserId = authService.user?.uid,
+              let blockedUserId = user.id else { return }
+
+        isProcessing = true
+
+        do {
+            try await firestoreService.unblockUser(
+                currentUserId: currentUserId,
+                blockedUserId: blockedUserId
+            )
+            AnalyticsService.logEvent("unblock_user")
+            isBlocked = false
+            // 解除後の申請可否を取り直す
+            try await loadRelationship(currentUserId: currentUserId, userId: blockedUserId)
+        } catch {
+            print("Unblock user error: \(error)")
         }
 
         isProcessing = false
