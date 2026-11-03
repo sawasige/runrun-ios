@@ -14,9 +14,9 @@ service cloud.firestore {
         && name.matches('[^\\p{Cc}]{1,20}');
     }
 
-    function isValidProfile(data) {
-      return (!('displayName' in data) || isValidDisplayName(data.displayName))
-        && (!('email' in data) || data.email == null || data.email is string)
+    // displayName 以外のフィールドの型チェック
+    function isValidProfileFields(data) {
+      return (!('email' in data) || data.email == null || data.email is string)
         && (!('iconName' in data) || (data.iconName is string && data.iconName.size() <= 50))
         && (!('avatarURL' in data) || (data.avatarURL is string && data.avatarURL.size() <= 2048))
         && (!('fcmToken' in data) || (data.fcmToken is string && data.fcmToken.size() <= 4096))
@@ -27,13 +27,17 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if request.auth != null;
       allow create: if request.auth.uid == userId
-        && 'displayName' in request.resource.data
         && request.resource.data.keys().hasOnly(profileFields())
-        && isValidProfile(request.resource.data);
-      // 更新は既知のフィールドのみ変更可（過去に書かれた未知のフィールドは残っていてもよい）
+        && isValidDisplayName(request.resource.data.displayName)
+        && isValidProfileFields(request.resource.data);
+      // 更新は既知のフィールドのみ変更可（過去に書かれた未知のフィールドは残っていてもよい）。
+      // 表示名の検証は表示名を変更するときだけ行う。ルール導入前に保存された条件外の名前が
+      // あっても、fcmToken 更新などの他の操作を止めないため
       allow update: if request.auth.uid == userId
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(profileFields())
-        && isValidProfile(request.resource.data);
+        && (!('displayName' in request.resource.data.diff(resource.data).affectedKeys())
+            || isValidDisplayName(request.resource.data.displayName))
+        && isValidProfileFields(request.resource.data);
       allow delete: if request.auth.uid == userId;
 
       // フレンドリスト
