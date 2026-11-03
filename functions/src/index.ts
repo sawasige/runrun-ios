@@ -277,14 +277,32 @@ export const onUserDeleted = functions
         friends.docs.forEach((doc) => batch.delete(doc.ref));
       }
 
-      // 5. ユーザープロフィール削除
+      // 5. ブロックリスト削除
+      const blocks = await db
+        .collection("users")
+        .doc(userId)
+        .collection("blocks")
+        .get();
+      blocks.docs.forEach((doc) => batch.delete(doc.ref));
+      console.log(`Deleting ${blocks.size} blocks`);
+
+      // 6. 目標削除
+      const goals = await db
+        .collection("users")
+        .doc(userId)
+        .collection("goals")
+        .get();
+      goals.docs.forEach((doc) => batch.delete(doc.ref));
+      console.log(`Deleting ${goals.size} goals`);
+
+      // 7. ユーザープロフィール削除
       batch.delete(db.collection("users").doc(userId));
 
       // バッチ実行
       await batch.commit();
       console.log(`Successfully cleaned up data for user: ${userId}`);
 
-      // 6. Storageのアバター画像削除
+      // 8. Storageのアバター画像削除
       try {
         const bucket = admin.storage().bucket();
         await bucket.deleteFiles({

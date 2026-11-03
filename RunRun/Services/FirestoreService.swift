@@ -40,6 +40,9 @@ final class FirestoreService {
 
     let profileCache = ProfileCache()
 
+    /// ブロック中のユーザー ID（FirestoreService+Blocks で管理）。nil は未取得
+    var blockedUserIdsCache: Set<String>?
+
     private init() {}
 
     var usersCollection: CollectionReference {
