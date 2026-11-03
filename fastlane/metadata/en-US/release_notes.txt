@@ -1,4 +1,11 @@
 Thank you for using RunRun!
 
+【New】
+・Block users: use the "…" menu on a profile to block someone. Blocked users no longer appear in rankings, search, or friend requests. Manage them in Settings → Blocked Users
+・Report users: report inappropriate display names or abusive behavior from the "…" menu on a profile
+
+【Improved】
+・Display names are now limited to 20 characters with no line breaks or leading/trailing spaces
+
 【Fixed】
-・Fixed an issue where a year with runs could be missing from the yearly distance chart on the profile screen
+・Fixed an issue where notifications such as friend requests could stop arriving after switching devices or reinstalling the app
