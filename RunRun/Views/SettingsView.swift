@@ -71,6 +71,10 @@ struct SettingsView: View {
                 }
 
                 Section("Account") {
+                    NavigationLink(value: ScreenType.blockedUsers) {
+                        Label("Blocked Users", systemImage: "person.slash")
+                    }
+
                     Button("Sign Out", role: .destructive) {
                         try? authService.signOut()
                     }

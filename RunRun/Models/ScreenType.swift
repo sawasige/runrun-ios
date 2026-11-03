@@ -9,4 +9,5 @@ enum ScreenType: Hashable {
     case weeklyStats(user: UserProfile)
     case licenses
     case goals
+    case blockedUsers
 }

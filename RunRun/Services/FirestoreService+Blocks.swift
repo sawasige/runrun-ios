@@ -17,7 +17,9 @@ extension FirestoreService {
         try await blocksCollection(userId: currentUserId).document(blockedUserId).setData([
             "createdAt": Date()
         ])
-        blockedUserIdsCache?.insert(blockedUserId)
+        if blockedUserIdsCache?.userId == currentUserId {
+            blockedUserIdsCache?.ids.insert(blockedUserId)
+        }
 
         try await removeFriend(currentUserId: currentUserId, friendUserId: blockedUserId)
         try await rejectPendingFriendRequests(between: currentUserId, and: blockedUserId)
@@ -26,7 +28,9 @@ extension FirestoreService {
     /// ブロックを解除する。解除してもフレンド関係は戻らない
     func unblockUser(currentUserId: String, blockedUserId: String) async throws {
         try await blocksCollection(userId: currentUserId).document(blockedUserId).delete()
-        blockedUserIdsCache?.remove(blockedUserId)
+        if blockedUserIdsCache?.userId == currentUserId {
+            blockedUserIdsCache?.ids.remove(blockedUserId)
+        }
     }
 
     func isBlocked(currentUserId: String, otherUserId: String) async throws -> Bool {
@@ -36,12 +40,12 @@ extension FirestoreService {
     /// ブロック中のユーザー ID の集合。初回のみ Firestore から取得し、以後はメモリ上の値を返す。
     /// ランキングや検索結果の除外に使う
     func blockedUserIds(for userId: String) async throws -> Set<String> {
-        if let cached = blockedUserIdsCache {
-            return cached
+        if let cached = blockedUserIdsCache, cached.userId == userId {
+            return cached.ids
         }
         let snapshot = try await blocksCollection(userId: userId).getDocuments()
         let ids = Set(snapshot.documents.map { $0.documentID })
-        blockedUserIdsCache = ids
+        blockedUserIdsCache = (userId, ids)
         return ids
     }
 
@@ -50,7 +54,7 @@ extension FirestoreService {
         let snapshot = try await blocksCollection(userId: userId)
             .order(by: "createdAt", descending: true)
             .getDocuments()
-        blockedUserIdsCache = Set(snapshot.documents.map { $0.documentID })
+        blockedUserIdsCache = (userId, Set(snapshot.documents.map { $0.documentID }))
 
         var profiles: [UserProfile] = []
         for document in snapshot.documents {
