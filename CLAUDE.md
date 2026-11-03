@@ -60,6 +60,7 @@ RunRun/
 │   ├── ProfileAvatarView.swift      # アバター表示コンポーネント
 │   ├── SettingsView.swift           # 設定画面
 │   ├── BlockedUsersView.swift       # ブロックしたユーザー一覧
+│   ├── ReportUserView.swift         # ユーザー通報フォーム
 │   ├── LoginView.swift              # ログイン画面
 │   ├── UserSearchView.swift         # ユーザー検索
 │   ├── GoalListView.swift           # 月別・年別目標一覧
@@ -105,6 +106,7 @@ RunRun/
 │   ├── FirestoreService+Leaderboard.swift   # 月別ランキング集計
 │   ├── FirestoreService+Friends.swift       # フレンド機能
 │   ├── FirestoreService+Blocks.swift        # ブロック機能（ブロック/解除、除外用 ID キャッシュ）
+│   ├── FirestoreService+Reports.swift       # ユーザー通報（reports コレクションへの書き込み）
 │   ├── FirestoreService+Goals.swift         # 目標の保存/取得
 │   ├── FirestoreService+Debug.swift         # デバッグ用書き込み
 │   ├── StorageService.swift                 # Firebase Storage（アバター画像）
@@ -201,7 +203,10 @@ healthKitService.startObservingWorkouts {
 - データベース: `(default)` (asia-northeast1)
 - コレクション:
   - `users`: ユーザープロフィール (displayName, email, createdAt)
+    - `users/{uid}/friends`, `users/{uid}/goals`, `users/{uid}/blocks`（ブロック相手、本人のみ閲覧可）
   - `runs`: ランニング記録 (userId, date, distanceKm, durationSeconds)
+  - `friendRequests`: フレンド申請（当事者のみ読み書き可）
+  - `reports`: ユーザー通報（クライアントは作成のみ。対応手順は `OPERATIONS.md`）
 
 **注意**: FirestoreのCodableは問題が起きやすいため、辞書ベースでデータを読み書きする。
 
@@ -227,6 +232,7 @@ firebase deploy --only firestore:indexes
 | フレンド | Friends |
 | 設定 | Settings |
 | ブロックしたユーザー | BlockedUsers |
+| ユーザー通報 | ReportUser |
 | プロフィール | Profile |
 | プロフィール編集 | ProfileEdit |
 | 年詳細 | YearDetail |
@@ -256,6 +262,7 @@ firebase deploy --only firestore:indexes
 | `remove_friend` | フレンド解除 | - |
 | `block_user` | ユーザーをブロック | - |
 | `unblock_user` | ブロック解除 | - |
+| `report_user` | ユーザー通報 | reason |
 | `change_distance_unit` | 単位変更 | unit: "km" or "mi" |
 | `share_image_saved` | 画像保存（ラン） | show_* オプション |
 | `share_image_shared` | 画像共有（ラン） | show_* オプション |

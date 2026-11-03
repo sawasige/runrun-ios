@@ -139,5 +139,29 @@ service cloud.firestore {
       // 削除は当事者のみ
       allow delete: if isParticipant(resource.data);
     }
+
+    // 通報: クライアントは作成のみ。確認と対応は Firebase コンソールから行う（OPERATIONS.md 参照）
+    function reportReasons() {
+      return ['inappropriate_name', 'inappropriate_photo', 'harassment', 'spam', 'other'];
+    }
+
+    match /reports/{reportId} {
+      allow read, update, delete: if false;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly([
+          'reporterId', 'reportedUserId', 'reportedDisplayName', 'reason', 'details', 'status', 'createdAt'
+        ])
+        && request.resource.data.reporterId == request.auth.uid
+        && request.resource.data.reportedUserId is string
+        && request.resource.data.reportedUserId != request.auth.uid
+        && exists(/databases/$(database)/documents/users/$(request.resource.data.reportedUserId))
+        && request.resource.data.reportedDisplayName is string
+        && request.resource.data.reportedDisplayName.size() <= 100
+        && request.resource.data.reason in reportReasons()
+        && (!('details' in request.resource.data)
+            || (request.resource.data.details is string && request.resource.data.details.size() <= 2000))
+        && request.resource.data.status == 'open'
+        && request.resource.data.createdAt is timestamp;
+    }
   }
 }
