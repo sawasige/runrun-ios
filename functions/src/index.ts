@@ -1,16 +1,19 @@
-import * as functions from "firebase-functions";
-import * as admin from "firebase-admin";
+import * as functions from "firebase-functions/v1";
+import {initializeApp} from "firebase-admin/app";
+import {getFirestore, Timestamp} from "firebase-admin/firestore";
+import {getMessaging, Message} from "firebase-admin/messaging";
+import {getStorage} from "firebase-admin/storage";
 
-admin.initializeApp();
+initializeApp();
 
-const db = admin.firestore();
+const db = getFirestore();
 
 interface FriendRequest {
   fromUserId: string;
   fromDisplayName: string;
   toUserId: string;
   status: string;
-  createdAt: admin.firestore.Timestamp;
+  createdAt: Timestamp;
 }
 
 interface UserProfile {
@@ -45,7 +48,7 @@ export const onFriendRequestCreated = functions
     }
 
     // 通知を送信
-    const message: admin.messaging.Message = {
+    const message: Message = {
       token: fcmToken,
       data: {
         type: "friend_request",
@@ -69,7 +72,7 @@ export const onFriendRequestCreated = functions
     };
 
     try {
-      await admin.messaging().send(message);
+      await getMessaging().send(message);
       console.log(`Notification sent to ${toUserId}`);
     } catch (error) {
       console.error(`Error sending notification to ${toUserId}:`, error);
@@ -130,7 +133,7 @@ async function sendAcceptedNotification(request: FriendRequest) {
     return;
   }
 
-  const message: admin.messaging.Message = {
+  const message: Message = {
     token: fcmToken,
     data: {
       type: "friend_accepted",
@@ -154,7 +157,7 @@ async function sendAcceptedNotification(request: FriendRequest) {
   };
 
   try {
-    await admin.messaging().send(message);
+    await getMessaging().send(message);
     console.log(`Accepted notification sent to ${fromUserId}`);
   } catch (error) {
     console.error(`Error sending notification to ${fromUserId}:`, error);
@@ -183,7 +186,7 @@ async function sendResendNotification(request: FriendRequest, requestId: string)
     return;
   }
 
-  const message: admin.messaging.Message = {
+  const message: Message = {
     token: fcmToken,
     data: {
       type: "friend_request",
@@ -207,7 +210,7 @@ async function sendResendNotification(request: FriendRequest, requestId: string)
   };
 
   try {
-    await admin.messaging().send(message);
+    await getMessaging().send(message);
     console.log(`Resend notification sent to ${toUserId}`);
   } catch (error) {
     console.error(`Error sending notification to ${toUserId}:`, error);
@@ -257,7 +260,7 @@ export const onReportCreated = functions
         continue;
       }
 
-      const message: admin.messaging.Message = {
+      const message: Message = {
         token: fcmToken,
         data: {
           type: "report",
@@ -277,7 +280,7 @@ export const onReportCreated = functions
       };
 
       try {
-        await admin.messaging().send(message);
+        await getMessaging().send(message);
         console.log(`Report notification sent to admin ${adminUid}`);
       } catch (error) {
         console.error(`Error sending report notification to ${adminUid}:`, error);
@@ -375,7 +378,7 @@ export const onUserDeleted = functions
 
       // 8. Storageのアバター画像削除
       try {
-        const bucket = admin.storage().bucket();
+        const bucket = getStorage().bucket();
         await bucket.deleteFiles({
           prefix: `avatars/${userId}/`,
         });
@@ -422,7 +425,7 @@ export const sendTestNotification = functions
     }
 
     // テスト通知を送信
-    const message: admin.messaging.Message = {
+    const message: Message = {
       token: fcmToken,
       data: {
         type: "test",
@@ -443,7 +446,7 @@ export const sendTestNotification = functions
     };
 
     try {
-      await admin.messaging().send(message);
+      await getMessaging().send(message);
       return { success: true, message: "通知を送信しました" };
     } catch (error) {
       console.error("Error sending test notification:", error);

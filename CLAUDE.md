@@ -217,6 +217,17 @@ firebase deploy --only firestore:rules
 firebase deploy --only firestore:indexes
 ```
 
+### Cloud Functions
+`functions/`（TypeScript, Node 22, firebase-admin 14 / firebase-functions 7）。firebase-admin 14 は Node 22 専用で、
+スタンドアロン版 Firebase CLI（同梱 Node 20）では関数の読み込みに失敗する。Functions のデプロイとエミュレータは
+npm 版の firebase-tools を Node 22 で実行する:
+```bash
+# 関数単位でデプロイ（通知系を巻き込まないため、変更した関数だけを指定する）
+npx -y firebase-tools@15.1.0 deploy --only functions:onUserDeleted
+# エミュレータ（Auth を使う検証は必ず auth を含める。含めないと admin SDK が本番 Auth に向かう）
+npx -y firebase-tools@15.1.0 emulators:exec --project runrun-66f12 --only auth,firestore,functions,storage "node script.cjs"
+```
+
 ### Analytics
 
 `AnalyticsService`がFirebase Analyticsへのイベント送信を担当。
