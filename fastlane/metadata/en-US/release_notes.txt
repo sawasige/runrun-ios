@@ -1,11 +1,2 @@
-Thank you for using RunRun!
-
-【New】
-・Block users: use the "…" menu on a profile to block someone. Blocked users no longer appear in rankings, search, or friend requests. Manage them in Settings → Blocked Users
-・Report users: report inappropriate display names or abusive behavior from the "…" menu on a profile
-
-【Improved】
-・Display names are now limited to 20 characters with no line breaks or leading/trailing spaces
-
-【Fixed】
-・Fixed an issue where notifications such as friend requests could stop arriving after switching devices or reinstalling the app
+Security update
+- Updated the Firestore SDK so that certificates from a revoked certificate authority are no longer trusted. Please update to keep your data secure.
