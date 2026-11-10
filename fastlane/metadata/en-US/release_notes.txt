@@ -1,1 +1,4 @@
-This update includes security improvements. Please update to the latest version to keep your data secure.
+Thank you for using RunRun!
+
+【Improved】
+・Security improvements. Please update to the latest version to keep your data secure.
