@@ -1,2 +1,1 @@
-Security update
-- Updated the Firestore SDK so that certificates from a revoked certificate authority are no longer trusted. Please update to keep your data secure.
+This update includes security improvements. Please update to the latest version to keep your data secure.
