@@ -148,15 +148,14 @@ struct GradientRouteMapView: UIViewRepresentable {
             guard let routeAnnotation = annotation as? RouteAnnotation else { return nil }
 
             let identifier = routeAnnotation.reuseIdentifier
-            var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier)
+            let annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier)
+                ?? MKAnnotationView(annotation: annotation, reuseIdentifier: identifier)
 
-            if annotationView == nil {
-                annotationView = MKAnnotationView(annotation: annotation, reuseIdentifier: identifier)
-                annotationView?.image = routeAnnotation.image
-                annotationView?.centerOffset = CGPoint(x: 0, y: -16)
-            } else {
-                annotationView?.annotation = annotation
-            }
+            // 再利用されたビューは別のキロ数の画像を持っているので、毎回描き直す
+            // （ズームで画面外に出たマーカーのビューが別の番号に使い回され、番号がずれていた）
+            annotationView.annotation = annotation
+            annotationView.image = routeAnnotation.image
+            annotationView.centerOffset = CGPoint(x: 0, y: -16)
 
             return annotationView
         }
