@@ -1,4 +1,4 @@
 Thank you for using RunRun!
 
-【Improved】
-・Security improvements. Please update to the latest version to keep your data secure.
+【Fixed】
+・Fixed an issue where kilometer markers on the run detail map could show the wrong numbers after zooming
